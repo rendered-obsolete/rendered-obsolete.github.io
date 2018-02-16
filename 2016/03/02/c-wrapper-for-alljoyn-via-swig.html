@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Begin Jekyll SEO tag v2.4.0 -->
+<title>C# Wrapper for AllJoyn via SWIG | Rendered Obsolete</title>
+<meta name="generator" content="Jekyll v3.7.2" />
+<meta property="og:title" content="C# Wrapper for AllJoyn via SWIG" />
+<meta name="author" content="Contact:" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="I was original interested in AllJoyn because it looked like a good way to build local multiplayer mobile games. At one point a few years back they even provided a Unity3D library. I got a simple “hello world” app working on PC/iOS/Android, but then got busy with other things and the project was eventually cancelled. &lt;p/&gt; I’ve been thinking about it again and looking at ways of getting it into .Net applications. Unfortunately they no longer provide the Unity library which would have given me a good start. &lt;p/&gt; Ran into some issues with their Linux build instructions. apt-get didn’t want to install ia32-libs since I already had ncurses installed. Next, the src zip directory structure didn’t quite match what’s in the documentation (I guess they want you to move directories around). But you can just run scons from the root of the decompressed source code. I got a compile error about not being able to find sys/capability.h. apt-get had given up ia32-libs and didn’t install libcap-dev. Once I got that everything seemed to work. &lt;p/&gt; Basically, I ended up doing: &lt;pre class=&quot;code&quot;&gt;sudo apt-get install build-essential libgtk2.0-dev libssl-dev xsltproc libxml2-dev libcap-dev python scons libssl-devscons BINDINGS=cpp WS=off BT=off ICE=off SERVICES=”about”&lt;/pre&gt; &lt;p/&gt; You can verify everything works by running the sample app. On a 64-bit system scons seems to build for x86_64 by default. &lt;p/&gt; In one shell: &lt;ol&gt;&lt;li&gt;export LD_LIBRARY_PATH=pwd/build/linux/x86_64/debug/dist/cpp/lib:$LD_LIBRARY_PATH&lt;/li&gt;&lt;li&gt;build/linux/x86_64/debug/dist/cpp/bin/samples/basic_service&lt;/li&gt;&lt;/ol&gt; And in another: &lt;ol&gt;&lt;li&gt;export LD_LIBRARY_PATH=pwd/build/linux/x86_64/debug/dist/cpp/lib:$LD_LIBRARY_PATH&lt;/li&gt;&lt;li&gt;build/linux/x86_64/debug/dist/cpp/bin/samples/basic_client&lt;/li&gt;&lt;/ol&gt; Now I’ve got the native AllJoyn library, but I still need to get it working with .Net. SWIG is my first thought to do this. PInvoke Interop Assistant is potentially another option, but it looks like it hasn’t been developed for some time. Following the SWIG tutorial I created the interface file alljoyn.swig specifying header files included by samples/basic/basic_client.cc: &lt;pre class=&quot;code&quot;&gt;%module alljoyn%{/* Includes the header in the wrapper code /#include “alljoyn_core/inc/alljoyn/AllJoynStd.h”#include “alljoyn_core/inc/alljoyn/BusAttachment.h”#include “build/linux/x86_64/debug/dist/cpp/inc/alljoyn/Status.h”#include “alljoyn_core/inc/alljoyn/Init.h”#include “alljoyn_core/inc/alljoyn/version.h”// Needed for alljoyn_wrap.cxx to compileusing namespace qcc;using namespace ajn;%}/ Parse the header file to generate wrappers */%include “alljoyn_core/inc/alljoyn/AllJoynStd.h”%include “alljoyn_core/inc/alljoyn/BusAttachment.h”%include “build/linux/x86_64/debug/dist/cpp/inc/alljoyn/Status.h”%include “alljoyn_core/inc/alljoyn/Init.h”%include “alljoyn_core/inc/alljoyn/version.h”&lt;/pre&gt; Then build everything: &lt;pre class=&quot;code&quot;&gt;mkdir alljoyn_cscd alljoyn_cs# Create alljoyn.swig here# Generate SWIG wrapper codeswig -c++ -csharp -cpperraswarn alljoyn.swig# Build shared libg++ -fPIC -c -DQCC_OS_GROUP_POSIX -I../build/linux/x86_64/debug/dist/cpp/inc -I../alljoyn_core/inc -I../common/inc alljoyn_wrap.cxxg++ -shared -L../build/linux/x86_64/debug/dist/cpp/lib -o liballjoyn.so alljoyn_wrap.o -lajrouter -Wl,-Bstatic -lalljoyn -Wl,-Bdynamic -lssl -lcrypto# Update so mono can find liballjoyn.soexport LD_LIBRARY_PATH=pwd:$LD_LIBRARY_PATH&lt;/pre&gt; I included all the swig generated csharp source files into a MonoDevelop project, and you can now call simple AllJoyn functions from C#: &lt;pre class=&quot;code&quot;&gt;if (alljoyn.AllJoynInit () != QStatus.ER_OK) return;Console.WriteLine (“AllJoyn Library version: {0}”, alljoyn.GetVersion ());Console.WriteLine (“AllJoyn Library build info: {0}”, alljoyn.GetBuildInfo ());var status = QStatus.ER_OK;var msgBus = new BusAttachment (“myApp”, true);if (msgBus == null) status = QStatus.ER_OUT_OF_MEMORY;&lt;/pre&gt; That’s a good start, but I’ve run into a problem. As expected, swig doesn’t always generate “natural” c# code. BusAttachment.CreateInterface() has the following signature: &lt;pre class=&quot;code&quot;&gt;public QStatus CreateInterface(string name, SWIGTYPE_p_p_InterfaceDescription iface)&lt;/pre&gt;Where SWIGTYPE_p_p_InterfaceDescription is some pointer wrapper for the managed/unmanaged magic that swig generated for us rather than something like “out InterfaceDescription”. It looks like swig provides typemaps to solve these sorts of problems, but in any case I’m not quite done yet. Misc other docs that were helpful: &lt;ul&gt;&lt;li&gt;http://www.mono-project.com/docs/advanced/pinvoke/dllnotfoundexception/&lt;/li&gt;&lt;li&gt;https://github.com/swig/swig/blob/master/Lib/csharp/typemaps.i&lt;/li&gt;&lt;/ul&gt;" />
+<meta property="og:description" content="I was original interested in AllJoyn because it looked like a good way to build local multiplayer mobile games. At one point a few years back they even provided a Unity3D library. I got a simple “hello world” app working on PC/iOS/Android, but then got busy with other things and the project was eventually cancelled. &lt;p/&gt; I’ve been thinking about it again and looking at ways of getting it into .Net applications. Unfortunately they no longer provide the Unity library which would have given me a good start. &lt;p/&gt; Ran into some issues with their Linux build instructions. apt-get didn’t want to install ia32-libs since I already had ncurses installed. Next, the src zip directory structure didn’t quite match what’s in the documentation (I guess they want you to move directories around). But you can just run scons from the root of the decompressed source code. I got a compile error about not being able to find sys/capability.h. apt-get had given up ia32-libs and didn’t install libcap-dev. Once I got that everything seemed to work. &lt;p/&gt; Basically, I ended up doing: &lt;pre class=&quot;code&quot;&gt;sudo apt-get install build-essential libgtk2.0-dev libssl-dev xsltproc libxml2-dev libcap-dev python scons libssl-devscons BINDINGS=cpp WS=off BT=off ICE=off SERVICES=”about”&lt;/pre&gt; &lt;p/&gt; You can verify everything works by running the sample app. On a 64-bit system scons seems to build for x86_64 by default. &lt;p/&gt; In one shell: &lt;ol&gt;&lt;li&gt;export LD_LIBRARY_PATH=pwd/build/linux/x86_64/debug/dist/cpp/lib:$LD_LIBRARY_PATH&lt;/li&gt;&lt;li&gt;build/linux/x86_64/debug/dist/cpp/bin/samples/basic_service&lt;/li&gt;&lt;/ol&gt; And in another: &lt;ol&gt;&lt;li&gt;export LD_LIBRARY_PATH=pwd/build/linux/x86_64/debug/dist/cpp/lib:$LD_LIBRARY_PATH&lt;/li&gt;&lt;li&gt;build/linux/x86_64/debug/dist/cpp/bin/samples/basic_client&lt;/li&gt;&lt;/ol&gt; Now I’ve got the native AllJoyn library, but I still need to get it working with .Net. SWIG is my first thought to do this. PInvoke Interop Assistant is potentially another option, but it looks like it hasn’t been developed for some time. Following the SWIG tutorial I created the interface file alljoyn.swig specifying header files included by samples/basic/basic_client.cc: &lt;pre class=&quot;code&quot;&gt;%module alljoyn%{/* Includes the header in the wrapper code /#include “alljoyn_core/inc/alljoyn/AllJoynStd.h”#include “alljoyn_core/inc/alljoyn/BusAttachment.h”#include “build/linux/x86_64/debug/dist/cpp/inc/alljoyn/Status.h”#include “alljoyn_core/inc/alljoyn/Init.h”#include “alljoyn_core/inc/alljoyn/version.h”// Needed for alljoyn_wrap.cxx to compileusing namespace qcc;using namespace ajn;%}/ Parse the header file to generate wrappers */%include “alljoyn_core/inc/alljoyn/AllJoynStd.h”%include “alljoyn_core/inc/alljoyn/BusAttachment.h”%include “build/linux/x86_64/debug/dist/cpp/inc/alljoyn/Status.h”%include “alljoyn_core/inc/alljoyn/Init.h”%include “alljoyn_core/inc/alljoyn/version.h”&lt;/pre&gt; Then build everything: &lt;pre class=&quot;code&quot;&gt;mkdir alljoyn_cscd alljoyn_cs# Create alljoyn.swig here# Generate SWIG wrapper codeswig -c++ -csharp -cpperraswarn alljoyn.swig# Build shared libg++ -fPIC -c -DQCC_OS_GROUP_POSIX -I../build/linux/x86_64/debug/dist/cpp/inc -I../alljoyn_core/inc -I../common/inc alljoyn_wrap.cxxg++ -shared -L../build/linux/x86_64/debug/dist/cpp/lib -o liballjoyn.so alljoyn_wrap.o -lajrouter -Wl,-Bstatic -lalljoyn -Wl,-Bdynamic -lssl -lcrypto# Update so mono can find liballjoyn.soexport LD_LIBRARY_PATH=pwd:$LD_LIBRARY_PATH&lt;/pre&gt; I included all the swig generated csharp source files into a MonoDevelop project, and you can now call simple AllJoyn functions from C#: &lt;pre class=&quot;code&quot;&gt;if (alljoyn.AllJoynInit () != QStatus.ER_OK) return;Console.WriteLine (“AllJoyn Library version: {0}”, alljoyn.GetVersion ());Console.WriteLine (“AllJoyn Library build info: {0}”, alljoyn.GetBuildInfo ());var status = QStatus.ER_OK;var msgBus = new BusAttachment (“myApp”, true);if (msgBus == null) status = QStatus.ER_OUT_OF_MEMORY;&lt;/pre&gt; That’s a good start, but I’ve run into a problem. As expected, swig doesn’t always generate “natural” c# code. BusAttachment.CreateInterface() has the following signature: &lt;pre class=&quot;code&quot;&gt;public QStatus CreateInterface(string name, SWIGTYPE_p_p_InterfaceDescription iface)&lt;/pre&gt;Where SWIGTYPE_p_p_InterfaceDescription is some pointer wrapper for the managed/unmanaged magic that swig generated for us rather than something like “out InterfaceDescription”. It looks like swig provides typemaps to solve these sorts of problems, but in any case I’m not quite done yet. Misc other docs that were helpful: &lt;ul&gt;&lt;li&gt;http://www.mono-project.com/docs/advanced/pinvoke/dllnotfoundexception/&lt;/li&gt;&lt;li&gt;https://github.com/swig/swig/blob/master/Lib/csharp/typemaps.i&lt;/li&gt;&lt;/ul&gt;" />
+<link rel="canonical" href="http://localhost:4000/2016/03/02/c-wrapper-for-alljoyn-via-swig.html" />
+<meta property="og:url" content="http://localhost:4000/2016/03/02/c-wrapper-for-alljoyn-via-swig.html" />
+<meta property="og:site_name" content="Rendered Obsolete" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2016-03-02T09:31:00+08:00" />
+<script type="application/ld+json">
+{"description":"I was original interested in AllJoyn because it looked like a good way to build local multiplayer mobile games. At one point a few years back they even provided a Unity3D library. I got a simple “hello world” app working on PC/iOS/Android, but then got busy with other things and the project was eventually cancelled. &lt;p/&gt; I’ve been thinking about it again and looking at ways of getting it into .Net applications. Unfortunately they no longer provide the Unity library which would have given me a good start. &lt;p/&gt; Ran into some issues with their Linux build instructions. apt-get didn’t want to install ia32-libs since I already had ncurses installed. Next, the src zip directory structure didn’t quite match what’s in the documentation (I guess they want you to move directories around). But you can just run scons from the root of the decompressed source code. I got a compile error about not being able to find sys/capability.h. apt-get had given up ia32-libs and didn’t install libcap-dev. Once I got that everything seemed to work. &lt;p/&gt; Basically, I ended up doing: &lt;pre class=&quot;code&quot;&gt;sudo apt-get install build-essential libgtk2.0-dev libssl-dev xsltproc libxml2-dev libcap-dev python scons libssl-devscons BINDINGS=cpp WS=off BT=off ICE=off SERVICES=”about”&lt;/pre&gt; &lt;p/&gt; You can verify everything works by running the sample app. On a 64-bit system scons seems to build for x86_64 by default. &lt;p/&gt; In one shell: &lt;ol&gt;&lt;li&gt;export LD_LIBRARY_PATH=pwd/build/linux/x86_64/debug/dist/cpp/lib:$LD_LIBRARY_PATH&lt;/li&gt;&lt;li&gt;build/linux/x86_64/debug/dist/cpp/bin/samples/basic_service&lt;/li&gt;&lt;/ol&gt; And in another: &lt;ol&gt;&lt;li&gt;export LD_LIBRARY_PATH=pwd/build/linux/x86_64/debug/dist/cpp/lib:$LD_LIBRARY_PATH&lt;/li&gt;&lt;li&gt;build/linux/x86_64/debug/dist/cpp/bin/samples/basic_client&lt;/li&gt;&lt;/ol&gt; Now I’ve got the native AllJoyn library, but I still need to get it working with .Net. SWIG is my first thought to do this. PInvoke Interop Assistant is potentially another option, but it looks like it hasn’t been developed for some time. Following the SWIG tutorial I created the interface file alljoyn.swig specifying header files included by samples/basic/basic_client.cc: &lt;pre class=&quot;code&quot;&gt;%module alljoyn%{/* Includes the header in the wrapper code /#include “alljoyn_core/inc/alljoyn/AllJoynStd.h”#include “alljoyn_core/inc/alljoyn/BusAttachment.h”#include “build/linux/x86_64/debug/dist/cpp/inc/alljoyn/Status.h”#include “alljoyn_core/inc/alljoyn/Init.h”#include “alljoyn_core/inc/alljoyn/version.h”// Needed for alljoyn_wrap.cxx to compileusing namespace qcc;using namespace ajn;%}/ Parse the header file to generate wrappers */%include “alljoyn_core/inc/alljoyn/AllJoynStd.h”%include “alljoyn_core/inc/alljoyn/BusAttachment.h”%include “build/linux/x86_64/debug/dist/cpp/inc/alljoyn/Status.h”%include “alljoyn_core/inc/alljoyn/Init.h”%include “alljoyn_core/inc/alljoyn/version.h”&lt;/pre&gt; Then build everything: &lt;pre class=&quot;code&quot;&gt;mkdir alljoyn_cscd alljoyn_cs# Create alljoyn.swig here# Generate SWIG wrapper codeswig -c++ -csharp -cpperraswarn alljoyn.swig# Build shared libg++ -fPIC -c -DQCC_OS_GROUP_POSIX -I../build/linux/x86_64/debug/dist/cpp/inc -I../alljoyn_core/inc -I../common/inc alljoyn_wrap.cxxg++ -shared -L../build/linux/x86_64/debug/dist/cpp/lib -o liballjoyn.so alljoyn_wrap.o -lajrouter -Wl,-Bstatic -lalljoyn -Wl,-Bdynamic -lssl -lcrypto# Update so mono can find liballjoyn.soexport LD_LIBRARY_PATH=pwd:$LD_LIBRARY_PATH&lt;/pre&gt; I included all the swig generated csharp source files into a MonoDevelop project, and you can now call simple AllJoyn functions from C#: &lt;pre class=&quot;code&quot;&gt;if (alljoyn.AllJoynInit () != QStatus.ER_OK) return;Console.WriteLine (“AllJoyn Library version: {0}”, alljoyn.GetVersion ());Console.WriteLine (“AllJoyn Library build info: {0}”, alljoyn.GetBuildInfo ());var status = QStatus.ER_OK;var msgBus = new BusAttachment (“myApp”, true);if (msgBus == null) status = QStatus.ER_OUT_OF_MEMORY;&lt;/pre&gt; That’s a good start, but I’ve run into a problem. As expected, swig doesn’t always generate “natural” c# code. BusAttachment.CreateInterface() has the following signature: &lt;pre class=&quot;code&quot;&gt;public QStatus CreateInterface(string name, SWIGTYPE_p_p_InterfaceDescription iface)&lt;/pre&gt;Where SWIGTYPE_p_p_InterfaceDescription is some pointer wrapper for the managed/unmanaged magic that swig generated for us rather than something like “out InterfaceDescription”. It looks like swig provides typemaps to solve these sorts of problems, but in any case I’m not quite done yet. Misc other docs that were helpful: &lt;ul&gt;&lt;li&gt;http://www.mono-project.com/docs/advanced/pinvoke/dllnotfoundexception/&lt;/li&gt;&lt;li&gt;https://github.com/swig/swig/blob/master/Lib/csharp/typemaps.i&lt;/li&gt;&lt;/ul&gt;","author":{"@type":"Person","name":"Contact:"},"@type":"BlogPosting","url":"http://localhost:4000/2016/03/02/c-wrapper-for-alljoyn-via-swig.html","headline":"C# Wrapper for AllJoyn via SWIG","dateModified":"2016-03-02T09:31:00+08:00","datePublished":"2016-03-02T09:31:00+08:00","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/2016/03/02/c-wrapper-for-alljoyn-via-swig.html"},"@context":"http://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+  <link rel="stylesheet" href="/assets/main.css">
+  <link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="Rendered Obsolete" />
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" rel="author" href="/">Rendered Obsolete</a>
+
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+            <a class="page-link" href="/about/">About</a>
+            
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">C# Wrapper for AllJoyn via SWIG</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2016-03-02T09:31:00+08:00" itemprop="datePublished">
+        
+        Mar 2, 2016
+      </time>
+      
+        • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span class="p-author h-card" itemprop="name">Contact:</span></span>
+      </p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    I was original interested in <a href="https://allseenalliance.org">AllJoyn</a> because it looked like a good way to build local multiplayer mobile games.  At one point a few years back they even provided a <a href="https://unity3d.com/">Unity3D</a> library.  I got a simple "hello world" app working on PC/iOS/Android, but then got busy with other things and the project was eventually cancelled.  <p/> I've been thinking about it again and looking at ways of getting it into .Net applications.  Unfortunately they no longer provide the Unity library which would have given me a good start.  <p/> Ran into some issues with their <a href="https://allseenalliance.org/framework/documentation/develop/building/linux">Linux build instructions</a>.  apt-get didn't want to install ia32-libs since I already had ncurses installed.  Next, the src zip directory structure didn't quite match what's in the documentation (I guess they want you to move directories around).  But you can just run scons from the root of the decompressed source code.  I got a compile error about not being able to find sys/capability.h.  apt-get had given up ia32-libs and didn't install libcap-dev.  Once I got that everything seemed to work.  <p/> Basically, I ended up doing: <pre class="code"><br />sudo apt-get install build-essential libgtk2.0-dev libssl-dev xsltproc libxml2-dev libcap-dev python scons libssl-dev<br />scons BINDINGS=cpp WS=off BT=off ICE=off SERVICES="about"<br /></pre> <p/> You can verify everything works by <a href="https://allseenalliance.org/framework/documentation/develop/run-sample-apps/basic/linux">running the sample app</a>.  On a 64-bit system scons seems to build for x86_64 by default.  <p/> In one shell: <ol><li>export LD_LIBRARY_PATH=`pwd`/build/linux/x86_64/debug/dist/cpp/lib:$LD_LIBRARY_PATH</li><li>build/linux/x86_64/debug/dist/cpp/bin/samples/basic_service</li></ol> And in another: <ol><li>export LD_LIBRARY_PATH=`pwd`/build/linux/x86_64/debug/dist/cpp/lib:$LD_LIBRARY_PATH</li><li>build/linux/x86_64/debug/dist/cpp/bin/samples/basic_client</li></ol> Now I've got the native AllJoyn library, but I still need to get it working with .Net.  <a href="http://www.swig.org/">SWIG</a> is my first thought to do this.  <a href="http://clrinterop.codeplex.com/releases/view/14120">PInvoke Interop Assistant</a> is potentially another option, but it looks like it hasn't been developed for some time.  Following the <a href="http://www.swig.org/tutorial.html">SWIG tutorial</a> I created the interface file alljoyn.swig specifying header files included by samples/basic/basic_client.cc:  <pre class="code"><br />%module alljoyn<br />%{<br />/* Includes the header in the wrapper code */<br />#include "alljoyn_core/inc/alljoyn/AllJoynStd.h"<br />#include "alljoyn_core/inc/alljoyn/BusAttachment.h"<br />#include "build/linux/x86_64/debug/dist/cpp/inc/alljoyn/Status.h"<br />#include "alljoyn_core/inc/alljoyn/Init.h"<br />#include "alljoyn_core/inc/alljoyn/version.h"<br /><br />// Needed for alljoyn_wrap.cxx to compile<br />using namespace qcc;<br />using namespace ajn;<br />%}<br /><br />/* Parse the header file to generate wrappers */<br />%include "alljoyn_core/inc/alljoyn/AllJoynStd.h"<br />%include "alljoyn_core/inc/alljoyn/BusAttachment.h"<br />%include "build/linux/x86_64/debug/dist/cpp/inc/alljoyn/Status.h"<br />%include "alljoyn_core/inc/alljoyn/Init.h"<br />%include "alljoyn_core/inc/alljoyn/version.h"<br /></pre> Then build everything: <pre class="code"><br />mkdir alljoyn_cs<br />cd alljoyn_cs<br /># Create alljoyn.swig here<br /><br /># Generate SWIG wrapper code<br />swig -c++ -csharp -cpperraswarn alljoyn.swig<br /><br /># Build shared lib<br />g++ -fPIC -c -DQCC_OS_GROUP_POSIX -I../build/linux/x86_64/debug/dist/cpp/inc -I../alljoyn_core/inc -I../common/inc alljoyn_wrap.cxx<br />g++ -shared -L../build/linux/x86_64/debug/dist/cpp/lib -o liballjoyn.so alljoyn_wrap.o -lajrouter -Wl,-Bstatic -lalljoyn -Wl,-Bdynamic -lssl -lcrypto<br /><br /># Update so mono can find liballjoyn.so<br />export LD_LIBRARY_PATH=`pwd`:$LD_LIBRARY_PATH<br /></pre> I included all the swig generated csharp source files into a MonoDevelop project, and you can now call simple AllJoyn functions from C#:  <pre class="code"><br />if (alljoyn.AllJoynInit () != QStatus.ER_OK)<br /> return;<br /><br />Console.WriteLine ("AllJoyn Library version: {0}", alljoyn.GetVersion ());<br />Console.WriteLine ("AllJoyn Library build info: {0}", alljoyn.GetBuildInfo ());<br /><br />var status = QStatus.ER_OK;<br /><br />var msgBus = new BusAttachment ("myApp", true);<br />if (msgBus == null)<br /> status = QStatus.ER_OUT_OF_MEMORY;<br /></pre> That's a good start, but I've run into a problem.  As expected, swig doesn't always generate "natural" c# code.  BusAttachment.CreateInterface() has the following signature: <pre class="code"><br />public QStatus CreateInterface(string name, SWIGTYPE_p_p_InterfaceDescription iface)<br /></pre>Where SWIGTYPE_p_p_InterfaceDescription is some pointer wrapper for the managed/unmanaged magic that swig generated for us rather than something like "out InterfaceDescription".  It looks like swig provides <a href="http://www.swig.org/Doc1.3/Typemaps.html">typemaps</a> to solve these sorts of problems, but in any case I'm not quite done yet.  Misc other docs that were helpful: <ul><li><a href="http://www.mono-project.com/docs/advanced/pinvoke/dllnotfoundexception/">http://www.mono-project.com/docs/advanced/pinvoke/dllnotfoundexception/</a></li><li>https://github.com/swig/swig/blob/master/Lib/csharp/typemaps.i</li></ul>
+  </div>
+
+  
+
+  <a class="u-url" href="/2016/03/02/c-wrapper-for-alljoyn-via-swig.html" hidden></a>
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Rendered Obsolete</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">
+            
+              Rendered Obsolete
+            
+            </li>
+            
+            <li><a class="u-email" href="mailto:your-email@example.com">your-email@example.com</a></li>
+            
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-2">
+        <ul class="social-media-list">
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+</ul>
+
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>

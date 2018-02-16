@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Begin Jekyll SEO tag v2.4.0 -->
+<title>rustlang dynamic library part 2 | Rendered Obsolete</title>
+<meta name="generator" content="Jekyll v3.7.2" />
+<meta property="og:title" content="rustlang dynamic library part 2" />
+<meta name="author" content="Contact:" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="A previous post was about getting a simple rust dynamic library working. The next thing I wanted to do was try passing a more complex type from the dynamic library to the executable using it. &lt;p/&gt; First, I changed dynamiclib to: &lt;pre&gt;#[derive(Debug)]pub struct Tuple (u32,);#[derive(Debug)]pub struct MyStruct { s1: &amp;’static str, s2: String, t: Tuple,}#[no_mangle]pub extern “C” fn test() -&gt; MyStruct { MyStruct { s1: “hello”, s2: “world”.to_string(), t: Tuple(47), }}&lt;/pre&gt; And dynamic to: &lt;pre&gt;#[link(name=”dynamiclib”)]extern { fn test() -&gt; MyStruct;}fn main() { let retval = unsafe { test() }; println!(“Got: {:?}”, retval);}&lt;/pre&gt; And (somewhat surprisingly) it worked as expected. Although you get the following error: &lt;pre&gt;warning: found struct without foreign-function-safe representation annotation in foreign module, consider adding a #[repr(C)] attribute to the type, #[warn(improper_ctypes)] on by default&lt;/pre&gt; At first I considered appeasing the warning, but if it’s a library written in rust and called from rust, shouldn’t the default &lt;pre&gt;repr(Rust)&lt;/pre&gt; be safe/correct? &lt;p/&gt; Next, I decided to try loading and re-loading the shared library using this more complex struct… and I started getting SIGSEGV the second time I attempted to use the library. &lt;p/&gt; I came across libloading (crates.io) which purports to be safer wrapper for working with dyanmic libraries, and if nothing else has much better documentation. &lt;p/&gt; A quick change to dynamic/src/main.rs (devoid of error-checking): &lt;pre&gt; let lib = Library::new(“libdynamiclib.dylib”).unwrap(); let test: Symbol&lt;extern fn() -&gt; MyStruct&gt; = unsafe { lib.get(b”test\0”).unwrap() }; println!(“Got: {:?}”, test());&lt;/pre&gt; And it works correctly even when re-loading the library. So, I was either using stale symbols, or something else. Still several things that I obviously don’t fully understand. Hopefully pouring over Rustonomicon will reveal the secrets to me." />
+<meta property="og:description" content="A previous post was about getting a simple rust dynamic library working. The next thing I wanted to do was try passing a more complex type from the dynamic library to the executable using it. &lt;p/&gt; First, I changed dynamiclib to: &lt;pre&gt;#[derive(Debug)]pub struct Tuple (u32,);#[derive(Debug)]pub struct MyStruct { s1: &amp;’static str, s2: String, t: Tuple,}#[no_mangle]pub extern “C” fn test() -&gt; MyStruct { MyStruct { s1: “hello”, s2: “world”.to_string(), t: Tuple(47), }}&lt;/pre&gt; And dynamic to: &lt;pre&gt;#[link(name=”dynamiclib”)]extern { fn test() -&gt; MyStruct;}fn main() { let retval = unsafe { test() }; println!(“Got: {:?}”, retval);}&lt;/pre&gt; And (somewhat surprisingly) it worked as expected. Although you get the following error: &lt;pre&gt;warning: found struct without foreign-function-safe representation annotation in foreign module, consider adding a #[repr(C)] attribute to the type, #[warn(improper_ctypes)] on by default&lt;/pre&gt; At first I considered appeasing the warning, but if it’s a library written in rust and called from rust, shouldn’t the default &lt;pre&gt;repr(Rust)&lt;/pre&gt; be safe/correct? &lt;p/&gt; Next, I decided to try loading and re-loading the shared library using this more complex struct… and I started getting SIGSEGV the second time I attempted to use the library. &lt;p/&gt; I came across libloading (crates.io) which purports to be safer wrapper for working with dyanmic libraries, and if nothing else has much better documentation. &lt;p/&gt; A quick change to dynamic/src/main.rs (devoid of error-checking): &lt;pre&gt; let lib = Library::new(“libdynamiclib.dylib”).unwrap(); let test: Symbol&lt;extern fn() -&gt; MyStruct&gt; = unsafe { lib.get(b”test\0”).unwrap() }; println!(“Got: {:?}”, test());&lt;/pre&gt; And it works correctly even when re-loading the library. So, I was either using stale symbols, or something else. Still several things that I obviously don’t fully understand. Hopefully pouring over Rustonomicon will reveal the secrets to me." />
+<link rel="canonical" href="http://localhost:4000/2016/04/05/rustlang-dynamic-library-part-2.html" />
+<meta property="og:url" content="http://localhost:4000/2016/04/05/rustlang-dynamic-library-part-2.html" />
+<meta property="og:site_name" content="Rendered Obsolete" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2016-04-05T20:14:00+08:00" />
+<script type="application/ld+json">
+{"description":"A previous post was about getting a simple rust dynamic library working. The next thing I wanted to do was try passing a more complex type from the dynamic library to the executable using it. &lt;p/&gt; First, I changed dynamiclib to: &lt;pre&gt;#[derive(Debug)]pub struct Tuple (u32,);#[derive(Debug)]pub struct MyStruct { s1: &amp;’static str, s2: String, t: Tuple,}#[no_mangle]pub extern “C” fn test() -&gt; MyStruct { MyStruct { s1: “hello”, s2: “world”.to_string(), t: Tuple(47), }}&lt;/pre&gt; And dynamic to: &lt;pre&gt;#[link(name=”dynamiclib”)]extern { fn test() -&gt; MyStruct;}fn main() { let retval = unsafe { test() }; println!(“Got: {:?}”, retval);}&lt;/pre&gt; And (somewhat surprisingly) it worked as expected. Although you get the following error: &lt;pre&gt;warning: found struct without foreign-function-safe representation annotation in foreign module, consider adding a #[repr(C)] attribute to the type, #[warn(improper_ctypes)] on by default&lt;/pre&gt; At first I considered appeasing the warning, but if it’s a library written in rust and called from rust, shouldn’t the default &lt;pre&gt;repr(Rust)&lt;/pre&gt; be safe/correct? &lt;p/&gt; Next, I decided to try loading and re-loading the shared library using this more complex struct… and I started getting SIGSEGV the second time I attempted to use the library. &lt;p/&gt; I came across libloading (crates.io) which purports to be safer wrapper for working with dyanmic libraries, and if nothing else has much better documentation. &lt;p/&gt; A quick change to dynamic/src/main.rs (devoid of error-checking): &lt;pre&gt; let lib = Library::new(“libdynamiclib.dylib”).unwrap(); let test: Symbol&lt;extern fn() -&gt; MyStruct&gt; = unsafe { lib.get(b”test\\0”).unwrap() }; println!(“Got: {:?}”, test());&lt;/pre&gt; And it works correctly even when re-loading the library. So, I was either using stale symbols, or something else. Still several things that I obviously don’t fully understand. Hopefully pouring over Rustonomicon will reveal the secrets to me.","author":{"@type":"Person","name":"Contact:"},"@type":"BlogPosting","url":"http://localhost:4000/2016/04/05/rustlang-dynamic-library-part-2.html","headline":"rustlang dynamic library part 2","dateModified":"2016-04-05T20:14:00+08:00","datePublished":"2016-04-05T20:14:00+08:00","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/2016/04/05/rustlang-dynamic-library-part-2.html"},"@context":"http://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+  <link rel="stylesheet" href="/assets/main.css">
+  <link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="Rendered Obsolete" />
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" rel="author" href="/">Rendered Obsolete</a>
+
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+            <a class="page-link" href="/about/">About</a>
+            
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">rustlang dynamic library part 2</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2016-04-05T20:14:00+08:00" itemprop="datePublished">
+        
+        Apr 5, 2016
+      </time>
+      
+        • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span class="p-author h-card" itemprop="name">Contact:</span></span>
+      </p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    A previous post was about getting a simple rust dynamic library working.  The next thing I wanted to do was try passing a more complex type from the dynamic library to the executable using it.  <p/> First, I changed dynamiclib to: <pre><br />#[derive(Debug)]<br />pub struct Tuple (u32,);<br /><br />#[derive(Debug)]<br />pub struct MyStruct {<br />    s1: &'static str,<br />    s2: String,<br />    t: Tuple,<br />}<br /><br />#[no_mangle]<br />pub extern "C" fn test() -> MyStruct {<br />    MyStruct {<br />        s1: "hello",<br />        s2: "world".to_string(),<br />        t: Tuple(47),<br />    }<br />}<br /></pre> And dynamic to: <pre><br />#[link(name="dynamiclib")]<br />extern {<br />    fn test() -> MyStruct;<br />}<br /><br />fn main() {<br />    let retval = unsafe { test() };<br />    println!("Got: {:?}", retval);<br />}<br /></pre> And (somewhat surprisingly) it worked as expected.  Although you get the following error: <pre><br />warning: found struct without foreign-function-safe representation annotation in foreign module, consider adding a #[repr(C)] attribute to the type, #[warn(improper_ctypes)] on by default<br /></pre> At first I considered appeasing the warning, but if it's a library written in rust and called from rust, shouldn't the default <pre>repr(Rust)</pre> be safe/correct?  <p/> Next, I decided to try loading and re-loading the shared library using this more complex struct... and I started getting SIGSEGV the second time I attempted to use the library.  <p/> I came across <a href="https://github.com/nagisa/rust_libloading">libloading</a> (<a href="https://crates.io/crates/libloading">crates.io</a>) which purports to be safer wrapper for working with dyanmic libraries, and if nothing else has much better <a href="http://nagisa.github.io/rust_libloading/libloading/struct.Library.html">documentation</a>.  <p/> A quick change to dynamic/src/main.rs (devoid of error-checking): <pre><br />    let lib = Library::new("libdynamiclib.dylib").unwrap();<br />    let test: Symbol<extern fn() -> MyStruct> = unsafe {<br />        lib.get(b"test\0").unwrap()<br />    };<br />    println!("Got: {:?}", test());<br /></pre> And it works correctly even when re-loading the library.  So, I was either using stale symbols, or something else.  Still several things that I obviously don't fully understand.  Hopefully pouring over <a href="https://doc.rust-lang.org/nomicon/README.html">Rustonomicon</a> will reveal the secrets to me.
+  </div>
+
+  
+
+  <a class="u-url" href="/2016/04/05/rustlang-dynamic-library-part-2.html" hidden></a>
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Rendered Obsolete</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">
+            
+              Rendered Obsolete
+            
+            </li>
+            
+            <li><a class="u-email" href="mailto:your-email@example.com">your-email@example.com</a></li>
+            
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-2">
+        <ul class="social-media-list">
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+</ul>
+
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>

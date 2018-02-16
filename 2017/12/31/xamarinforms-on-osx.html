@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Begin Jekyll SEO tag v2.4.0 -->
+<title>Xamarin.Forms on OSX | Rendered Obsolete</title>
+<meta name="generator" content="Jekyll v3.7.2" />
+<meta property="og:title" content="Xamarin.Forms on OSX" />
+<meta name="author" content="Contact:" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Not sure how I missed this, but Xamarin.Forms now has preview support for Mac OSX clients.  This is really exciting and I hope they decide to finalize support for OSX as a first-class target.I spend fair amount of time on OSX, so one of my biggest gripes about Forms was lack of support for a native Mac client.  On Windows I can target UWP and run projects directly on Windows 10.  But, on OSX I have to launch either the iOS or Android target.  Not a deal breaker, but certainly cumbersome.MvvmCross promises to be a Xamarin.Forms-like MVVM framework that targets more platforms.  But, it seems OSX clients are languishing as a low-priority concern for that project.&lt;h3&gt;Working Client&lt;/h3&gt;&lt;div&gt;The xamarin blog’s instructions mostly worked.  I added a Cocoa app with the latest version of Xamarin.Forms on nuget (2.5.0) to my Forms solution, and made the required changes.&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;Everything built, but when I launched it I got a System.NullReferenceException:&lt;/div&gt;&lt;pre style=&quot;background: #f0f0f0; border: 1px dashed #cccccc; color: black; font-family: &quot;arial&quot;; font-size: 12px; height: auto; line-height: 20px; overflow: auto; padding: 0px; text-align: left; width: 99%;&quot;&gt;1: Xamarin.Forms.Platform.MacOS.FormsApplicationDelegate.UpdateMainMenu() in 2: Xamarin.Forms.Platform.MacOS.FormsApplicationDelegate.DidFinishLaunching(Foundation.NSNotification notification) in 3: mobile_app.OSX.AppDelegate.DidFinishLaunching(Foundation.NSNotification notification) in /Users/jake/jade/jade/mobile_app/mobile_app.OSX/AppDelegate.cs:33 4: AppKit.NSApplication.NSApplicationMain() in 5: AppKit.NSApplication.Main(string[] args) in /Users/builder/data/lanes/5489/c4240f3f/source/xamarin-macios/src/AppKit/NSApplication.cs:100 6: mobile_app.OSX.MainClass.Main(string[] args) in /Users/jake/jade/jade/mobile_app/mobile_app.OSX/Main.cs:12 &lt;/pre&gt;I found the solution in the xamarin forums.  Need to change the initialization of NSApplication in Main.cs:&lt;pre style=&quot;background: #f0f0f0; border: 1px dashed #cccccc; color: black; font-family: &quot;arial&quot;; font-size: 12px; height: auto; line-height: 20px; overflow: auto; padding: 0px; text-align: left; width: 99%;&quot;&gt;1: static void Main(string[] args) 2: { 3: NSApplication.Init(); 4: NSApplication.SharedApplication.Delegate = new AppDelegate(); 5: NSApplication.SharedApplication.MainMenu = new NSMenu(); // FIX 6: NSApplication.Main(args); 7: } &lt;/pre&gt;Line 5 is the added line.Giving me a working- albeit embarrassingly trivial- app:&lt;div class=&quot;separator&quot; style=&quot;clear: both; text-align: center;&quot;&gt;&lt;/div&gt;" />
+<meta property="og:description" content="Not sure how I missed this, but Xamarin.Forms now has preview support for Mac OSX clients.  This is really exciting and I hope they decide to finalize support for OSX as a first-class target.I spend fair amount of time on OSX, so one of my biggest gripes about Forms was lack of support for a native Mac client.  On Windows I can target UWP and run projects directly on Windows 10.  But, on OSX I have to launch either the iOS or Android target.  Not a deal breaker, but certainly cumbersome.MvvmCross promises to be a Xamarin.Forms-like MVVM framework that targets more platforms.  But, it seems OSX clients are languishing as a low-priority concern for that project.&lt;h3&gt;Working Client&lt;/h3&gt;&lt;div&gt;The xamarin blog’s instructions mostly worked.  I added a Cocoa app with the latest version of Xamarin.Forms on nuget (2.5.0) to my Forms solution, and made the required changes.&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;Everything built, but when I launched it I got a System.NullReferenceException:&lt;/div&gt;&lt;pre style=&quot;background: #f0f0f0; border: 1px dashed #cccccc; color: black; font-family: &quot;arial&quot;; font-size: 12px; height: auto; line-height: 20px; overflow: auto; padding: 0px; text-align: left; width: 99%;&quot;&gt;1: Xamarin.Forms.Platform.MacOS.FormsApplicationDelegate.UpdateMainMenu() in 2: Xamarin.Forms.Platform.MacOS.FormsApplicationDelegate.DidFinishLaunching(Foundation.NSNotification notification) in 3: mobile_app.OSX.AppDelegate.DidFinishLaunching(Foundation.NSNotification notification) in /Users/jake/jade/jade/mobile_app/mobile_app.OSX/AppDelegate.cs:33 4: AppKit.NSApplication.NSApplicationMain() in 5: AppKit.NSApplication.Main(string[] args) in /Users/builder/data/lanes/5489/c4240f3f/source/xamarin-macios/src/AppKit/NSApplication.cs:100 6: mobile_app.OSX.MainClass.Main(string[] args) in /Users/jake/jade/jade/mobile_app/mobile_app.OSX/Main.cs:12 &lt;/pre&gt;I found the solution in the xamarin forums.  Need to change the initialization of NSApplication in Main.cs:&lt;pre style=&quot;background: #f0f0f0; border: 1px dashed #cccccc; color: black; font-family: &quot;arial&quot;; font-size: 12px; height: auto; line-height: 20px; overflow: auto; padding: 0px; text-align: left; width: 99%;&quot;&gt;1: static void Main(string[] args) 2: { 3: NSApplication.Init(); 4: NSApplication.SharedApplication.Delegate = new AppDelegate(); 5: NSApplication.SharedApplication.MainMenu = new NSMenu(); // FIX 6: NSApplication.Main(args); 7: } &lt;/pre&gt;Line 5 is the added line.Giving me a working- albeit embarrassingly trivial- app:&lt;div class=&quot;separator&quot; style=&quot;clear: both; text-align: center;&quot;&gt;&lt;/div&gt;" />
+<link rel="canonical" href="http://localhost:4000/2017/12/31/xamarinforms-on-osx.html" />
+<meta property="og:url" content="http://localhost:4000/2017/12/31/xamarinforms-on-osx.html" />
+<meta property="og:site_name" content="Rendered Obsolete" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2017-12-31T08:05:00+08:00" />
+<script type="application/ld+json">
+{"description":"Not sure how I missed this, but Xamarin.Forms now has preview support for Mac OSX clients.  This is really exciting and I hope they decide to finalize support for OSX as a first-class target.I spend fair amount of time on OSX, so one of my biggest gripes about Forms was lack of support for a native Mac client.  On Windows I can target UWP and run projects directly on Windows 10.  But, on OSX I have to launch either the iOS or Android target.  Not a deal breaker, but certainly cumbersome.MvvmCross promises to be a Xamarin.Forms-like MVVM framework that targets more platforms.  But, it seems OSX clients are languishing as a low-priority concern for that project.&lt;h3&gt;Working Client&lt;/h3&gt;&lt;div&gt;The xamarin blog’s instructions mostly worked.  I added a Cocoa app with the latest version of Xamarin.Forms on nuget (2.5.0) to my Forms solution, and made the required changes.&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;Everything built, but when I launched it I got a System.NullReferenceException:&lt;/div&gt;&lt;pre style=&quot;background: #f0f0f0; border: 1px dashed #cccccc; color: black; font-family: &quot;arial&quot;; font-size: 12px; height: auto; line-height: 20px; overflow: auto; padding: 0px; text-align: left; width: 99%;&quot;&gt;1: Xamarin.Forms.Platform.MacOS.FormsApplicationDelegate.UpdateMainMenu() in 2: Xamarin.Forms.Platform.MacOS.FormsApplicationDelegate.DidFinishLaunching(Foundation.NSNotification notification) in 3: mobile_app.OSX.AppDelegate.DidFinishLaunching(Foundation.NSNotification notification) in /Users/jake/jade/jade/mobile_app/mobile_app.OSX/AppDelegate.cs:33 4: AppKit.NSApplication.NSApplicationMain() in 5: AppKit.NSApplication.Main(string[] args) in /Users/builder/data/lanes/5489/c4240f3f/source/xamarin-macios/src/AppKit/NSApplication.cs:100 6: mobile_app.OSX.MainClass.Main(string[] args) in /Users/jake/jade/jade/mobile_app/mobile_app.OSX/Main.cs:12 &lt;/pre&gt;I found the solution in the xamarin forums.  Need to change the initialization of NSApplication in Main.cs:&lt;pre style=&quot;background: #f0f0f0; border: 1px dashed #cccccc; color: black; font-family: &quot;arial&quot;; font-size: 12px; height: auto; line-height: 20px; overflow: auto; padding: 0px; text-align: left; width: 99%;&quot;&gt;1: static void Main(string[] args) 2: { 3: NSApplication.Init(); 4: NSApplication.SharedApplication.Delegate = new AppDelegate(); 5: NSApplication.SharedApplication.MainMenu = new NSMenu(); // FIX 6: NSApplication.Main(args); 7: } &lt;/pre&gt;Line 5 is the added line.Giving me a working- albeit embarrassingly trivial- app:&lt;div class=&quot;separator&quot; style=&quot;clear: both; text-align: center;&quot;&gt;&lt;/div&gt;","author":{"@type":"Person","name":"Contact:"},"@type":"BlogPosting","url":"http://localhost:4000/2017/12/31/xamarinforms-on-osx.html","headline":"Xamarin.Forms on OSX","dateModified":"2017-12-31T08:05:00+08:00","datePublished":"2017-12-31T08:05:00+08:00","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/2017/12/31/xamarinforms-on-osx.html"},"@context":"http://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+  <link rel="stylesheet" href="/assets/main.css">
+  <link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="Rendered Obsolete" />
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" rel="author" href="/">Rendered Obsolete</a>
+
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+            <a class="page-link" href="/about/">About</a>
+            
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Xamarin.Forms on OSX</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2017-12-31T08:05:00+08:00" itemprop="datePublished">
+        
+        Dec 31, 2017
+      </time>
+      
+        • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span class="p-author h-card" itemprop="name">Contact:</span></span>
+      </p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    Not sure how I missed this, but <a href="https://blog.xamarin.com/preview-bringing-macos-to-xamarin-forms/">Xamarin.Forms now has preview support for Mac OSX clients</a>.&nbsp; This is really exciting and I hope they decide to finalize support for OSX as a first-class target.<br /><br />I spend fair amount of time on OSX, so one of my biggest gripes about Forms was lack of support for a native Mac client.&nbsp; On Windows I can target UWP and run projects directly on Windows 10.&nbsp; But, on OSX I have to launch either the iOS or Android target.&nbsp; Not a deal breaker, but certainly cumbersome.<br /><br /><a href="https://www.mvvmcross.com/">MvvmCross</a>&nbsp;promises to be a Xamarin.Forms-like MVVM framework that targets more platforms.&nbsp; But, it seems OSX clients are <a href="https://stackoverflow.com/questions/28234584/mvvmcross-on-xamarin-mac">languishing as a low-priority concern</a> for that project.<br /><br /><h3>Working Client</h3><div>The <a href="https://blog.xamarin.com/preview-bringing-macos-to-xamarin-forms/">xamarin blog's</a>&nbsp;instructions mostly worked.&nbsp; I added a Cocoa app with the latest version of Xamarin.Forms on nuget (2.5.0) to my Forms solution, and made the required changes.</div><div><br /></div><div>Everything built, but when I launched it I got a System.NullReferenceException:</div><pre style="background: #f0f0f0; border: 1px dashed #cccccc; color: black; font-family: &quot;arial&quot;; font-size: 12px; height: auto; line-height: 20px; overflow: auto; padding: 0px; text-align: left; width: 99%;"><code style="color: black; word-wrap: normal;">1:  Xamarin.Forms.Platform.MacOS.FormsApplicationDelegate.UpdateMainMenu() in   <br />2:  Xamarin.Forms.Platform.MacOS.FormsApplicationDelegate.DidFinishLaunching(Foundation.NSNotification notification) in   <br />3:  mobile_app.OSX.AppDelegate.DidFinishLaunching(Foundation.NSNotification notification) in /Users/jake/jade/jade/mobile_app/mobile_app.OSX/AppDelegate.cs:33  <br />4:  AppKit.NSApplication.NSApplicationMain() in   <br />5:  AppKit.NSApplication.Main(string[] args) in /Users/builder/data/lanes/5489/c4240f3f/source/xamarin-macios/src/AppKit/NSApplication.cs:100  <br />6:  mobile_app.OSX.MainClass.Main(string[] args) in /Users/jake/jade/jade/mobile_app/mobile_app.OSX/Main.cs:12  <br /></code></pre><br />I found <a href="https://forums.xamarin.com/discussion/comment/309181/#Comment_309181">the solution in the xamarin forums</a>.&nbsp; Need to change the initialization of NSApplication in <b>Main.cs</b>:<br /><pre style="background: #f0f0f0; border: 1px dashed #cccccc; color: black; font-family: &quot;arial&quot;; font-size: 12px; height: auto; line-height: 20px; overflow: auto; padding: 0px; text-align: left; width: 99%;"><code style="color: black; word-wrap: normal;">1:  static void Main(string[] args)  <br />2:  {  <br />3:    NSApplication.Init();  <br />4:    NSApplication.SharedApplication.Delegate = new AppDelegate();  <br />5:    NSApplication.SharedApplication.MainMenu = new NSMenu();  // FIX  <br />6:    NSApplication.Main(args);  <br />7:  }  <br /></code></pre>Line 5 is the added line.<br /><br />Giving me a working- albeit embarrassingly trivial- app:<br /><div class="separator" style="clear: both; text-align: center;"><a href="https://3.bp.blogspot.com/-72miX0FI9Ko/WkgpQo-QruI/AAAAAAAACys/A-f1e5olUAocP1BQyaJpEXBmwFZEx0HhQCLcBGAs/s1600/Screen%2BShot%2B2017-12-31%2Bat%2B08.01.35.png" imageanchor="1" style="margin-left: 1em; margin-right: 1em;"><img border="0" data-original-height="694" data-original-width="858" height="258" src="https://3.bp.blogspot.com/-72miX0FI9Ko/WkgpQo-QruI/AAAAAAAACys/A-f1e5olUAocP1BQyaJpEXBmwFZEx0HhQCLcBGAs/s320/Screen%2BShot%2B2017-12-31%2Bat%2B08.01.35.png" width="320" /></a></div><span id="goog_725635082"></span><span id="goog_725635083"></span><br />
+  </div>
+
+  
+
+  <a class="u-url" href="/2017/12/31/xamarinforms-on-osx.html" hidden></a>
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Rendered Obsolete</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">
+            
+              Rendered Obsolete
+            
+            </li>
+            
+            <li><a class="u-email" href="mailto:your-email@example.com">your-email@example.com</a></li>
+            
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-2">
+        <ul class="social-media-list">
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+</ul>
+
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Begin Jekyll SEO tag v2.4.0 -->
+<title>Lua, Lua… Oh no! Me gotta go | Rendered Obsolete</title>
+<meta name="generator" content="Jekyll v3.7.2" />
+<meta property="og:title" content="Lua, Lua… Oh no! Me gotta go" />
+<meta name="author" content="Contact:" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Been messing around with Lua a bit the last few days. Can’t remember how I came across it but it’s performance against other languages (1, 2) made me decide to give it a serious look. Particularly given how well it did against the dark lord Perl and my personal favorite, Python. Found several other things where people remarked how easy it was to embed in C/C++ programs so I figured it was worth the time.Downloaded the 5.1.1 source from www.lua.org and had it compiled under cygwin in a matter of seconds without any problems. Found a decent selection of tutorials, and an online version of Programming in Lua but found they were a bit thin when it came to embedding Lua in C. Thought I hit the jackpot with this writeup at debian.org but was amazed to find out that it no longer worked despite being less than a year old.After an hour or two of (re-)reading the sources above, looking at header files, etc. I was able to figure out enough to get a demo working. It’s pretty slick. You can write a C program like:&lt;pre class=&quot;code&quot;&gt;#include &lt;stdio.h&gt;#include &lt;lua.h&gt;#include &lt;lualib.h&gt;#include &lt;lauxlib.h&gt;intmain( int argc, char ** argv ){int value = 1;// Initialize Lualua_State L = lua_open();// Load various Lua librariesluaopen_base( L );luaopen_table( L );//luaopen_io( L ); // Not sure why but I get a PANIC if i try to load thisluaopen_string( L );luaopen_math( L );luaL_loadfile( L, “3.lua”);lua_pcall( L, 0, 0, 0 ); // Have to parse it once or getglobal() will failprintf( “C: value is %d\n”, value );lua_getglobal( L, “test” );lua_pushnumber( L, value );lua_pcall( L, 1, 1, 0); // 1 argument, 1 resultvalue = (int)lua_tonumber( L, -1 ); // Lua arrays are 1-indexed /boggleprintf( “C: value is %d\n”, value );// Cleanuplua_close( L );return 0;}&lt;/pre&gt;And then you create a script called 3.lua like:&lt;pre class=&quot;code&quot;&gt;function test (x)return (x + 1)end&lt;/pre&gt;And your output should be:&lt;pre&gt;C: value is 1C: value is 2&lt;/pre&gt;Pretty slick. Doesn’t make the C program terribly huge, either. The luaopen_() functions load libraries which naturally increase the size of executable. The plain C executable was about 8k, with the four libraries above about 130k, or with just “base” alone it was 114k. OK, OK, so the executable is about 12x larger… it’s still neat seeing as how you now have full access to a fairly powerful scripting engine without having to recompile.I’m positive I can put this to good use in at least one of my projects. Why do I mention it here? Saw a bunch of comments about it being used for scripting, etc. in various video games…. good stuff." />
+<meta property="og:description" content="Been messing around with Lua a bit the last few days. Can’t remember how I came across it but it’s performance against other languages (1, 2) made me decide to give it a serious look. Particularly given how well it did against the dark lord Perl and my personal favorite, Python. Found several other things where people remarked how easy it was to embed in C/C++ programs so I figured it was worth the time.Downloaded the 5.1.1 source from www.lua.org and had it compiled under cygwin in a matter of seconds without any problems. Found a decent selection of tutorials, and an online version of Programming in Lua but found they were a bit thin when it came to embedding Lua in C. Thought I hit the jackpot with this writeup at debian.org but was amazed to find out that it no longer worked despite being less than a year old.After an hour or two of (re-)reading the sources above, looking at header files, etc. I was able to figure out enough to get a demo working. It’s pretty slick. You can write a C program like:&lt;pre class=&quot;code&quot;&gt;#include &lt;stdio.h&gt;#include &lt;lua.h&gt;#include &lt;lualib.h&gt;#include &lt;lauxlib.h&gt;intmain( int argc, char ** argv ){int value = 1;// Initialize Lualua_State L = lua_open();// Load various Lua librariesluaopen_base( L );luaopen_table( L );//luaopen_io( L ); // Not sure why but I get a PANIC if i try to load thisluaopen_string( L );luaopen_math( L );luaL_loadfile( L, “3.lua”);lua_pcall( L, 0, 0, 0 ); // Have to parse it once or getglobal() will failprintf( “C: value is %d\n”, value );lua_getglobal( L, “test” );lua_pushnumber( L, value );lua_pcall( L, 1, 1, 0); // 1 argument, 1 resultvalue = (int)lua_tonumber( L, -1 ); // Lua arrays are 1-indexed /boggleprintf( “C: value is %d\n”, value );// Cleanuplua_close( L );return 0;}&lt;/pre&gt;And then you create a script called 3.lua like:&lt;pre class=&quot;code&quot;&gt;function test (x)return (x + 1)end&lt;/pre&gt;And your output should be:&lt;pre&gt;C: value is 1C: value is 2&lt;/pre&gt;Pretty slick. Doesn’t make the C program terribly huge, either. The luaopen_() functions load libraries which naturally increase the size of executable. The plain C executable was about 8k, with the four libraries above about 130k, or with just “base” alone it was 114k. OK, OK, so the executable is about 12x larger… it’s still neat seeing as how you now have full access to a fairly powerful scripting engine without having to recompile.I’m positive I can put this to good use in at least one of my projects. Why do I mention it here? Saw a bunch of comments about it being used for scripting, etc. in various video games…. good stuff." />
+<link rel="canonical" href="http://localhost:4000/2006/10/02/lua-lua-oh-no-me-gotta-go.html" />
+<meta property="og:url" content="http://localhost:4000/2006/10/02/lua-lua-oh-no-me-gotta-go.html" />
+<meta property="og:site_name" content="Rendered Obsolete" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2006-10-02T00:45:00+08:00" />
+<script type="application/ld+json">
+{"description":"Been messing around with Lua a bit the last few days. Can’t remember how I came across it but it’s performance against other languages (1, 2) made me decide to give it a serious look. Particularly given how well it did against the dark lord Perl and my personal favorite, Python. Found several other things where people remarked how easy it was to embed in C/C++ programs so I figured it was worth the time.Downloaded the 5.1.1 source from www.lua.org and had it compiled under cygwin in a matter of seconds without any problems. Found a decent selection of tutorials, and an online version of Programming in Lua but found they were a bit thin when it came to embedding Lua in C. Thought I hit the jackpot with this writeup at debian.org but was amazed to find out that it no longer worked despite being less than a year old.After an hour or two of (re-)reading the sources above, looking at header files, etc. I was able to figure out enough to get a demo working. It’s pretty slick. You can write a C program like:&lt;pre class=&quot;code&quot;&gt;#include &lt;stdio.h&gt;#include &lt;lua.h&gt;#include &lt;lualib.h&gt;#include &lt;lauxlib.h&gt;intmain( int argc, char ** argv ){int value = 1;// Initialize Lualua_State L = lua_open();// Load various Lua librariesluaopen_base( L );luaopen_table( L );//luaopen_io( L ); // Not sure why but I get a PANIC if i try to load thisluaopen_string( L );luaopen_math( L );luaL_loadfile( L, “3.lua”);lua_pcall( L, 0, 0, 0 ); // Have to parse it once or getglobal() will failprintf( “C: value is %d\\n”, value );lua_getglobal( L, “test” );lua_pushnumber( L, value );lua_pcall( L, 1, 1, 0); // 1 argument, 1 resultvalue = (int)lua_tonumber( L, -1 ); // Lua arrays are 1-indexed /boggleprintf( “C: value is %d\\n”, value );// Cleanuplua_close( L );return 0;}&lt;/pre&gt;And then you create a script called 3.lua like:&lt;pre class=&quot;code&quot;&gt;function test (x)return (x + 1)end&lt;/pre&gt;And your output should be:&lt;pre&gt;C: value is 1C: value is 2&lt;/pre&gt;Pretty slick. Doesn’t make the C program terribly huge, either. The luaopen_() functions load libraries which naturally increase the size of executable. The plain C executable was about 8k, with the four libraries above about 130k, or with just “base” alone it was 114k. OK, OK, so the executable is about 12x larger… it’s still neat seeing as how you now have full access to a fairly powerful scripting engine without having to recompile.I’m positive I can put this to good use in at least one of my projects. Why do I mention it here? Saw a bunch of comments about it being used for scripting, etc. in various video games…. good stuff.","author":{"@type":"Person","name":"Contact:"},"@type":"BlogPosting","url":"http://localhost:4000/2006/10/02/lua-lua-oh-no-me-gotta-go.html","headline":"Lua, Lua… Oh no! Me gotta go","dateModified":"2006-10-02T00:45:00+08:00","datePublished":"2006-10-02T00:45:00+08:00","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/2006/10/02/lua-lua-oh-no-me-gotta-go.html"},"@context":"http://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+  <link rel="stylesheet" href="/assets/main.css">
+  <link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="Rendered Obsolete" />
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" rel="author" href="/">Rendered Obsolete</a>
+
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+            <a class="page-link" href="/about/">About</a>
+            
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Lua, Lua... Oh no! Me gotta go</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2006-10-02T00:45:00+08:00" itemprop="datePublished">
+        
+        Oct 2, 2006
+      </time>
+      
+        • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span class="p-author h-card" itemprop="name">Contact:</span></span>
+      </p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    Been messing around with <a href="http://www.lua.org/">Lua</a> a bit the last few days.  Can't remember how I came across it but it's performance against other languages (<a href="http://shootout.alioth.debian.org/">1</a>, <a href="http://dada.perl.it/shootout/">2</a>) made me decide to give it a serious look.  Particularly given how well it did against the dark lord Perl and my personal favorite, Python.  Found several other things where people remarked how easy it was to embed in C/C++ programs so I figured it was worth the time.<br /><br />Downloaded the 5.1.1 source from <a href="http://www.lua.org/">www.lua.org</a> and had it compiled under <a href="http://www.cygwin.com/">cygwin</a> in a matter of seconds without any problems.  Found a decent selection of <a href="http://lua-users.org/wiki/TutorialDirectory">tutorials</a>, and an <a href="http://www.lua.org/pil/index.html">online version of Programming in Lua</a> but found they were a bit thin when it came to embedding Lua in C.  Thought I hit the jackpot with <a href="http://www.debian-administration.org/articles/264">this writeup at debian.org</a> but was amazed to find out that it no longer worked despite being less than a year old.<br /><br />After an hour or two of (re-)reading the sources above, looking at header files, etc. I was able to figure out enough to get a demo working.  It's pretty slick.  You can write a C program like:<br /><pre class="code"><br />#include &lt;stdio.h&gt;<br />#include &lt;lua.h&gt;<br />#include &lt;lualib.h&gt;<br />#include &lt;lauxlib.h&gt;<br />int<br />main( int argc, char ** argv ){<br />int value = 1;<br /><br />// Initialize Lua<br />lua_State *L = lua_open();<br /><br />// Load various Lua libraries<br />luaopen_base( L );<br />luaopen_table( L );<br />//luaopen_io( L ); // Not sure why but I get a PANIC if i try to load this<br />luaopen_string( L );<br />luaopen_math( L );<br /><br />luaL_loadfile( L, "3.lua");<br />lua_pcall( L, 0, 0, 0 ); // Have to parse it once or getglobal() will fail<br /><br />printf( "C: value is %d\n", value );<br /><br />lua_getglobal( L, "test" );<br />lua_pushnumber( L, value );<br />lua_pcall( L, 1, 1, 0); // 1 argument, 1 result<br />value = (int)lua_tonumber( L, -1 ); // Lua arrays are 1-indexed /boggle<br /><br />printf( "C: value is %d\n", value );<br /><br />// Cleanup<br />lua_close( L );<br /><br />return 0;<br />}<br /></pre><br /><br />And then you create a script called 3.lua like:<br /><pre class="code">function test (x)<br />return (x + 1)<br />end<br /></pre><br /><br />And your output should be:<br /><pre>C: value is 1<br />C: value is 2<br /></pre><br /><br />Pretty slick.  Doesn't make the C program terribly huge, either.  The luaopen_*() functions load libraries which naturally increase the size of executable.  The plain C executable was about 8k, with the four libraries above about 130k, or with just "base" alone it was 114k.  OK, OK, so the executable is about 12x larger... it's still neat seeing as how you now have full access to a fairly powerful scripting engine without having to recompile.<br /><br />I'm positive I can put this to good use in at least one of my projects.  Why do I mention it here?  Saw a bunch of comments about it being used for scripting, etc. in various video games.... good stuff.
+  </div>
+
+  
+
+  <a class="u-url" href="/2006/10/02/lua-lua-oh-no-me-gotta-go.html" hidden></a>
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Rendered Obsolete</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">
+            
+              Rendered Obsolete
+            
+            </li>
+            
+            <li><a class="u-email" href="mailto:your-email@example.com">your-email@example.com</a></li>
+            
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-2">
+        <ul class="social-media-list">
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+</ul>
+
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>

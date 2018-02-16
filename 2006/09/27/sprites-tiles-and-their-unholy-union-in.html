@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Begin Jekyll SEO tag v2.4.0 -->
+<title>Sprites, Tiles and Their Unholy Union in Sprite Memory | Rendered Obsolete</title>
+<meta name="generator" content="Jekyll v3.7.2" />
+<meta property="og:title" content="Sprites, Tiles and Their Unholy Union in Sprite Memory" />
+<meta name="author" content="Contact:" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="There are several demos both packaged with devkitpro and in various tutorials that use sprites, but they almost all involve drawing one sprite (possibly multiple times) on screen. As I started trying to add to the demos, I found that I was having trouble drawing more than two sprites.Several examples setup sprite OAM (Object Attribute Memory) as follows:&lt;pre class=&quot;code&quot;&gt;int spriteID = 0; // the sprite idint spriteX = 0; // X positionint spriteY = 0; // Y positionsprites[0].attribute[0] = ATTR0_COLOR_16 ATTR0_SQUARE spriteX;sprites[0].attribute[1] = ATTR1_SIZE_16 spriteY;sprites[0].attribute[2] = spriteID;&lt;/pre&gt;ATTR0_COLOR_16 specifies 16 color mode, ATTR0_SQUARE says the sprite is square (heigth = width), ATTR1_SIZE_16 makes the sprite 16x16.And then sprite data is written like:&lt;pre class=&quot;code&quot;&gt;/* size of sprite in words (word is 16 bits) = 16 * 16 / 4* 16-color mode = 4 bits per pixel (2 pixels per byte, or 4 per word)* 16 pixel by 16 pixel sprite, 4 pixels per word = 16 * 16 / 4 bytes*/int size = 64;int pali = 2; // Palette indexfor( int i = 0; i &lt; size; i++ ){ SPRITE_GFX[ spriteID * size + i] = (pali &lt;&lt; 12) (pali &lt;&lt; 8) (pali &lt;&lt; 4) pali;}&lt;/pre&gt;This just fills the entire sprite area with whatever color is defined at index 2 of the palette.What was confusing me was the representation of sprites as tiles, how they are stored in sprite memory, the allocation of sprite IDs, and the way that sprite OAM uses sprite memory. If you are unclear on the meaning of tiles, check out Patater’s tutorial.Basically, tiles are 8 pixel by 8 pixel images, and all sprites are made up of them. What’s important to understand here is that the sprite IDs reference the location of tiles in memory. If a sprite is larger than 8x8 then it uses more than one tile and covers a range of tile/sprite IDs. This means that two 16x16 sprites (each 4 tiles) stored in adjacent memory can’t be allocated ID 0 and ID 1. The two images will overlap since the 16x16 sprite at ID 0 is defined as tiles 0 to 3, and the 16x16 sprite at ID 1 is defined as tiles 1 to 4.You have to keep in mind the size of one pixel in memory and the dimensions of the sprite both when storing pixel data in sprite memory, and when allocating sprite IDs in sprite OAM.In the example above (two 16-color 16x16 sprites):&lt;ol&gt;&lt;li&gt;The first sprite is assigned ID 0 (8x8 tiles 0 to 3) and is stored in 128 bytes (16pix * 16pix / 2 pixels-per-byte) of sprite memory starting at index 0.&lt;/li&gt;&lt;li&gt;The second sprite should be assigned ID 4 (8x8 tiles 4 to 7) and is stored in 128 bytes of sprite memory starting at index 128 + 1 (right after the first sprite).&lt;/li&gt;&lt;/ol&gt;NOTE: In the code above I offset by 64 rather than 128 because we are using word-aligned (16 bit) rather than byte-aligned (8 bit) addressing since SPRITE_GFX is an array of 16-bit values." />
+<meta property="og:description" content="There are several demos both packaged with devkitpro and in various tutorials that use sprites, but they almost all involve drawing one sprite (possibly multiple times) on screen. As I started trying to add to the demos, I found that I was having trouble drawing more than two sprites.Several examples setup sprite OAM (Object Attribute Memory) as follows:&lt;pre class=&quot;code&quot;&gt;int spriteID = 0; // the sprite idint spriteX = 0; // X positionint spriteY = 0; // Y positionsprites[0].attribute[0] = ATTR0_COLOR_16 ATTR0_SQUARE spriteX;sprites[0].attribute[1] = ATTR1_SIZE_16 spriteY;sprites[0].attribute[2] = spriteID;&lt;/pre&gt;ATTR0_COLOR_16 specifies 16 color mode, ATTR0_SQUARE says the sprite is square (heigth = width), ATTR1_SIZE_16 makes the sprite 16x16.And then sprite data is written like:&lt;pre class=&quot;code&quot;&gt;/* size of sprite in words (word is 16 bits) = 16 * 16 / 4* 16-color mode = 4 bits per pixel (2 pixels per byte, or 4 per word)* 16 pixel by 16 pixel sprite, 4 pixels per word = 16 * 16 / 4 bytes*/int size = 64;int pali = 2; // Palette indexfor( int i = 0; i &lt; size; i++ ){ SPRITE_GFX[ spriteID * size + i] = (pali &lt;&lt; 12) (pali &lt;&lt; 8) (pali &lt;&lt; 4) pali;}&lt;/pre&gt;This just fills the entire sprite area with whatever color is defined at index 2 of the palette.What was confusing me was the representation of sprites as tiles, how they are stored in sprite memory, the allocation of sprite IDs, and the way that sprite OAM uses sprite memory. If you are unclear on the meaning of tiles, check out Patater’s tutorial.Basically, tiles are 8 pixel by 8 pixel images, and all sprites are made up of them. What’s important to understand here is that the sprite IDs reference the location of tiles in memory. If a sprite is larger than 8x8 then it uses more than one tile and covers a range of tile/sprite IDs. This means that two 16x16 sprites (each 4 tiles) stored in adjacent memory can’t be allocated ID 0 and ID 1. The two images will overlap since the 16x16 sprite at ID 0 is defined as tiles 0 to 3, and the 16x16 sprite at ID 1 is defined as tiles 1 to 4.You have to keep in mind the size of one pixel in memory and the dimensions of the sprite both when storing pixel data in sprite memory, and when allocating sprite IDs in sprite OAM.In the example above (two 16-color 16x16 sprites):&lt;ol&gt;&lt;li&gt;The first sprite is assigned ID 0 (8x8 tiles 0 to 3) and is stored in 128 bytes (16pix * 16pix / 2 pixels-per-byte) of sprite memory starting at index 0.&lt;/li&gt;&lt;li&gt;The second sprite should be assigned ID 4 (8x8 tiles 4 to 7) and is stored in 128 bytes of sprite memory starting at index 128 + 1 (right after the first sprite).&lt;/li&gt;&lt;/ol&gt;NOTE: In the code above I offset by 64 rather than 128 because we are using word-aligned (16 bit) rather than byte-aligned (8 bit) addressing since SPRITE_GFX is an array of 16-bit values." />
+<link rel="canonical" href="http://localhost:4000/2006/09/27/sprites-tiles-and-their-unholy-union-in.html" />
+<meta property="og:url" content="http://localhost:4000/2006/09/27/sprites-tiles-and-their-unholy-union-in.html" />
+<meta property="og:site_name" content="Rendered Obsolete" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2006-09-27T10:30:00+08:00" />
+<script type="application/ld+json">
+{"description":"There are several demos both packaged with devkitpro and in various tutorials that use sprites, but they almost all involve drawing one sprite (possibly multiple times) on screen. As I started trying to add to the demos, I found that I was having trouble drawing more than two sprites.Several examples setup sprite OAM (Object Attribute Memory) as follows:&lt;pre class=&quot;code&quot;&gt;int spriteID = 0; // the sprite idint spriteX = 0; // X positionint spriteY = 0; // Y positionsprites[0].attribute[0] = ATTR0_COLOR_16 ATTR0_SQUARE spriteX;sprites[0].attribute[1] = ATTR1_SIZE_16 spriteY;sprites[0].attribute[2] = spriteID;&lt;/pre&gt;ATTR0_COLOR_16 specifies 16 color mode, ATTR0_SQUARE says the sprite is square (heigth = width), ATTR1_SIZE_16 makes the sprite 16x16.And then sprite data is written like:&lt;pre class=&quot;code&quot;&gt;/* size of sprite in words (word is 16 bits) = 16 * 16 / 4* 16-color mode = 4 bits per pixel (2 pixels per byte, or 4 per word)* 16 pixel by 16 pixel sprite, 4 pixels per word = 16 * 16 / 4 bytes*/int size = 64;int pali = 2; // Palette indexfor( int i = 0; i &lt; size; i++ ){ SPRITE_GFX[ spriteID * size + i] = (pali &lt;&lt; 12) (pali &lt;&lt; 8) (pali &lt;&lt; 4) pali;}&lt;/pre&gt;This just fills the entire sprite area with whatever color is defined at index 2 of the palette.What was confusing me was the representation of sprites as tiles, how they are stored in sprite memory, the allocation of sprite IDs, and the way that sprite OAM uses sprite memory. If you are unclear on the meaning of tiles, check out Patater’s tutorial.Basically, tiles are 8 pixel by 8 pixel images, and all sprites are made up of them. What’s important to understand here is that the sprite IDs reference the location of tiles in memory. If a sprite is larger than 8x8 then it uses more than one tile and covers a range of tile/sprite IDs. This means that two 16x16 sprites (each 4 tiles) stored in adjacent memory can’t be allocated ID 0 and ID 1. The two images will overlap since the 16x16 sprite at ID 0 is defined as tiles 0 to 3, and the 16x16 sprite at ID 1 is defined as tiles 1 to 4.You have to keep in mind the size of one pixel in memory and the dimensions of the sprite both when storing pixel data in sprite memory, and when allocating sprite IDs in sprite OAM.In the example above (two 16-color 16x16 sprites):&lt;ol&gt;&lt;li&gt;The first sprite is assigned ID 0 (8x8 tiles 0 to 3) and is stored in 128 bytes (16pix * 16pix / 2 pixels-per-byte) of sprite memory starting at index 0.&lt;/li&gt;&lt;li&gt;The second sprite should be assigned ID 4 (8x8 tiles 4 to 7) and is stored in 128 bytes of sprite memory starting at index 128 + 1 (right after the first sprite).&lt;/li&gt;&lt;/ol&gt;NOTE: In the code above I offset by 64 rather than 128 because we are using word-aligned (16 bit) rather than byte-aligned (8 bit) addressing since SPRITE_GFX is an array of 16-bit values.","author":{"@type":"Person","name":"Contact:"},"@type":"BlogPosting","url":"http://localhost:4000/2006/09/27/sprites-tiles-and-their-unholy-union-in.html","headline":"Sprites, Tiles and Their Unholy Union in Sprite Memory","dateModified":"2006-09-27T10:30:00+08:00","datePublished":"2006-09-27T10:30:00+08:00","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/2006/09/27/sprites-tiles-and-their-unholy-union-in.html"},"@context":"http://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+  <link rel="stylesheet" href="/assets/main.css">
+  <link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="Rendered Obsolete" />
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" rel="author" href="/">Rendered Obsolete</a>
+
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+            <a class="page-link" href="/about/">About</a>
+            
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Sprites, Tiles and Their Unholy Union in Sprite Memory</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2006-09-27T10:30:00+08:00" itemprop="datePublished">
+        
+        Sep 27, 2006
+      </time>
+      
+        • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span class="p-author h-card" itemprop="name">Contact:</span></span>
+      </p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    There are several demos both packaged with devkitpro and in various tutorials that use sprites, but they almost all involve drawing one sprite (possibly multiple times) on screen.  As I started trying to add to the demos, I found that I was having trouble drawing more than two sprites.<br /><br />Several examples setup sprite OAM (Object Attribute Memory) as follows:<br /><pre class="code">int spriteID = 0; // the sprite id<br />int spriteX = 0; // X position<br />int spriteY = 0; // Y position<br />sprites[0].attribute[0] = ATTR0_COLOR_16 | ATTR0_SQUARE | spriteX;<br />sprites[0].attribute[1] = ATTR1_SIZE_16 | spriteY;<br />sprites[0].attribute[2] = spriteID;<br /></pre><br /><br />ATTR0_COLOR_16 specifies 16 color mode, ATTR0_SQUARE says the sprite is square (heigth = width), ATTR1_SIZE_16 makes the sprite 16x16.<br /><br />And then sprite data is written like:<br /><pre class="code">/* size of sprite in words (word is 16 bits) = 16 * 16 / 4<br />* 16-color mode = 4 bits per pixel (2 pixels per byte, or 4 per word)<br />* 16 pixel by 16 pixel sprite, 4 pixels per word = 16 * 16 / 4 bytes<br />*/<br />int size = 64;<br />int pali = 2; // Palette index<br />for( int i = 0; i &lt; size; i++ ){<br />  SPRITE_GFX[ spriteID * size + i] = (pali &lt;&lt; 12) | (pali &lt;&lt; 8) | (pali &lt;&lt; 4) | pali;<br />}<br /></pre><br /><br />This just fills the entire sprite area with whatever color is defined at index 2 of the palette.<br /><br />What was confusing me was the representation of sprites as tiles, how they are stored in sprite memory, the allocation of sprite IDs, and the way that sprite OAM uses sprite memory.  If you are unclear on the meaning of tiles, check out <a href="http://www.patatersoft.info/manual.html">Patater's tutorial</a>.<br /><br />Basically, tiles are 8 pixel by 8 pixel images, and all sprites are made up of them.  What's important to understand here is that the sprite IDs reference the location of tiles in memory.  If a sprite is larger than 8x8 then it uses more than one tile and covers a range of tile/sprite IDs.  This means that two 16x16 sprites (each 4 tiles) stored in adjacent memory can't be allocated ID 0 and ID 1.  The two images will overlap since the 16x16 sprite at ID 0 is defined as tiles 0 to 3, and the 16x16 sprite at ID 1 is defined as tiles 1 to 4.<br /><br />You have to keep in mind the size of one pixel in memory and the dimensions of the sprite both when storing pixel data in sprite memory, and when allocating sprite IDs in sprite OAM.<br /><br />In the example above (two 16-color 16x16 sprites):<br /><ol><br /><li>The first sprite is assigned ID 0 (8x8 tiles 0 to 3) and is stored in 128 bytes (16pix * 16pix / 2 pixels-per-byte) of sprite memory starting at index 0.</li><br /><li>The second sprite should be assigned ID 4 (8x8 tiles 4 to 7) and is stored in 128 bytes of sprite memory starting at index 128 + 1 (right after the first sprite).</li><br /></ol><br /><br />NOTE: In the code above I offset by 64 rather than 128 because we are using word-aligned (16 bit) rather than byte-aligned (8 bit) addressing since SPRITE_GFX is an array of 16-bit values.
+  </div>
+
+  
+
+  <a class="u-url" href="/2006/09/27/sprites-tiles-and-their-unholy-union-in.html" hidden></a>
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Rendered Obsolete</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">
+            
+              Rendered Obsolete
+            
+            </li>
+            
+            <li><a class="u-email" href="mailto:your-email@example.com">your-email@example.com</a></li>
+            
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-2">
+        <ul class="social-media-list">
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+</ul>
+
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>

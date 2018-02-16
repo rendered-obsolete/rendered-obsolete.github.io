@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Begin Jekyll SEO tag v2.4.0 -->
+<title>SPU Demo Scene? | Rendered Obsolete</title>
+<meta name="generator" content="Jekyll v3.7.2" />
+<meta property="og:title" content="SPU Demo Scene?" />
+<meta name="author" content="Contact:" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="I’ve always found programming under extreme constraints and limitations to be fascinating; embedded systems development, old-school console programming, assembly language, whatever. For this reason I also found demo-scene projects to be rather interesting. Not so much for the artistic portions but more for the technological challenges. In some way they’ve inspired me to want to try and motivate people with the same or similar goals, this time using the SPUs. The SPUs relative simplicity and resurrection of low-level programming techniques revitalizes the purer, skill-based challenge that seemed to exist before the advent of massive libraries and hulking tools.But most of all, it’s just for the fun of it.I’ve been trying to come up with a loose series of “rules” to base this all on with the primary theme being: you have the SPE and 256KB for code/data and nothing else. Without looking at other competitions, I would imagine something along the lines of:&lt;ul&gt;&lt;li&gt;Each contest is specified as N-way; where N is the number of SPUs you are allowed to use&lt;/li&gt;&lt;li&gt;LS(s) can be initialized with whatever you like, but once an SPU is started NO communication (except for debugging/status feedback purposes) between the PPU and the SPUs (including mailboxes, etc.) or DMA to/from the SPEs and main/non-LS memory is allowed except SPU-to-SPU transfers via memory-mapped LS and other allowed exceptions&lt;/li&gt;&lt;li&gt;A framebuffer for visual output is also provided (my inclination is to make this write-only to keep it from being used as working memory)&lt;/li&gt;&lt;li&gt;Demos, in general, must run at 60 fps&lt;/li&gt;&lt;/ul&gt;There are probably a lot more things to consider, loop holes to fill, etc. But it captures the essence of my interest in both time and space limitations." />
+<meta property="og:description" content="I’ve always found programming under extreme constraints and limitations to be fascinating; embedded systems development, old-school console programming, assembly language, whatever. For this reason I also found demo-scene projects to be rather interesting. Not so much for the artistic portions but more for the technological challenges. In some way they’ve inspired me to want to try and motivate people with the same or similar goals, this time using the SPUs. The SPUs relative simplicity and resurrection of low-level programming techniques revitalizes the purer, skill-based challenge that seemed to exist before the advent of massive libraries and hulking tools.But most of all, it’s just for the fun of it.I’ve been trying to come up with a loose series of “rules” to base this all on with the primary theme being: you have the SPE and 256KB for code/data and nothing else. Without looking at other competitions, I would imagine something along the lines of:&lt;ul&gt;&lt;li&gt;Each contest is specified as N-way; where N is the number of SPUs you are allowed to use&lt;/li&gt;&lt;li&gt;LS(s) can be initialized with whatever you like, but once an SPU is started NO communication (except for debugging/status feedback purposes) between the PPU and the SPUs (including mailboxes, etc.) or DMA to/from the SPEs and main/non-LS memory is allowed except SPU-to-SPU transfers via memory-mapped LS and other allowed exceptions&lt;/li&gt;&lt;li&gt;A framebuffer for visual output is also provided (my inclination is to make this write-only to keep it from being used as working memory)&lt;/li&gt;&lt;li&gt;Demos, in general, must run at 60 fps&lt;/li&gt;&lt;/ul&gt;There are probably a lot more things to consider, loop holes to fill, etc. But it captures the essence of my interest in both time and space limitations." />
+<link rel="canonical" href="http://localhost:4000/2009/05/10/spu-demo-scene.html" />
+<meta property="og:url" content="http://localhost:4000/2009/05/10/spu-demo-scene.html" />
+<meta property="og:site_name" content="Rendered Obsolete" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2009-05-10T01:05:00+08:00" />
+<script type="application/ld+json">
+{"description":"I’ve always found programming under extreme constraints and limitations to be fascinating; embedded systems development, old-school console programming, assembly language, whatever. For this reason I also found demo-scene projects to be rather interesting. Not so much for the artistic portions but more for the technological challenges. In some way they’ve inspired me to want to try and motivate people with the same or similar goals, this time using the SPUs. The SPUs relative simplicity and resurrection of low-level programming techniques revitalizes the purer, skill-based challenge that seemed to exist before the advent of massive libraries and hulking tools.But most of all, it’s just for the fun of it.I’ve been trying to come up with a loose series of “rules” to base this all on with the primary theme being: you have the SPE and 256KB for code/data and nothing else. Without looking at other competitions, I would imagine something along the lines of:&lt;ul&gt;&lt;li&gt;Each contest is specified as N-way; where N is the number of SPUs you are allowed to use&lt;/li&gt;&lt;li&gt;LS(s) can be initialized with whatever you like, but once an SPU is started NO communication (except for debugging/status feedback purposes) between the PPU and the SPUs (including mailboxes, etc.) or DMA to/from the SPEs and main/non-LS memory is allowed except SPU-to-SPU transfers via memory-mapped LS and other allowed exceptions&lt;/li&gt;&lt;li&gt;A framebuffer for visual output is also provided (my inclination is to make this write-only to keep it from being used as working memory)&lt;/li&gt;&lt;li&gt;Demos, in general, must run at 60 fps&lt;/li&gt;&lt;/ul&gt;There are probably a lot more things to consider, loop holes to fill, etc. But it captures the essence of my interest in both time and space limitations.","author":{"@type":"Person","name":"Contact:"},"@type":"BlogPosting","url":"http://localhost:4000/2009/05/10/spu-demo-scene.html","headline":"SPU Demo Scene?","dateModified":"2009-05-10T01:05:00+08:00","datePublished":"2009-05-10T01:05:00+08:00","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/2009/05/10/spu-demo-scene.html"},"@context":"http://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+  <link rel="stylesheet" href="/assets/main.css">
+  <link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="Rendered Obsolete" />
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" rel="author" href="/">Rendered Obsolete</a>
+
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+            <a class="page-link" href="/about/">About</a>
+            
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">SPU Demo Scene?</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2009-05-10T01:05:00+08:00" itemprop="datePublished">
+        
+        May 10, 2009
+      </time>
+      
+        • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span class="p-author h-card" itemprop="name">Contact:</span></span>
+      </p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    I've always found programming under extreme constraints and limitations to be fascinating; embedded systems development, old-school console programming, assembly language, whatever.  For this reason I also found demo-scene projects to be rather interesting.  Not so much for the artistic portions but more for the technological challenges.  In some way they've inspired me to want to try and motivate people with the same or similar goals, this time using the SPUs.  The SPUs relative simplicity and resurrection of low-level programming techniques revitalizes the purer, skill-based challenge that seemed to exist before the advent of massive libraries and hulking tools.<br /><br />But most of all, it's just for the fun of it.<br /><br />I've been trying to come up with a loose series of "rules" to base this all on with the primary theme being: you have the SPE and 256KB for code/data and nothing else.  Without looking at other competitions, I would imagine something along the lines of:<br /><ul><br /><li>Each contest is specified as N-way; where N is the number of SPUs you are allowed to use</li><br /><li>LS(s) can be initialized with whatever you like, but once an SPU is started NO communication (except for debugging/status feedback purposes) between the PPU and the SPUs (including mailboxes, etc.) or DMA to/from the SPEs and main/non-LS memory is allowed except SPU-to-SPU transfers via memory-mapped LS and other allowed exceptions</li><br /><li>A framebuffer for visual output is also provided (my inclination is to make this write-only to keep it from being used as working memory)</li><br /><li>Demos, in general, must run at 60 fps</li><br /></ul><br /><br />There are probably a lot more things to consider, loop holes to fill, etc.  But it captures the essence of my interest in both time and space limitations.
+  </div>
+
+  
+
+  <a class="u-url" href="/2009/05/10/spu-demo-scene.html" hidden></a>
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Rendered Obsolete</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">
+            
+              Rendered Obsolete
+            
+            </li>
+            
+            <li><a class="u-email" href="mailto:your-email@example.com">your-email@example.com</a></li>
+            
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-2">
+        <ul class="social-media-list">
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+</ul>
+
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>

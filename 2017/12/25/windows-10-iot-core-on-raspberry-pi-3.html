@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Begin Jekyll SEO tag v2.4.0 -->
+<title>Windows 10 IoT Core on Raspberry Pi 3 | Rendered Obsolete</title>
+<meta name="generator" content="Jekyll v3.7.2" />
+<meta property="og:title" content="Windows 10 IoT Core on Raspberry Pi 3" />
+<meta name="author" content="Contact:" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Following up on my last post, finally got around to trying to install IoT Core on my actual Raspberry Pi device:&lt;ul&gt;&lt;li&gt;Raspberry Pi 3 model B&lt;/li&gt;&lt;li&gt;7” Touchscreen&lt;/li&gt;&lt;/ul&gt;My development machine is a 15” Macbook Pro running OSX High Sierra (10.3.2).  Wasn’t able to get a Windows 10 VM in VirtualBox to recognize the SD card slot in my adapter (the otherwise fantastic Satechi type-C multi-port adapater), so started looking for how to flash the image without using IoT Core Dashboard.&lt;h3&gt;Image Preparation&lt;/h3&gt;Microsoft has some docs about using dism instead of Dashboard.  From the IoT Core download page you can obtain an iso file containing an msi that by default installs the image to: &lt;pre style=&quot;background: #f0f0f0; border: 1px dashed #cccccc; color: black; font-family: &quot;arial&quot;; font-size: 12px; height: auto; line-height: 20px; overflow: auto; padding: 0px; text-align: left; width: 99%;&quot;&gt; C:\Program Files (x86)\Microsoft IoT\FFU\RaspberryPi2\flash.ffu &lt;/pre&gt;ffu2img (https://github.com/t0x0/random/wiki/ffu2img) can be used to convert the ffu to an img file usable with dd found on OSX (and Linux, etc.).Ensure you’re using Python 2.7 and convert the image:&lt;pre style=&quot;background: #f0f0f0; border: 1px dashed #cccccc; color: black; font-family: &quot;arial&quot;; font-size: 12px; height: auto; line-height: 20px; overflow: auto; padding: 0px; text-align: left; width: 99%;&quot;&gt; python ffu2img.py PATH/flash.ffu&lt;/pre&gt;Resulting in a flash.img file in the same location as the ffu.&lt;h3&gt;Writing Image to SD Card&lt;/h3&gt;To write the image to an SD card I consulted the documentation at raspberrypi.org.I had trouble getting those instructions to work with my card/reader.  No matter what, dd failed with “Operation not permitted”.  In the end I had to:&lt;ol&gt;&lt;li&gt;Insert card into reader and connect reader to laptop&lt;/li&gt;&lt;li&gt;Without unmounting the SD card, run:&lt;pre style=&quot;background: #f0f0f0; border: 1px dashed #cccccc; color: black; font-family: &quot;arial&quot;; font-size: 12px; height: auto; line-height: 20px; overflow: auto; padding: 0px; text-align: left; width: 99%;&quot;&gt; sudo diskutil partitionDisk /dev/disk2 1 MBR &quot;Free Space&quot; &quot;%noformat%&quot; 100% &lt;/pre&gt;&lt;/li&gt;&lt;li&gt;Disconnect then reconnect the reader (above command seemed to eject the SD card)&lt;/li&gt;&lt;li&gt;Write the image:&lt;pre style=&quot;background: #f0f0f0; border: 1px dashed #cccccc; color: black; font-family: &quot;arial&quot;; font-size: 12px; height: auto; line-height: 20px; overflow: auto; padding: 0px; text-align: left; width: 99%;&quot;&gt; sudo dd bs=1m if=PATH/flash.img of=/dev/rdisk2 conv=sync&lt;/pre&gt;&lt;/li&gt;&lt;/ol&gt;&lt;div&gt;In my case, the SD card is /dev/disk2.  /dev/disk2 and /dev/rdisk2 in the above commands should be adjusted appropriately for other cases.&lt;/div&gt;&lt;div&gt;&lt;/div&gt;Using df can see several partitions were created (/dev/disk2s1, disk2s2, disk2s3, and disk2s6) on the SD card.  Once inserted in the Raspberry Pi device and powered on, IoT Core should boot.&lt;div style=&quot;font-family: Calibri; font-size: 11.0pt; margin: 0in;&quot;&gt;&lt;h3&gt;IoT Core Setup&lt;/h3&gt;&lt;/div&gt;&lt;div style=&quot;font-family: Calibri; font-size: 11.0pt; margin: 0in;&quot;&gt;As it happens, I didn’t have a USB keyboard on hand to get the device on the wifi.Using an ethernet cable to connect the device directly to my laptop, I obtained the device’s link-local address from the bottom-left of the touch screen.  The device’s admin portal is now accessible by pointing my laptop browser at http://169.254.236.118:8080 (default username/password is Administrator/p@ssw0rd).In the left panel, selecting Connectivity, then Network, you can configure the wifi AP:&lt;div class=&quot;separator&quot; style=&quot;clear: both; text-align: center;&quot;&gt;&lt;/div&gt;Initially the display was upside-down (assuming the HDMI port is “up” as when using this touchscreen case).  To fix this, in the left panel pick Device Settings and towards the bottom in Display Orientation select “Landscape (Flipped)”:&lt;div class=&quot;separator&quot; style=&quot;clear: both; text-align: center;&quot;&gt;&lt;/div&gt;&lt;/div&gt;" />
+<meta property="og:description" content="Following up on my last post, finally got around to trying to install IoT Core on my actual Raspberry Pi device:&lt;ul&gt;&lt;li&gt;Raspberry Pi 3 model B&lt;/li&gt;&lt;li&gt;7” Touchscreen&lt;/li&gt;&lt;/ul&gt;My development machine is a 15” Macbook Pro running OSX High Sierra (10.3.2).  Wasn’t able to get a Windows 10 VM in VirtualBox to recognize the SD card slot in my adapter (the otherwise fantastic Satechi type-C multi-port adapater), so started looking for how to flash the image without using IoT Core Dashboard.&lt;h3&gt;Image Preparation&lt;/h3&gt;Microsoft has some docs about using dism instead of Dashboard.  From the IoT Core download page you can obtain an iso file containing an msi that by default installs the image to: &lt;pre style=&quot;background: #f0f0f0; border: 1px dashed #cccccc; color: black; font-family: &quot;arial&quot;; font-size: 12px; height: auto; line-height: 20px; overflow: auto; padding: 0px; text-align: left; width: 99%;&quot;&gt; C:\Program Files (x86)\Microsoft IoT\FFU\RaspberryPi2\flash.ffu &lt;/pre&gt;ffu2img (https://github.com/t0x0/random/wiki/ffu2img) can be used to convert the ffu to an img file usable with dd found on OSX (and Linux, etc.).Ensure you’re using Python 2.7 and convert the image:&lt;pre style=&quot;background: #f0f0f0; border: 1px dashed #cccccc; color: black; font-family: &quot;arial&quot;; font-size: 12px; height: auto; line-height: 20px; overflow: auto; padding: 0px; text-align: left; width: 99%;&quot;&gt; python ffu2img.py PATH/flash.ffu&lt;/pre&gt;Resulting in a flash.img file in the same location as the ffu.&lt;h3&gt;Writing Image to SD Card&lt;/h3&gt;To write the image to an SD card I consulted the documentation at raspberrypi.org.I had trouble getting those instructions to work with my card/reader.  No matter what, dd failed with “Operation not permitted”.  In the end I had to:&lt;ol&gt;&lt;li&gt;Insert card into reader and connect reader to laptop&lt;/li&gt;&lt;li&gt;Without unmounting the SD card, run:&lt;pre style=&quot;background: #f0f0f0; border: 1px dashed #cccccc; color: black; font-family: &quot;arial&quot;; font-size: 12px; height: auto; line-height: 20px; overflow: auto; padding: 0px; text-align: left; width: 99%;&quot;&gt; sudo diskutil partitionDisk /dev/disk2 1 MBR &quot;Free Space&quot; &quot;%noformat%&quot; 100% &lt;/pre&gt;&lt;/li&gt;&lt;li&gt;Disconnect then reconnect the reader (above command seemed to eject the SD card)&lt;/li&gt;&lt;li&gt;Write the image:&lt;pre style=&quot;background: #f0f0f0; border: 1px dashed #cccccc; color: black; font-family: &quot;arial&quot;; font-size: 12px; height: auto; line-height: 20px; overflow: auto; padding: 0px; text-align: left; width: 99%;&quot;&gt; sudo dd bs=1m if=PATH/flash.img of=/dev/rdisk2 conv=sync&lt;/pre&gt;&lt;/li&gt;&lt;/ol&gt;&lt;div&gt;In my case, the SD card is /dev/disk2.  /dev/disk2 and /dev/rdisk2 in the above commands should be adjusted appropriately for other cases.&lt;/div&gt;&lt;div&gt;&lt;/div&gt;Using df can see several partitions were created (/dev/disk2s1, disk2s2, disk2s3, and disk2s6) on the SD card.  Once inserted in the Raspberry Pi device and powered on, IoT Core should boot.&lt;div style=&quot;font-family: Calibri; font-size: 11.0pt; margin: 0in;&quot;&gt;&lt;h3&gt;IoT Core Setup&lt;/h3&gt;&lt;/div&gt;&lt;div style=&quot;font-family: Calibri; font-size: 11.0pt; margin: 0in;&quot;&gt;As it happens, I didn’t have a USB keyboard on hand to get the device on the wifi.Using an ethernet cable to connect the device directly to my laptop, I obtained the device’s link-local address from the bottom-left of the touch screen.  The device’s admin portal is now accessible by pointing my laptop browser at http://169.254.236.118:8080 (default username/password is Administrator/p@ssw0rd).In the left panel, selecting Connectivity, then Network, you can configure the wifi AP:&lt;div class=&quot;separator&quot; style=&quot;clear: both; text-align: center;&quot;&gt;&lt;/div&gt;Initially the display was upside-down (assuming the HDMI port is “up” as when using this touchscreen case).  To fix this, in the left panel pick Device Settings and towards the bottom in Display Orientation select “Landscape (Flipped)”:&lt;div class=&quot;separator&quot; style=&quot;clear: both; text-align: center;&quot;&gt;&lt;/div&gt;&lt;/div&gt;" />
+<link rel="canonical" href="http://localhost:4000/2017/12/25/windows-10-iot-core-on-raspberry-pi-3.html" />
+<meta property="og:url" content="http://localhost:4000/2017/12/25/windows-10-iot-core-on-raspberry-pi-3.html" />
+<meta property="og:site_name" content="Rendered Obsolete" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2017-12-25T04:34:00+08:00" />
+<script type="application/ld+json">
+{"description":"Following up on my last post, finally got around to trying to install IoT Core on my actual Raspberry Pi device:&lt;ul&gt;&lt;li&gt;Raspberry Pi 3 model B&lt;/li&gt;&lt;li&gt;7” Touchscreen&lt;/li&gt;&lt;/ul&gt;My development machine is a 15” Macbook Pro running OSX High Sierra (10.3.2).  Wasn’t able to get a Windows 10 VM in VirtualBox to recognize the SD card slot in my adapter (the otherwise fantastic Satechi type-C multi-port adapater), so started looking for how to flash the image without using IoT Core Dashboard.&lt;h3&gt;Image Preparation&lt;/h3&gt;Microsoft has some docs about using dism instead of Dashboard.  From the IoT Core download page you can obtain an iso file containing an msi that by default installs the image to: &lt;pre style=&quot;background: #f0f0f0; border: 1px dashed #cccccc; color: black; font-family: &quot;arial&quot;; font-size: 12px; height: auto; line-height: 20px; overflow: auto; padding: 0px; text-align: left; width: 99%;&quot;&gt; C:\\Program Files (x86)\\Microsoft IoT\\FFU\\RaspberryPi2\\flash.ffu &lt;/pre&gt;ffu2img (https://github.com/t0x0/random/wiki/ffu2img) can be used to convert the ffu to an img file usable with dd found on OSX (and Linux, etc.).Ensure you’re using Python 2.7 and convert the image:&lt;pre style=&quot;background: #f0f0f0; border: 1px dashed #cccccc; color: black; font-family: &quot;arial&quot;; font-size: 12px; height: auto; line-height: 20px; overflow: auto; padding: 0px; text-align: left; width: 99%;&quot;&gt; python ffu2img.py PATH/flash.ffu&lt;/pre&gt;Resulting in a flash.img file in the same location as the ffu.&lt;h3&gt;Writing Image to SD Card&lt;/h3&gt;To write the image to an SD card I consulted the documentation at raspberrypi.org.I had trouble getting those instructions to work with my card/reader.  No matter what, dd failed with “Operation not permitted”.  In the end I had to:&lt;ol&gt;&lt;li&gt;Insert card into reader and connect reader to laptop&lt;/li&gt;&lt;li&gt;Without unmounting the SD card, run:&lt;pre style=&quot;background: #f0f0f0; border: 1px dashed #cccccc; color: black; font-family: &quot;arial&quot;; font-size: 12px; height: auto; line-height: 20px; overflow: auto; padding: 0px; text-align: left; width: 99%;&quot;&gt; sudo diskutil partitionDisk /dev/disk2 1 MBR &quot;Free Space&quot; &quot;%noformat%&quot; 100% &lt;/pre&gt;&lt;/li&gt;&lt;li&gt;Disconnect then reconnect the reader (above command seemed to eject the SD card)&lt;/li&gt;&lt;li&gt;Write the image:&lt;pre style=&quot;background: #f0f0f0; border: 1px dashed #cccccc; color: black; font-family: &quot;arial&quot;; font-size: 12px; height: auto; line-height: 20px; overflow: auto; padding: 0px; text-align: left; width: 99%;&quot;&gt; sudo dd bs=1m if=PATH/flash.img of=/dev/rdisk2 conv=sync&lt;/pre&gt;&lt;/li&gt;&lt;/ol&gt;&lt;div&gt;In my case, the SD card is /dev/disk2.  /dev/disk2 and /dev/rdisk2 in the above commands should be adjusted appropriately for other cases.&lt;/div&gt;&lt;div&gt;&lt;/div&gt;Using df can see several partitions were created (/dev/disk2s1, disk2s2, disk2s3, and disk2s6) on the SD card.  Once inserted in the Raspberry Pi device and powered on, IoT Core should boot.&lt;div style=&quot;font-family: Calibri; font-size: 11.0pt; margin: 0in;&quot;&gt;&lt;h3&gt;IoT Core Setup&lt;/h3&gt;&lt;/div&gt;&lt;div style=&quot;font-family: Calibri; font-size: 11.0pt; margin: 0in;&quot;&gt;As it happens, I didn’t have a USB keyboard on hand to get the device on the wifi.Using an ethernet cable to connect the device directly to my laptop, I obtained the device’s link-local address from the bottom-left of the touch screen.  The device’s admin portal is now accessible by pointing my laptop browser at http://169.254.236.118:8080 (default username/password is Administrator/p@ssw0rd).In the left panel, selecting Connectivity, then Network, you can configure the wifi AP:&lt;div class=&quot;separator&quot; style=&quot;clear: both; text-align: center;&quot;&gt;&lt;/div&gt;Initially the display was upside-down (assuming the HDMI port is “up” as when using this touchscreen case).  To fix this, in the left panel pick Device Settings and towards the bottom in Display Orientation select “Landscape (Flipped)”:&lt;div class=&quot;separator&quot; style=&quot;clear: both; text-align: center;&quot;&gt;&lt;/div&gt;&lt;/div&gt;","author":{"@type":"Person","name":"Contact:"},"@type":"BlogPosting","url":"http://localhost:4000/2017/12/25/windows-10-iot-core-on-raspberry-pi-3.html","headline":"Windows 10 IoT Core on Raspberry Pi 3","dateModified":"2017-12-25T04:34:00+08:00","datePublished":"2017-12-25T04:34:00+08:00","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/2017/12/25/windows-10-iot-core-on-raspberry-pi-3.html"},"@context":"http://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+  <link rel="stylesheet" href="/assets/main.css">
+  <link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="Rendered Obsolete" />
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" rel="author" href="/">Rendered Obsolete</a>
+
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+            <a class="page-link" href="/about/">About</a>
+            
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Windows 10 IoT Core on Raspberry Pi 3</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2017-12-25T04:34:00+08:00" itemprop="datePublished">
+        
+        Dec 25, 2017
+      </time>
+      
+        • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span class="p-author h-card" itemprop="name">Contact:</span></span>
+      </p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    Following up on&nbsp;<a href="http://rendered-obsolete.blogspot.com/2017/11/win10-iot-core-redux.html">my last post</a>, finally got around to trying to install IoT Core on my actual Raspberry Pi device:<br /><ul><li><a href="https://www.raspberrypi.org/products/raspberry-pi-3-model-b/">Raspberry Pi 3 model B</a></li><li><a href="https://www.raspberrypi.org/products/raspberry-pi-touch-display/">7" Touchscreen</a></li></ul><br />My development machine is a <a href="https://support.apple.com/kb/SP756?locale=en_US">15" Macbook Pro</a> running&nbsp;<span style="font-family: &quot;calibri&quot;; font-size: 11pt;">OSX High Sierra (10.3.2).&nbsp; Wasn't able to get a Windows 10 VM in VirtualBox to recognize the SD card slot in my adapter (the otherwise fantastic <a href="https://satechi.net/collections/usb-type-c/products/satechi-aluminum-multi-port-adapter-4k">Satechi type-C multi-port adapater</a>), so started looking for how to flash the image without using <a href="https://developer.microsoft.com/en-us/windows/iot/Downloads">IoT Core Dashboard</a>.</span><br /><br /><h3>Image Preparation</h3>Microsoft has some docs about using <a href="https://docs.microsoft.com/en-us/windows/iot-core/connect-your-device/dism">dism</a>&nbsp;instead of Dashboard.&nbsp; From the&nbsp;<a href="https://developer.microsoft.com/en-us/windows/iot/Downloads">IoT Core download page</a>&nbsp;you can obtain an iso file containing an msi that by default installs the image to: <br /><pre style="background: #f0f0f0; border: 1px dashed #cccccc; color: black; font-family: &quot;arial&quot;; font-size: 12px; height: auto; line-height: 20px; overflow: auto; padding: 0px; text-align: left; width: 99%;"><code style="color: black; word-wrap: normal;"> C:\Program Files (x86)\Microsoft IoT\FFU\RaspberryPi2\flash.ffu  <br /></code></pre><br />ffu2img (<a href="https://github.com/t0x0/random/wiki/ffu2img" style="font-size: 11pt;">https://github.com/t0x0/random/wiki/ffu2img</a>) can be used to convert the <a href="https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/deploy-windows-using-full-flash-update--ffu">ffu</a>&nbsp;to an img file usable with <a href="https://developer.apple.com/legacy/library/documentation/Darwin/Reference/ManPages/man1/dd.1.html">dd</a> found on OSX (and Linux, etc.).<br /><br />Ensure you're using <a href="https://www.python.org/download/releases/2.7/">Python 2.7</a>&nbsp;and convert the image:<br /><pre style="background: #f0f0f0; border: 1px dashed #cccccc; color: black; font-family: &quot;arial&quot;; font-size: 12px; height: auto; line-height: 20px; overflow: auto; padding: 0px; text-align: left; width: 99%;"><code style="color: black; word-wrap: normal;"> python ffu2img.py PATH<path>/flash.ffu<br /></path></code></pre>Resulting in a <b><i>flash.img</i></b> file in the same location as the ffu.<br /><br /><h3>Writing Image to SD Card</h3>To write the image to an SD card I consulted the documentation at <a href="https://www.raspberrypi.org/documentation/installation/installing-images/mac.md">raspberrypi.org</a>.<br /><br />I had trouble getting those instructions to work with my card/reader.&nbsp; No matter what, dd failed with "Operation not permitted".&nbsp; In the end I had to:<br /><ol><li>Insert card into reader and connect reader to laptop</li><li>Without unmounting the SD card, run:<pre style="background: #f0f0f0; border: 1px dashed #cccccc; color: black; font-family: &quot;arial&quot;; font-size: 12px; height: auto; line-height: 20px; overflow: auto; padding: 0px; text-align: left; width: 99%;"><code style="color: black; word-wrap: normal;"> sudo diskutil partitionDisk /dev/disk2 1 MBR "Free Space" "%noformat%" 100%  <br /></code></pre></li><li>Disconnect then reconnect the reader (above command seemed to eject the SD card)</li><li>Write the image:<pre style="background: #f0f0f0; border: 1px dashed #cccccc; color: black; font-family: &quot;arial&quot;; font-size: 12px; height: auto; line-height: 20px; overflow: auto; padding: 0px; text-align: left; width: 99%;"><code style="color: black; word-wrap: normal;"> sudo dd bs=1m if=PATH/flash.img of=/dev/rdisk2 conv=sync</code></pre></li></ol><div>In my case, the SD card is&nbsp;<b><i>/dev/disk2</i></b>.&nbsp; /dev/disk2 and /dev/rdisk2 in the above commands should be adjusted appropriately for other cases.</div><div><br /></div>Using df can see several partitions were created (/dev/disk2s1, disk2s2, disk2s3, and disk2s6) on the SD card.&nbsp; Once inserted in the Raspberry Pi device and powered on, IoT Core should boot.<br /><div style="font-family: Calibri; font-size: 11.0pt; margin: 0in;"><br /><h3>IoT Core Setup</h3></div><div style="font-family: Calibri; font-size: 11.0pt; margin: 0in;">As it happens, I didn't have a USB keyboard on hand to get the device on the wifi.<br /><br />Using an ethernet cable to connect the device directly to my laptop, I obtained the device's link-local address from the bottom-left of the touch screen.&nbsp; The device's admin portal is now accessible by pointing my laptop browser at http://169.254.236.118:8080 (default username/password is Administrator/p@ssw0rd).<br /><br />In the left panel, selecting Connectivity, then Network, you can configure the wifi AP:<br /><div class="separator" style="clear: both; text-align: center;"><a href="https://4.bp.blogspot.com/-Z5YabqARYIU/WkACj5I_WfI/AAAAAAAACyU/PnCl3lGOwvUpJUSc5ZjWhVJ2ON8m5_r-gCLcBGAs/s1600/Screen%2BShot%2B2017-12-24%2Bat%2B12.34.50.png" imageanchor="1" style="margin-left: 1em; margin-right: 1em;"><img border="0" data-original-height="1046" data-original-width="1600" height="209" src="https://4.bp.blogspot.com/-Z5YabqARYIU/WkACj5I_WfI/AAAAAAAACyU/PnCl3lGOwvUpJUSc5ZjWhVJ2ON8m5_r-gCLcBGAs/s320/Screen%2BShot%2B2017-12-24%2Bat%2B12.34.50.png" width="320" /></a></div><br />Initially the display was upside-down (assuming the HDMI port is "up" as when using <a href="https://www.amazon.com/Raspberry-Pi-7-Inch-Touch-Screen/dp/B01GQFUWIC">this touchscreen case</a>).&nbsp; To fix this, in the left panel pick&nbsp;<span style="font-size: 14.6667px;">Device Settings and towards the bottom in Display Orientation select "Landscape (Flipped)":</span><br /><div class="separator" style="clear: both; text-align: center;"><a href="https://3.bp.blogspot.com/-VqYoHAA5PeQ/WkACj9OvC8I/AAAAAAAACyY/-EVWnDAgqWYuJnjh05paGGcqVtRItHcsACEwYBhgL/s1600/Screen%2BShot%2B2017-12-24%2Bat%2B12.35.44.png" imageanchor="1" style="margin-left: 1em; margin-right: 1em;"><img border="0" data-original-height="1160" data-original-width="1600" height="231" src="https://3.bp.blogspot.com/-VqYoHAA5PeQ/WkACj9OvC8I/AAAAAAAACyY/-EVWnDAgqWYuJnjh05paGGcqVtRItHcsACEwYBhgL/s320/Screen%2BShot%2B2017-12-24%2Bat%2B12.35.44.png" width="320" /></a></div><span style="font-size: 14.6667px;"><br /></span></div>
+  </div>
+
+  
+
+  <a class="u-url" href="/2017/12/25/windows-10-iot-core-on-raspberry-pi-3.html" hidden></a>
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Rendered Obsolete</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">
+            
+              Rendered Obsolete
+            
+            </li>
+            
+            <li><a class="u-email" href="mailto:your-email@example.com">your-email@example.com</a></li>
+            
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-2">
+        <ul class="social-media-list">
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+</ul>
+
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>
