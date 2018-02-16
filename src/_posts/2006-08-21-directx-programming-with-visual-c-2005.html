@@ -1,0 +1,16 @@
+---
+layout: post
+title: DirectX Programming with Visual C++ 2005 Express Edition
+date: '2006-08-21T22:55:00.001+09:00'
+author: 'Contact:'
+tags:
+- setup
+- tools
+- windows
+- directx
+modified_time: '2006-12-07T23:21:02.992+09:00'
+blogger_id: tag:blogger.com,1999:blog-5371326417913853395.post-2205395550002006930
+blogger_orig_url: http://rendered-obsolete.blogspot.com/2006/08/directx-programming-with-visual-c-2005.html
+---
+
+At some point I feel like I should embrace the winner in graphics APIs for computer games and learn DirectX (seriously, this time). In some obvious attempt to entice me, Microsoft began offering the <a href="http://msdn.microsoft.com/vstudio/express/visualc/">Visual C++ 2005 Express Edition</a> for free.<br /><br />I looked at how to get it setup for DirectX development and these are my notes. You obviously need it and the <a href="http://msdn.microsoft.com/directx/">DirectX SDK</a> to start with.<br /><br /><ol><br /><li>Setup the Platform SDK as described here <a href="http://msdn.microsoft.com/vstudio/express/visualc/usingpsdk/">here</a>.</li><br /><li>Start Visual C++</li><br /><li>File->New->Project</li><br /><li>For "Project type" select "Visual C++" or "Win32" and create a "Win32 Console Application".</li><br /><li>When the Win32 Application Wizard comes up, make sure you select "Windows applicaiton" for the "Application type", and "Empty project" from "Additional options".</li><br /><li>Project->Add New Item. Select "C++ File".</li><br /><li>Project->Properties. Configuration Properties->Linker->Input. Add necessary DirectX libraries (ddraw.lib, dxguid.lib, etc.) to "Additional Dependencies".</li><br /></ol>

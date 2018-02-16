@@ -1,0 +1,15 @@
+---
+layout: post
+title: Subtleties of Console Development
+date: '2006-10-05T00:45:00.000+09:00'
+author: 'Contact:'
+tags:
+- nds
+- dev
+- devkitpro
+modified_time: '2006-10-05T00:56:04.159+09:00'
+blogger_id: tag:blogger.com,1999:blog-5371326417913853395.post-6515625237419151265
+blogger_orig_url: http://rendered-obsolete.blogspot.com/2006/10/subtleties-of-console-development.html
+---
+
+I've been trying to write my own sprite management code as a sort of exercise in C++ as well as the DS.  I was having trouble getting things displayed correctly and thrashed back and forth changing one thing and then another, writing directly to memory rather than using DMA, etc. etc. etc. trying to figure out what was wrong.  I'm a pretty careless programmer, so I assumed that it was either my mistake or the result of developing on an only partially documented system.  Not having figured out a good way to do debugging obviously doesn't help either.<br /><br />And, I finally figured it out.  It was in code I wasn't even looking at; apparently I was trying to do something the system hadn't been initialized to do.<br /><br />You can pass a number of flags to videoSetMode() when you are initializing the display, and apparently DISPLAY_SPR_1D_BMP is necessary in order to display 16-bit, non-palettized sprites.  It seems obvious given that the ATTR0_BMP flag must be set in the sprite's OAM entry, but I didn't even know I should be looking for it.<br /><br />Further, apparently you can't mix ATTR0_BMP and non-BMP sprites.  At least, I can't get both to display at the same time.  Perhaps I need another flag....

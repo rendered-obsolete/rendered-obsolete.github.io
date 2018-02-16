@@ -1,0 +1,18 @@
+---
+layout: post
+title: Win10 IoT Core Redux
+date: '2017-11-23T18:22:00.003+09:00'
+author: 'Contact:'
+tags:
+- virtualbox
+- vmware
+- raspi
+- iotcore
+- win10
+modified_time: '2017-11-23T18:22:59.329+09:00'
+thumbnail: https://2.bp.blogspot.com/-g0ZF5OHElQY/WhaSZPZPC7I/AAAAAAAACxs/MmtDNfV2LrwyozAH6Dc9FAhYVJrC8AftQCLcBGAs/s72-c/iotcore.png
+blogger_id: tag:blogger.com,1999:blog-5371326417913853395.post-5898581398568023515
+blogger_orig_url: http://rendered-obsolete.blogspot.com/2017/11/win10-iot-core-redux.html
+---
+
+Moments after completing my <a href="https://rendered-obsolete.blogspot.com/2017/11/win-10-iot-core.html">last post</a> I noticed IoT Core running in the VM reported it had no IP address.&nbsp; I initially assumed I just had to fiddle with the network adapter settings, but after dong that for a while it appears I can't get networking to work under VirtualBox at all!<br /><br />Rather than give up, I decided to give <a href="http://vmware.com/">VMware</a> a try.<br /><br />VMware doesn't seem to be able to work directly with the VHD image I'd created- instead expecting a VMDK.&nbsp; I thought Hyper-V could be used to do the conversion, but it's only able to create a VHDX.&nbsp; It looks like <a href="http://www.vmware.com/products/converter.html">VMware's vCenter Converter</a> should be able to do it, but I couldn't get that working.&nbsp; In the end <a href="http://www.winimage.com/winimage.htm">winimage</a> got the job done.<br /><br />Clicking through the VM setup I was again up and running with a working IoT Core VM.&nbsp; This time with networking.<br /><div class="separator" style="clear: both; text-align: center;"><a href="https://2.bp.blogspot.com/-g0ZF5OHElQY/WhaSZPZPC7I/AAAAAAAACxs/MmtDNfV2LrwyozAH6Dc9FAhYVJrC8AftQCLcBGAs/s1600/iotcore.png" imageanchor="1" style="margin-left: 1em; margin-right: 1em;"><img border="0" data-original-height="908" data-original-width="1254" height="231" src="https://2.bp.blogspot.com/-g0ZF5OHElQY/WhaSZPZPC7I/AAAAAAAACxs/MmtDNfV2LrwyozAH6Dc9FAhYVJrC8AftQCLcBGAs/s320/iotcore.png" width="320" /></a></div><br />I've learned my lesson to not celebrate prematurely.<br /><br />Last step was installing <a href="https://developer.microsoft.com/en-us/windows/iot/downloads">IoT Core Dashboard</a> and now I should be good to go:<br /><div class="separator" style="clear: both; text-align: center;"><a href="https://1.bp.blogspot.com/-D8w-cV2tTfw/WhaTES0heHI/AAAAAAAACx0/RwAPA4p1W94tmpY5LLFB_kBeLAY6PNnKwCLcBGAs/s1600/iotdashboard.png" imageanchor="1" style="margin-left: 1em; margin-right: 1em;"><img border="0" data-original-height="252" data-original-width="1080" height="74" src="https://1.bp.blogspot.com/-D8w-cV2tTfw/WhaTES0heHI/AAAAAAAACx0/RwAPA4p1W94tmpY5LLFB_kBeLAY6PNnKwCLcBGAs/s320/iotdashboard.png" width="320" /></a></div><br />

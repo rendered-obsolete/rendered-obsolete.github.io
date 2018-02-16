@@ -1,0 +1,14 @@
+---
+layout: post
+title: Back to OpenGL...
+date: '2008-09-10T02:18:00.004+09:00'
+author: 'Contact:'
+tags:
+- graphics
+- opengl
+modified_time: '2009-01-12T22:47:34.064+09:00'
+blogger_id: tag:blogger.com,1999:blog-5371326417913853395.post-3241067185182329368
+blogger_orig_url: http://rendered-obsolete.blogspot.com/2008/09/back-to-opengl.html
+---
+
+Being moved to PS3 stuff at work has really revitalized my interest in OpenGL and programming in general. I figured it was high time to bring myself up to date regarding OpenGL after so many brief flings with DirectX since it was now more relevant (for me, at least).  All of this prompted me to brush off this blog since I seem to be able to concentrate my efforts on something a lot better if I write about it.<br /><br />I had never used OpenGL extensions before, but I found some good info about them at <a href="http://www.opengl.org/resources/features/OGLextensions/">opengl.org</a>.  I lifted the <code>isExtensionSupported()</code> function to help me check for capabilities supported by the graphics driver/card and made a short macro to help me get function pointers with <code>wglGetProcAddress()</code>.  It seems clunky but with a bit of wrapping and macro/template magic I should be able to get something decent going.  I found out about <a href="http://www.blogger.com/glew.sourceforge.net">GLEW</a> from <a href="http://developer.nvidia.com/page/opengl.html">NVidia's OpenGL SDK</a>, but I've decided to handle extensions myself for the moment since it will force me to look into them a bit more closely and I figure I won't be using that many anyway.  We'll see how my patience holds up.

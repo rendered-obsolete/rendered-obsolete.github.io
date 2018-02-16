@@ -1,0 +1,15 @@
+---
+layout: post
+title: DevKitPro and Run-time Type Information
+date: '2006-11-15T19:50:00.000+09:00'
+author: 'Contact:'
+tags:
+- c++
+- nds
+- dev
+- devkitpro
+modified_time: '2006-11-15T19:54:09.278+09:00'
+blogger_id: tag:blogger.com,1999:blog-5371326417913853395.post-8490879376109210440
+---
+
+I was having trouble getting some code to work and after fooling around a bit had the "no-rtti" compiler flag brought to my attention.<br /><br />no typeid()<br />no dynamic_cast<> <- resulted in program crash for me<br /><br />This can make the STL's unexpected handling of polymorphic types that much more difficult to deal with.

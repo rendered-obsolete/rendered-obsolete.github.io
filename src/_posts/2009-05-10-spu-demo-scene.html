@@ -1,0 +1,15 @@
+---
+layout: post
+title: SPU Demo Scene?
+date: '2009-05-10T02:05:00.004+09:00'
+author: 'Contact:'
+tags:
+- cbe
+- spus
+- demoscene
+modified_time: '2009-05-10T03:06:17.578+09:00'
+blogger_id: tag:blogger.com,1999:blog-5371326417913853395.post-952057030014820901
+blogger_orig_url: http://rendered-obsolete.blogspot.com/2009/05/spu-demo-scene.html
+---
+
+I've always found programming under extreme constraints and limitations to be fascinating; embedded systems development, old-school console programming, assembly language, whatever.  For this reason I also found demo-scene projects to be rather interesting.  Not so much for the artistic portions but more for the technological challenges.  In some way they've inspired me to want to try and motivate people with the same or similar goals, this time using the SPUs.  The SPUs relative simplicity and resurrection of low-level programming techniques revitalizes the purer, skill-based challenge that seemed to exist before the advent of massive libraries and hulking tools.<br /><br />But most of all, it's just for the fun of it.<br /><br />I've been trying to come up with a loose series of "rules" to base this all on with the primary theme being: you have the SPE and 256KB for code/data and nothing else.  Without looking at other competitions, I would imagine something along the lines of:<br /><ul><br /><li>Each contest is specified as N-way; where N is the number of SPUs you are allowed to use</li><br /><li>LS(s) can be initialized with whatever you like, but once an SPU is started NO communication (except for debugging/status feedback purposes) between the PPU and the SPUs (including mailboxes, etc.) or DMA to/from the SPEs and main/non-LS memory is allowed except SPU-to-SPU transfers via memory-mapped LS and other allowed exceptions</li><br /><li>A framebuffer for visual output is also provided (my inclination is to make this write-only to keep it from being used as working memory)</li><br /><li>Demos, in general, must run at 60 fps</li><br /></ul><br /><br />There are probably a lot more things to consider, loop holes to fill, etc.  But it captures the essence of my interest in both time and space limitations.

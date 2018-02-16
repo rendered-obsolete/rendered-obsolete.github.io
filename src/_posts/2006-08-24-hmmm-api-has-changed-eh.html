@@ -1,0 +1,17 @@
+---
+layout: post
+title: Hmmm.... the API has changed, eh?
+date: '2006-08-24T10:37:00.000+09:00'
+author: 'Contact:'
+tags:
+- docs
+- nds
+- dev
+- tutorials
+- devkitpro
+modified_time: '2006-08-24T11:22:24.301+09:00'
+blogger_id: tag:blogger.com,1999:blog-5371326417913853395.post-366407147655656649
+blogger_orig_url: http://rendered-obsolete.blogspot.com/2006/08/hmmm-api-has-changed-eh.html
+---
+
+In general, <a href="http://www.devkitpro.org/">DevKitPro</a> is a pretty nice software package.  GBA, PSP, and (most importantly) DS development libraries all in one place.  They even have a fancy updating tool that will keep your libraries up to date and add new ones (they recently added dswifi).<br /><br />Biggest problem?  Documentation... of course.  Unless there's some guys that are really dedicated to working on it, the documentation for every project generally seems to limp along coughing and wheezing behind the coders.  And, DevKitPro is no exception.<br /><br />Don't they have a Wiki?  <a href="http://devkitpro.sourceforge.net/devkitProWiki/">Well... kinda</a>.  But its out of order.<br /><br />Doxygen?  <a href="http://devkitpro.sourceforge.net/devkitProWiki/libnds/">Well... kinda</a>.  But its pretty obviously not complete.<br /><br />In case you're wondering, there doesn't seem to be any documentation in the software directory- save for the PSP.<br /><br />For this reason, tutorials are nice just to avoid the frustration of figuring things out.  If you check out any other DS dev-related sites: <a href="http://www.ndshb.com/">NDS Homebrew</a>, <a href="http://www.drunkencoders.com/">Drunken Coders</a>, <a href="http://www.patatersoft.info/cms.php?page=links">PataterSoft</a>, etc.  They all tend to link to the same tutortials- all of which are either quite outdated or incomplete.<br /><br />Far and away the best is <a href="http://www.palib.info/wiki/doku.php">PALib</a>.  This is assuming you want to use PALib, that is.<br /><br />I was using the highly regarded <a href="http://www.double.co.nz/nintendo_ds/nds_develop1.html">double.co.nz</a> tutorials.  But, they no longer work.  I haven't looked into it very deeply yet, but when I tried to compile the very short programs there were several errors.  devKitARM (part of devKitPro) seems to have changed since the tutorials were last updated.<br /><br />Most notably:<br /><ul><br /><li>The development tools all changed from arm-elf-* to arm-eabi-*</li><br /><li>The DISP_SR symbol seems to have completely disappeared.</li><br /></ul><br />The first isn't really a bit deal.  But it illustrates the a problem that may be more difficult to solve for a real beginner.  I didn't really bother with it after than.  I'll give it another go tonight when I get home.<br /><br />Perhaps writing an up to date tutorial is something I should undertake.  We'll see.

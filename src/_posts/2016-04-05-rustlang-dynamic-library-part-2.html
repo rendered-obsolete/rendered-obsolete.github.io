@@ -1,0 +1,14 @@
+---
+layout: post
+title: rustlang dynamic library part 2
+date: '2016-04-05T21:14:00.000+09:00'
+author: 'Contact:'
+tags:
+- rustlang
+- ffi
+modified_time: '2016-04-07T11:01:45.002+09:00'
+blogger_id: tag:blogger.com,1999:blog-5371326417913853395.post-4022684424222293912
+blogger_orig_url: http://rendered-obsolete.blogspot.com/2016/04/rustlang-dynamic-library-part-2.html
+---
+
+A previous post was about getting a simple rust dynamic library working.  The next thing I wanted to do was try passing a more complex type from the dynamic library to the executable using it.  <p/> First, I changed dynamiclib to: <pre><br />#[derive(Debug)]<br />pub struct Tuple (u32,);<br /><br />#[derive(Debug)]<br />pub struct MyStruct {<br />    s1: &'static str,<br />    s2: String,<br />    t: Tuple,<br />}<br /><br />#[no_mangle]<br />pub extern "C" fn test() -> MyStruct {<br />    MyStruct {<br />        s1: "hello",<br />        s2: "world".to_string(),<br />        t: Tuple(47),<br />    }<br />}<br /></pre> And dynamic to: <pre><br />#[link(name="dynamiclib")]<br />extern {<br />    fn test() -> MyStruct;<br />}<br /><br />fn main() {<br />    let retval = unsafe { test() };<br />    println!("Got: {:?}", retval);<br />}<br /></pre> And (somewhat surprisingly) it worked as expected.  Although you get the following error: <pre><br />warning: found struct without foreign-function-safe representation annotation in foreign module, consider adding a #[repr(C)] attribute to the type, #[warn(improper_ctypes)] on by default<br /></pre> At first I considered appeasing the warning, but if it's a library written in rust and called from rust, shouldn't the default <pre>repr(Rust)</pre> be safe/correct?  <p/> Next, I decided to try loading and re-loading the shared library using this more complex struct... and I started getting SIGSEGV the second time I attempted to use the library.  <p/> I came across <a href="https://github.com/nagisa/rust_libloading">libloading</a> (<a href="https://crates.io/crates/libloading">crates.io</a>) which purports to be safer wrapper for working with dyanmic libraries, and if nothing else has much better <a href="http://nagisa.github.io/rust_libloading/libloading/struct.Library.html">documentation</a>.  <p/> A quick change to dynamic/src/main.rs (devoid of error-checking): <pre><br />    let lib = Library::new("libdynamiclib.dylib").unwrap();<br />    let test: Symbol<extern fn() -> MyStruct> = unsafe {<br />        lib.get(b"test\0").unwrap()<br />    };<br />    println!("Got: {:?}", test());<br /></pre> And it works correctly even when re-loading the library.  So, I was either using stale symbols, or something else.  Still several things that I obviously don't fully understand.  Hopefully pouring over <a href="https://doc.rust-lang.org/nomicon/README.html">Rustonomicon</a> will reveal the secrets to me.

@@ -1,0 +1,12 @@
+---
+layout: post
+title: 
+date: '2017-11-07T19:20:00.001+09:00'
+author: 'Contact:'
+tags: 
+modified_time: '2017-11-07T19:20:36.514+09:00'
+blogger_id: tag:blogger.com,1999:blog-5371326417913853395.post-106462571957900027
+blogger_orig_url: https://www.blogger.com/comment.g?blogID=5371326417913853395&postID=106462571957900027
+---
+
+Recently we had a legacy codebase made up of VS2010 and 2013 C++ projects to VS2017.  This included using the v141 toolchain and Windows 10 SDK. Especially brutal was recompiling 3-5 year old versions of over a dozen third-party libraries to make errors like the following go away:  Boost  Project originally included boost 1.44 and 1.46. Decided to give 1.64.0 a try since we were already using it in another C++ project. Now deprecated hash_map was used all over the place causing the following error: Temporarily defined _SILENCE_STDEXT_HASH_DEPRECATION_WARNINGS to make it go away.  Next came emiplib, jrtplib, and jthread.  jrtplib and jthread were easy enough:
