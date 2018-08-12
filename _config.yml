@@ -22,14 +22,13 @@ url: "https://rendered-obsolete.github.io" # the base hostname & protocol for yo
 
 # Build settings
 markdown: kramdown
-#theme: jekyll-theme-midnight
-theme: minima
+theme: jekyll-theme-midnight
 plugins:
   - jekyll-feed
   - jekyll-sitemap
-  #- jekyll-paginate-v2
+  - jekyll-paginate
 
-#paginate: 12
+paginate: 4
 
 # Exclude from processing.
 # The following items will not be processed, by default. Create a custom list
