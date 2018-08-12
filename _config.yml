@@ -30,6 +30,10 @@ plugins:
 
 paginate: 4
 
+disqus:
+  shortname: rendered-obsolete
+repository: rendered-obsolete/rendered-obsolete.github.io
+
 # Exclude from processing.
 # The following items will not be processed, by default. Create a custom list
 # to override the default setting.

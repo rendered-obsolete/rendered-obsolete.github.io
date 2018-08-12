@@ -1,6 +1,7 @@
 ---
 layout: post
 title: GitHub Pages Migration Part 2
+comments: true
 tags:
 - github
 - blog
@@ -33,12 +34,13 @@ To move to github I'd added another remote git repository `github` (my previous 
 
 Simple enough.
 
+Either seems to work.  But, I need to [use two github accounts](https://stackoverflow.com/questions/20353564/use-different-ssh-keys-for-different-accounts-on-the-same-git-hosting), so I set __repository__.
+
 ## Theming
 
 Now looking at [a GitHub doc on Jekyll theming](https://help.github.com/articles/adding-a-jekyll-theme-to-your-github-pages-site/).
 
-In `_config.yml` switching `theme: minima` for `theme: jekyll-theme-midnight`.
-
+In `_config.yml` switching `theme: minima` for `theme: jekyll-theme-midnight` results in lots of:
 ```
 Build Warning: Layout 'post' requested in _drafts/2018/2018-08-12-github-pages-migration.md does not exist.
 Build Warning: Layout 'page' requested in about.md does not exist.
@@ -86,3 +88,35 @@ Pagination: Pagination is enabled, but I couldn't find an index.html page to use
 Since my `index.md` just contains `layout: home`, I move `_layouts\home.html` to `index.html` (in the root of the repo).  And adding the pagination templating they recommend.
 
 Works, but now all the posts are paginated inline on the index page.  Not sure that's what I want so I'm backing that out.  I'm trying to avoid fiddling with visual layout as much as possible, but I'm finding it harder and harder to retain this policy.
+
+## Comments
+
+Despite not expecting anyone to comment (I rarely leave comments myself), I was a bit curious how they could be added.
+
+Turns out [Disqus](https://disqus.com/) (NB: from within China you'll need to use VPN) is the Github Pages "way" to do this.  
+
+I setup an account and see I need to add some template magic.  Figuring `_layouts/post.html` (which I copied from the __minima__ template) was the place for this, I opened it and find this blurb:
+{% raw %}
+```
+  {%- if site.disqus.shortname -%}
+    {%-  -%}
+  {%- endif -%}
+```
+{% endraw %}
+
+Turns out [the minima template has an html helper file for Disqus](https://github.com/jekyll/minima/blob/master/_includes/disqus_comments.html) that includes the ["universal code"](https://disqus.com/admin/universalcode/) and deals with the ["configuration variables"](https://help.disqus.com/troubleshooting/use-configuration-variables-to-avoid-split-threads-and-missing-comments).  Stole that:
+```
+cp `bundle show minima`/_includes/disqus_comments.html _includes/
+```
+
+And, so it points at my Disqus site, [https://rendered-obsolete.disqus.com](https://rendered-obsolete.disqus.com), as per [this issue](https://github.com/barryclark/jekyll-now/issues/53) to `_config.yml` add:
+```
+disqus:
+  shortname: rendered-obsolete
+```
+
+Something else to watch out for is the `and jekyll.environment == "production"` at the top of `disqus_comments.html`.  [Jekyll defaults to a __development__ environment](https://jekyllrb.com/docs/configuration/#specifying-a-jekyll-environment-at-build-time), so you either need to comment that bit out or run things with:
+```
+JEKYLL_ENV=production bundle exec jekyll serve
+```
+
