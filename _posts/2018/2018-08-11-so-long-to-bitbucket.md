@@ -52,4 +52,8 @@ Unlike with bitbucket there's a bevy of resources about hosting static websites 
 
 The best part being Github takes care of running Jekyll for you.  So, rather than needing to juggle markdown, generation, and html with bitbucket, I can just push the markdown to Github.
 
+### _config.yml
+
+When I first pushed the site, nothing was displayed.  After poking around I noticed `url: "https://rendered-obsolete.bitbucket.io"`, changed it to `url: "https://rendered-obsolete.github.io"`, and pushed the site again.  Now it displayed, however I'm not really sure if that was necessary or not.
+
 And with that I bring you [https://rendered-obsolete.github.io/](https://rendered-obsolete.github.io/)!
