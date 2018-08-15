@@ -8,9 +8,9 @@ tags:
 - msbuild
 ---
 
-Recently started looking at publishing [our C# libraries to nuget.org](https://www.nuget.org/profiles/subor).  This first post covers my experience with the actual packaging.  In a later post I do the actual signing and publishing.
+Recently started looking at publishing [our C# libraries to nuget.org](https://www.nuget.org/profiles/subor).  This first post covers my experience with the actual packaging.  In a later post I'll do the signing and publishing.
 
-## In the beginning
+## In the Beginning
 
 [Subor.NNanomsg.NETStandard](https://www.nuget.org/packages/Subor.NNanomsg.NETStandard/) ([our fork](https://github.com/zplus/NNanomsg) of [NNanomsg](https://github.com/mhowlett/NNanomsg)- a C# library for [nanomsg](https://nanomsg.org/)) was particularly frustrating because it involves a native library `nanomsg.dll`.
 
@@ -39,7 +39,7 @@ But I struggled making a package that worked; `nanomsg.dll` wasn't in the output
 
 ## Nuspec
 
-- `nuget.exe spec` will generate template nuspec from csproj in current directory
+- `nuget.exe spec` will generate a template nuspec from csproj in current directory
 - A nuspec file with the same name as the csproj will automatically get included when using nuget.exe from the command line.  For example, `NNanomsg.NETStandard.csproj` and `NNanomsg.NETStandard.nuspec`.
 - [Replacement tokens](https://docs.microsoft.com/en-us/nuget/reference/nuspec#replacement-tokens) usable in nuspec
 - Using a nuspec together with a csproj is clumsy
