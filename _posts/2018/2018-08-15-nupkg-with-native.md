@@ -45,7 +45,7 @@ But I struggled making a package that worked; `nanomsg.dll` wasn't in the output
 - Using a nuspec together with a csproj is clumsy
     - There's only replacement tokens for some meta-data values
     - Omitting a tag from the nuspec results in the value being undefined- even if it is set in the csproj
-    - Enabling generation of NuGet package on build (placed in output folder) doesn't use the nuspec:
+    - Enabling generation of NuGet package on build (placed in output folder) doesn't use the nuspec:  
     ![]({{ "/assets/vs_project_package_on_build.png" | absolute_url }})
 - When using nuget.exe, a `<files>` section of the nuspec seems to be the only way to include `/runtimes/` files.  `<Content>` in csproj places things in a `content/` subfolder (nuget.exe ignores `<ContentTargetFolders>`), `<None>` doesn't include them at all.
 
@@ -81,7 +81,7 @@ If your project doesn't reference any external packages you _might_ need to [for
 </PropertyGroup>
 ```
 
-Not sure if it matters, but I use PackageReference by default (__Tools->Options->NuGet Package Manager__):
+Not sure if it matters, but I use PackageReference by default (__Tools->Options->NuGet Package Manager__):  
 ![]({{ "/assets/vs_options_nuget_package_management.png" | absolute_url }})
 
 I include the native binaries with:
@@ -98,15 +98,15 @@ msbuild /t:pack
 
 ## Consuming nupkg
 
-- In Visual Studio, __Tools->Options->NuGet Package Manager->Package Sources__ to add a local directory as source for nuget packages:
-![]({{ "/assets/vs_project_properties_platform_target.png" | absolute_url }})
+- In Visual Studio, __Tools->Options->NuGet Package Manager->Package Sources__ to add a local directory as source for nuget packages:  
+![]({{ "/assets/vs_options_package_source.png" | absolute_url }})
 
 - Visual Studio Package Manager (__View->Other Windows->Package Manager Console__) makes it easy to reload a local nupkg.  Make sure __Default project__ is set to the correct project and run: `Install-Package D:\dev\NNanomsg\NNanomsg.NETStandard\NNanomsg.NETStandard.0.5.2.nupkg`.
 
 - Installing the package doesn't cause the native binaries to get copied, you have to build the project.
 
-- Assuming your nupkg contains 32-bit and 64-bit native libraries, `runtimes/win-x86/native/nanomsg.dll` and `runtimes/win-x64/native/nanomsg.dll`, respectively.  If _Platform target_ (project __Properties->Build__) of the consuming project is `Any CPU` __neither__ native assembly will be copied to the output directory.  You __must__ select either `x86` or `x64`:
-![]({{ "/assets/vs_options_package_source.png" | absolute_url }})
+- Assuming your nupkg contains 32-bit and 64-bit native libraries, `runtimes/win-x86/native/nanomsg.dll` and `runtimes/win-x64/native/nanomsg.dll`, respectively.  If _Platform target_ (project __Properties->Build__) of the consuming project is `Any CPU` __neither__ native assembly will be copied to the output directory.  You __must__ select either `x86` or `x64`:  
+![]({{ "/assets/vs_project_properties_platform_target.png" | absolute_url }})
 
 ## Conclusions
 
