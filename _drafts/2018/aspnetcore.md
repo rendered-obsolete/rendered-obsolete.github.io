@@ -1,17 +1,20 @@
 ---
 layout: post
-title: Migrating from MEF1 to MEF2
+title: Migrating from HttpListener to ASP.NET Core w/ Apache Thrift
 tags:
 - thrift
 - aspnetcore
 - csharp
+- netcore
 ---
 
-The bulk of our client UI is HTML5 via [CEF](https://bitbucket.org/chromiumembedded/cef) which talks to a Windows service using [Apache Thrift](https://thrift.apache.org/) through HTTP and WebSockets.  As part of our migration to .NET Core:
+The bulk of our client UI is HTML5 (via [CEF](https://bitbucket.org/chromiumembedded/cef)) which uses [Apache Thrift](https://thrift.apache.org/) to talk to a Windows service (via HTTP and WebSockets).  As part of our migration to .NET Core we set out to:
 - Use the new `netcore` generator in [thrift 0.11](https://github.com/apache/thrift/releases/tag/0.11.0)
-- Handle HTTP requests with `Thrift.Transports.Server.THttpServerTransport` atop ASP.NET Core instead of `Thrift.Transport.THttpHandler` and `System.Net.HttpListener`
+- Handle HTTP requests with `Thrift.Transports.Server.THttpServerTransport` atop [ASP.NET Core](https://docs.microsoft.com/en-us/aspnet/core/) instead of `System.Net.HttpListener` handing requests to `Thrift.Transport.THttpHandler`
 
-The original implementation based on `System.Net.HttpListener` looked similar to:
+## Before
+
+The original implementation based on `System.Net.HttpListener` was similar to:
 ```csharp
 if (!System.Net.HttpListener.IsSupported)
 {
@@ -26,6 +29,7 @@ listener.Start();
 
 while (!cts.IsCancellationRequested)
 {
+    // Receive HTTP request
     var ctx = await listener.GetContextAsync();
     await Task.Run(() =>
     {
@@ -43,6 +47,7 @@ while (!cts.IsCancellationRequested)
             }
             else
             {
+                // Pass request to thrift services registered with multiplexed processor
                 thrift.ProcessRequest(ctx);
             }
         }
@@ -54,11 +59,17 @@ while (!cts.IsCancellationRequested)
 }
 ```
 
-The CORS hack was needed for CEF to load content directly from disk.
+The CORS hack needed for CEF to load content directly from disk.
 
-As I started looking into ASP.NET Core the level of configurability and sheer sophistication was pretty daunting.  More importantly, it was immediately clear how to pass HTTP requests to thrift.
+## After
 
+As I started looking into ASP.NET Core the level of configurability and sheer sophistication was pretty daunting.  More importantly, it wasn't immediately clear how to handle HTTP requests with thrift.
 
+The MS documentation is extensive.  The following will help you get started:
+- [ASP.NET Core Web Host](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/host/web-host)
+- [Application Startup in ASP.NET Core](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/startup)
+
+The following was cobbled together from numerous sources:
 ```csharp
 var factory = new Microsoft.Extensions.Logging.LoggerFactory();
 
@@ -73,12 +84,6 @@ try
     //.UseStartup<Startup>()
     .ConfigureServices(services =>
     {
-        // Middleware:
-        //https://docs.microsoft.com/en-us/aspnet/core/fundamentals/middleware/?view=aspnetcore-2.1&tabs=aspnetcore2x
-        // Read https://docs.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection?view=aspnetcore-2.1 when get error like:
-        //Unable to resolve service for type 'Thrift.ITAsyncProcessor' while attempting to activate 'Thrift.Transports.Server.THttpServerTransport'.
-        //services.AddSingleton<ITAsyncProcessor>(MultiProcessors.HttpProcessor);
-        //services.AddSingleton<ITProtocolFactory>(new TJsonProtocol.Factory());
         services.AddCors();
     })
     .Configure(app =>
@@ -89,6 +94,7 @@ try
             corsPolicyBuilder.AllowAnyOrigin();
             corsPolicyBuilder.AllowAnyMethod();
         });
+        // Here's our thrift middleware
         app.UseMiddleware<Thrift.Transports.Server.THttpServerTransport>(MultiProcessors.HttpProcessor, new TJsonProtocol.Factory());
     })
     .Build();
@@ -100,4 +106,33 @@ catch (Exception ex)
 }
 ```
 
-[what a beast ASP.NET Core is](https://www.ageofascent.com/2016/02/18/asp-net-core-exeeds-1-15-million-requests-12-6-gbps/)
+This uses the [ConfigureServices() and Configure() helpers instead of a Startup class](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/startup#convenience-methods).
+
+Rather than waiting for a routine to return an HTTP request and then passing it to a handler, ASP.NET Core can be configured with ["middleware"](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/middleware/index) to handle requests and process responses.
+
+I initially was trying to add thrift as a service via [ASP.NET Core dependency injection](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection):
+```csharp
+.ConfigureServices(services =>
+{
+    // This doesn't work
+    services.AddSingleton<ITAsyncProcessor>(MultiProcessors.HttpProcessor);
+    services.AddSingleton<ITProtocolFactory>(new TJsonProtocol.Factory());
+})
+```
+
+But got errors like:
+```
+Unable to resolve service for type 'Thrift.ITAsyncProcessor' while attempting to activate 'Thrift.Transports.Server.THttpServerTransport'.
+```
+
+Services probably aren't the correct mechanism, while middleware seems intended for request/response handling.
+
+The difference between `AddSingleton()`, `AddTransient()`, etc. pertains to the [lifetime of the service](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection#service-lifetimes).
+
+Finally, make sure to call `webHostBuilder.StopAsync()` when finished.  Otherwise you'll get a native exception in the GC finalizer.
+
+## Conclusions
+
+Unfortunately, we don't have any perfomance tests for this area of code.  Because I would have loved to see the results after learning [what a beast ASP.NET Core is](https://www.ageofascent.com/2016/02/18/asp-net-core-exeeds-1-15-million-requests-12-6-gbps/).
+
+We've got a first version working, but I don't fully understand it yet.  The [same architecture can be used to bulid Net Core console applications](https://odetocode.com/blogs/scott/archive/2018/08/16/three-tips-for-console-applications-in-net-core.aspx), so it would be well-worth investing more time.
