@@ -7,20 +7,19 @@ tags:
 - public-key
 ---
 
-In [an earlier post]({% post_url /2018/2018-08-15-nupkg-with-native %}) I detailed how we create a nupkg containing a native library.  Here we'll sign it and upload it to [nuget.org](https://www.nuget.org/).
-
-Motivations:
-- Make our own libraries more accessible to others.  Previously we provided instructions on cloning the repo and bringing it into an existing project- using nuget would be easier.
-- Try to get our projects under control.  Our main .sln has 55 projects; perhaps 10 of which are third party libs that we made minor changes to but otherwise rarely touch.
+[A few days ago]({% post_url /2018/2018-08-15-nupkg-with-native %}) I detailed how to create a nupkg containing a native library.  Next we'll sign and upload it to [nuget.org](https://www.nuget.org/).
 
 Nuget.org also has [an excellect post](https://blog.nuget.org/20180522/Introducing-signed-package-submissions.html) on the topic.
 
+Motivations:
+- Make our own libraries more accessible to others.  Previously we provided instructions on cloning the repo and bringing it into an existing project- using nuget would be easier.
+- Simplify our codebase.  Our main .sln has 55 projects; perhaps 10 of which are third party libs that we made minor changes to but otherwise rarely touch.
+
 ## Organization
 
-We want all our packages to be owned by the [Subor organization](https://www.nuget.org/profiles/subor) so everything won't be tied to a single individual.
+We want all our packages to be owned by the [Subor organization](https://www.nuget.org/profiles/subor) so everything won't be tied to a single person.
 
-After creating an organization (profile __->Manage Organizations->Add new__), click the pencil icon (![]({{ "/assets/nuget_edit_icon.png" | absolute_url }})) to access the organization's settings page.
-
+After creating an organization (profile __->Manage Organizations->Add new__), you can click the pencil icon (![]({{ "/assets/nuget_edit_icon.png" | absolute_url }})) to access the organization's settings page and configure various things.
 
 ## Certificate Creation and Registration
 
@@ -46,12 +45,12 @@ For __Package Owner__ pick the organization.  Uploaded packages will belong to t
 
 For __Select Scopes__ I've got __Push only new package versions__ because I'm planning to use this on our build machine and it really has no reason to create new packages.
 
-Click __Create__ then __Copy__ to save the API key to your clipboard.  You cannot get this key again later; if you forget it you just have to __Regenerate__ it (invalidating the old one- in case someone is using it somewhere):  
+Click __Create__ then __Copy__ to save the API key to your clipboard.  You cannot get this key again later; if you forget it you just have to __Regenerate__ it (invalidating the old one):  
 ![]({{ "/assets/nuget-org_apikey_regenerate.png" | absolute_url }})
 
 ## Signing
 
-I've got `Subor.NNanomsg.NETStandard.0.5.2.nupkg` from the [other day]({% post_url /2018/2018-08-15-nupkg-with-native %}).  Sign it with:
+I've got `Subor.NNanomsg.NETStandard.0.5.2.nupkg` from the [other day]({% post_url /2018/2018-08-15-nupkg-with-native %}) and our private key (the pfx).  To sign the package:
 ```
 nuget.exe sign Subor.NNanomsg.NETStandard.0.5.2.nupkg -Timestamper http://sha256timestamp.ws.symantec.com/sha256/timestamp -CertificatePath path_to_private_key.pfx
 ```
@@ -74,17 +73,19 @@ http://sha256timestamp.ws.symantec.com/sha256/timestamp
 Package(s) signed successfully.
 ```
 
-After signing the size of the nupkg file should increase slightly.  You can verify the package with:
+After signing the size of the nupkg file should increase slightly (in this case 10KB).
+
+If you get output that ends with `Key does not exist.`, make sure the .pfx (the private key) follows `-CertificatePath` and not the .cer (public key).
+
+You can verify the package with:
 ```
 nuget.exe verify Subor.NNanomsg.NETStandard.0.5.2.nupkg -All
 ```
 And there should be a bunch of similar output that ends with `Successfully verified package 'Subor.NNanomsg.NETStandard.0.5.2'.`.
 
-If you get output that ends with `Key does not exist.`, make sure the .pfx (the private key) follows `-CertificatePath` and not the .cer (public key).
-
 ## Uploading
 
-The first time I uploaded the package I used the web interface: profile __->Manage Packages->+Add new__.
+The first time I uploaded the package I used nuget.org's web interface: profile __->Manage Packages->+Add new__.
 
 Thereafter I can use the "update package versions"-only API key I created to push updates:
 ```
@@ -104,7 +105,7 @@ The package is validated before becoming available via nuget.org.  This seems to
 
 Back in Visual Studio, you can now:
 1. Right-click a project __->Manage NuGet Packages...->Browse__.
-1. Make sure __Package source__ is back to `nuget.org` (in case you changed it during package development).  And search for `Subor.NNanomsg.NETStandard`:  
+1. Make sure __Package source__ is `nuget.org` (in case you changed it during package development).  And search for `Subor.NNanomsg.NETStandard`:  
 ![]({{ "/assets/vs_nuget_browse.png" | absolute_url }})
 
 1. __Install__ it and build the project (don't forget to [set __Platform target__]({% post_url /2018/2018-08-15-nupkg-with-native %}#consuming-nupkg)!).
