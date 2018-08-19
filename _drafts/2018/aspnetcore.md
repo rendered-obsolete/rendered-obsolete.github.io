@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Migrating from HttpListener to ASP.NET Core w/ Apache Thrift
+title: Migrating to ASP.NET Core w/ Apache Thrift
 tags:
 - thrift
 - aspnetcore
@@ -12,7 +12,7 @@ The bulk of our client UI is HTML5 (via [CEF](https://bitbucket.org/chromiumembe
 - Use the new `netcore` generator in [thrift 0.11](https://github.com/apache/thrift/releases/tag/0.11.0)
 - Handle HTTP requests with `Thrift.Transports.Server.THttpServerTransport` atop [ASP.NET Core](https://docs.microsoft.com/en-us/aspnet/core/) instead of `System.Net.HttpListener` handing requests to `Thrift.Transport.THttpHandler`
 
-## Before
+## Before- HttpListener
 
 The original implementation based on `System.Net.HttpListener` was similar to:
 ```csharp
@@ -61,9 +61,9 @@ while (!cts.IsCancellationRequested)
 
 The CORS hack needed for CEF to load content directly from disk.
 
-## After
+## After- ASP.[]()NET Core
 
-As I started looking into ASP.NET Core the level of configurability and sheer sophistication was pretty daunting.  More importantly, it wasn't immediately clear how to handle HTTP requests with thrift.
+As I started looking into ASP.[]()NET Core the level of configurability and sheer sophistication was pretty daunting.  More importantly, it wasn't immediately clear how to handle HTTP requests with thrift.
 
 The MS documentation is extensive.  The following will help you get started:
 - [ASP.NET Core Web Host](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/host/web-host)
@@ -108,7 +108,7 @@ catch (Exception ex)
 
 This uses the [ConfigureServices() and Configure() helpers instead of a Startup class](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/startup#convenience-methods).
 
-Rather than waiting for a routine to return an HTTP request and then passing it to a handler, ASP.NET Core can be configured with ["middleware"](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/middleware/index) to handle requests and process responses.
+Rather than waiting for a routine to return an HTTP request and then passing it to a handler, ASP.[]()NET Core can be configured with ["middleware"](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/middleware/index) to handle requests and process responses.
 
 I initially was trying to add thrift as a service via [ASP.NET Core dependency injection](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection):
 ```csharp
