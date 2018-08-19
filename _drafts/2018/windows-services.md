@@ -9,12 +9,12 @@ tags:
 ---
 
 Part of our client runs as a Windows service for a few reasons:
-- It can automatically start when Windows 10 boots
+- It automatically starts when Windows 10 boots
 - OS can restart it if it fails
 - It will be running even when no user is logged in
 - When required, we have elevated privileges
 
-Other than operations requiring elevated privileges, all those reasons only exist in a production environment.  During development we want the convenience of launching/debugging from Visual Studio and easily viewing stdout/stderr, so we also want it to function as a console application.
+Other than operations requiring elevated privileges, all those reasons only exist in a production environment.  During development we want the convenience of launching/debugging from Visual Studio and easily viewing of stdout/stderr, so we also want it to function as a console application.
 
 In our codebase and documentation this program is referred to as "layer0".
 
@@ -31,18 +31,18 @@ class Layer0Service : System.ServiceProcess.ServiceBase
     protected override void OnStart(string[] args)
     {
         base.OnStart(args);
-        DoStartup();
+        StartLayer0();
     }
 
     protected override void OnStop()
     {
         base.OnStop();
-        DoShutdown();
+        StopLayer0();
     }
 }
 ```
 
-`DoStartup()` and `DoShutdown()` are routines that take care of startup and shutdown and are shared by the service and console application.
+`StartLayer0()` and `StopLayer0()` are routines that take care of startup and shutdown and are shared by the service and console application.
 
 ## The Main()
 
@@ -71,9 +71,9 @@ static public int Main(string[] args)
 ```
 
 This executable has 3 modes:
-- `console.exe --install` installs the service
-- `console.exe --service` executes as the service
-- `console.exe` executes as a normal console application
+- `layer0.exe --install` installs the service
+- `layer0.exe --service` executes as the service
+- `layer0.exe` executes as a normal console application
 
 ## Service Installation
 
@@ -94,7 +94,7 @@ public static int InstallService()
 
         hService = CreateService(hSC, ShortServiceName, DisplayName,
             SERVICE_ACCESS.SERVICE_ALL_ACCESS, SERVICE_TYPE.SERVICE_WIN32_OWN_PROCESS, SERVICE_START.SERVICE_AUTO_START, SERVICE_ERROR.SERVICE_ERROR_NORMAL,
-            // Start console exe with --service arg
+            // Start layer0 exe with --service arg
             fullPathFilename + " --service",
             null, null, null, null, null
             );
@@ -120,11 +120,11 @@ public static int InstallService()
 
 [CreateService()](https://docs.microsoft.com/en-us/windows/desktop/api/winsvc/nf-winsvc-createservicea) is the main call.  `SERVICE_AUTO_START` means the service will start automatically.  The application registers itself and it will be passed the `--service` command line argument.
 
-This places it in services.msc where __Run__ executes `console.exe --service`:
+This places it in services.msc where __Run__ executes `layer0.exe --service`:
 
 ## setPermissions()
 
-Our platform being a non-critical to the system, we felt that ordinary users should be able to start/stop it.
+Our platform being non-critical to the system, we felt that ordinary users should be able to start/stop it.
 
 Reference these Stack Overflow issues:
 - https://stackoverflow.com/questions/15771998/how-to-give-a-user-permission-to-start-and-stop-a-particular-service-using-c-sha
@@ -174,7 +174,7 @@ if (!ok)
 
 ## Failure Actions
 
-This is a particularly heinous bit of pinvoke.  Blame falls squarely on the function we need [ChangeServiceConfig2()](https://docs.microsoft.com/en-us/windows/desktop/api/winsvc/nf-winsvc-changeserviceconfig2a) because its second parameter specifies what type the third parameter is a pointer to an array of.
+This is a particularly nasty bit of pinvoke.  Blame falls squarely on the function we need [ChangeServiceConfig2()](https://docs.microsoft.com/en-us/windows/desktop/api/winsvc/nf-winsvc-changeserviceconfig2a) because its second parameter specifies what type the third parameter is a pointer to an array of.
 
 We heavily consulted and munged together the following sources:
 - [pinvoke.net entry for ChangeServiceConfig2()](http://pinvoke.net/default.aspx/advapi32/ChangeServiceConfig2.html)

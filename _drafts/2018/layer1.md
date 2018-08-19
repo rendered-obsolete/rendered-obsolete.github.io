@@ -1,208 +1,155 @@
 ---
 layout: post
-title: More Windows Service in C#
+title: Layer1
 tags:
 - win10
 - csharp
 - service
+- pinvoke
 ---
 
-[XXXXXX Previous post]() created a Windows service we call "layer0".
-
-Our application has the additional wrinkle that this service needs to interact with the user and their desktop.  [Interactive Services](https://docs.microsoft.com/en-us/windows/desktop/Services/interactive-services) provides guidance how to accomplish this.  Basically, spawn a desktop application as the user and use [IPC](https://en.wikipedia.org/wiki/Inter-process_communication) to communicate between the two.  We refer to this portion of our client as "layer1".
-
-Owing to [XXXXXXXX our use of]() [Apache Thrift](https://thrift.apache.org/) we a complete messaging solution for IPC between layer1 and layer0 (the service).
-
-SERVICE_INTERACTIVE_PROCESS
+I've covered "layer0", a Windows service that among other things spawns and monitors a process as the logged in user.  It only makes sense to talk about "layer1"
 
 ## Session Events
 
-In order for layer0 service to spawn layer1 process as the user, we need to respond to user login/logout events.  Modify [class derived from ServiceBase]().
-
-First, set [ServiceBase.CanHandleSessionChangeEvent](https://docs.microsoft.com/en-us/dotnet/api/system.serviceprocess.servicebase.canhandlesessionchangeevent):
 ```csharp
-public Layer0Service()
+static L1ExitCode ExitCode = L1ExitCode.RestartLayer1;
+
+static int Main(string[] args)
 {
-    CanHandleSessionChangeEvent = true;
-}
-```
-
-Then override [OnSessionChange](https://docs.microsoft.com/en-us/dotnet/api/system.serviceprocess.servicebase.onsessionchange):
-```csharp
-protected override void OnSessionChange(SessionChangeDescription changeDescription)
-{
-    Log("OnSessionChange: " + changeDescription.Reason);
-    base.OnSessionChange(changeDescription);
-    switch (changeDescription.Reason)
-    {
-        case SessionChangeReason.SessionLogon:
-        case SessionChangeReason.SessionUnlock: // Switch between logged in users.
-            DoLogon();
-            break;
-        case SessionChangeReason.SessionLogoff:
-        //case SessionChangeReason.SessionLock:
-            DoLogoff();
-            break;
-    }
-}
-```
-
-The `Logon` and `Logoff` events are self-explanatory.  `Unlock` (and the corresponding `Lock`) less so.  Unlock events occur when fast user switching is used, for example.  The "correct" behaviour likely depends on application requirements.
-
-## Start Process as Desktop User
-
-PInvoke ahoy:
-```csharp
-#if DEBUG
-const Pinvoke.CreationFlags Layer1CreationFlags = Pinvoke.CreationFlags.CreateNewConsole;
-#else
-const Pinvoke.CreationFlags Layer1CreationFlags = Pinvoke.CreationFlags.CreateNoWindow;
-#endif
-
-Pinvoke.PROCESS_INFORMATION? serviceStartLayer1AsUser(string exePath, string command)
-{
-    IntPtr server = IntPtr.Zero;
-    IntPtr ppSessionInfo = IntPtr.Zero;
-    IntPtr userToken = IntPtr.Zero; // WARNING: the user token is supposed to be a secret, don't print it anywhere
     try
     {
-        // Query all sessions on local machine
-        server = Pinvoke.WTSOpenServer("localhost");
-        Int32 count = 0;
-        Int32 retval = Pinvoke.WTSEnumerateSessions(server, ref ppSessionInfo, ref count);
-        if (retval == 0)
-        {
-            throw new Win32Exception(Marshal.GetLastWin32Error(), "WTSEnumerateSessions");
-        }
+        // These events only work if we have a Windows message pump
+        Microsoft.Win32.SystemEvents.SessionEnding += SessionEnding;
+        Microsoft.Win32.SystemEvents.SessionEnded += SessionEnded;
+        Microsoft.Win32.SystemEvents.SessionSwitch += SessionSwitch;
 
-        // Find session for the logged in user and get their token
-        Int32 dataSize = Marshal.SizeOf(typeof(Pinvoke.WTS_SESSION_INFO));
-        Int64 current = (Int64)ppSessionInfo;
-        for (int i = 0; i < count; i++)
-        {
-            var si = (Pinvoke.WTS_SESSION_INFO)Marshal.PtrToStructure((IntPtr)current, typeof(Pinvoke.WTS_SESSION_INFO));
-            current += dataSize;
-
-            if (si.State != Pinvoke.WTS_CONNECTSTATE_CLASS.WTSActive && si.State != Pinvoke.WTS_CONNECTSTATE_CLASS.WTSConnected)
-                continue;
-
-            var sessionId = (uint)si.SessionID;
-            // WARNING: the user token is supposed to be a secret, don't print it anywhere
-            if (OS.Pinvoke.WTSQueryUserToken(sessionId, out userToken))
-            {
-                Log(LogLevel.Info, "WTSQueryUserToken succeeded for session: " + sessionId);
-                break;
-            }
-        }
-
-        if (userToken == IntPtr.Zero)
-        {
-            Log(LogLevel.Error, "Unable to obtain user token, unable to start layer1");
-            return null;
-        }
-
-        // Launch layer1 as the logged-in user
-        var nullSecurityAttributes = new Pinvoke.SECURITY_ATTRIBUTES { lpSecurityDescriptor = IntPtr.Zero };
-        Pinvoke.STARTUPINFO startupInfo = Pinvoke.StartupInfoAlloc();
-        Pinvoke.PROCESS_INFORMATION processInfo;
-        // WARNING: the user token is supposed to be a secret, don't print it anywhere
-        Pinvoke.CreateProcessAsUser(userToken, exePath, command,
-            ref nullSecurityAttributes, ref nullSecurityAttributes,
-            true, Layer1CreationFlags, IntPtr.Zero, null, ref startupInfo, out processInfo);
-
-        return processInfo;
+        RunLayer1();
     }
     finally
     {
-        if (server != IntPtr.Zero)
-            Pinvoke.WTSCloseServer(server);
-        if (ppSessionInfo != IntPtr.Zero)
-            Pinvoke.WTSFreeMemory(ppSessionInfo);
-        if (userToken != IntPtr.Zero)
-            Pinvoke.CloseHandle(userToken);
+        Microsoft.Win32.SystemEvents.SessionEnding -= SessionEnding;
+        Microsoft.Win32.SystemEvents.SessionEnded -= SessionEnded;
+        Microsoft.Win32.SystemEvents.SessionSwitch -= SessionSwitch;
+    }
+    return (int)ExitCode;
+}
+
+static void SessionEnding(object sender, Microsoft.Win32.SessionEndingEventArgs args) => sessionEvent(SessionEvent.SessionEnding);
+static void SessionEnded(object sender, Microsoft.Win32.SessionEndedEventArgs args) => sessionEvent(SessionEvent.SessionEnded);
+static void SessionSwitch(object sender, Microsoft.Win32.SessionSwitchEventArgs args) => sessionEvent(SessionEvent.SessionSwitch);
+
+static void sessionEvent(SessionEvent sessionEvent)
+{
+    switch(sessionEvent)
+    {
+        case SessionEvent.SessionEnded:
+        case SessionEvent.SessionEnding:
+            ExitCode = L1ExitCode.UserLoggingOut;
+            // Trigger layer1 shutdown
+            break;
+        case SessionEvent.SessionSwitch:
+        default:
+            // Do nothing
+            break;
     }
 }
 ```
 
-1. Use [WTSEnumerateSessions](https://docs.microsoft.com/en-us/windows/desktop/api/wtsapi32/nf-wtsapi32-wtsenumeratesessionsa) to iterate over all sessions looking for the active desktop session.
-1. [WTSQueryUserToken](https://docs.microsoft.com/en-us/windows/desktop/api/wtsapi32/nf-wtsapi32-wtsqueryusertoken) to obtain primary access token for that session's user.
-1. [CreateProcessAsUser](https://msdn.microsoft.com/en-us/library/windows/desktop/ms682429%28v=vs.85%29.aspx?f=255&MSPPError=-2147217396) to launch a process (i.e. layer1) as that user.
+When a user logs out, first `SessionEvent.SessionEnding` followed shortly by `SessionEvent.SessionEnded`.
 
-Now both the layer0 service and layer1 process are running.
+The [docs for `Microsoft.Win32.SystemEvents`](https://docs.microsoft.com/en-us/dotnet/api/microsoft.win32.systemevents) state the events we're interested in are only raised if the message pump is running.  It just so happens that layer1 has to have a message loop.
 
-## Console Executable
+## Message Loop
 
-Quick aside.
-
-When a developer is running layer0 as a desktop console application instead of a service, starting layer1 is more straightforward:
-```csharp
-Pinvoke.PROCESS_INFORMATION? startLayer1(string exePath, string commandline)
-{
-    var nullSecurityAttributes = new Pinvoke.SECURITY_ATTRIBUTES { lpSecurityDescriptor = IntPtr.Zero };
-    Pinvoke.STARTUPINFO startupInfo = Pinvoke.StartupInfoAlloc();
-    Pinvoke.PROCESS_INFORMATION procInfo;
-    Pinvoke.CreateProcess(exePath, commandline,
-        ref nullSecurityAttributes, ref nullSecurityAttributes,
-        true, Layer1CreationFlags, IntPtr.Zero, null,
-        ref startupInfo, out procInfo);
-    return procInfo;
-}
-```
-
-The canonical solution to start another exe is [`System.Diagnostics.Process`](https://docs.microsoft.com/en-us/dotnet/api/system.diagnostics.process).  But since [CreateProcess](https://docs.microsoft.com/en-us/windows/desktop/api/processthreadsapi/nf-processthreadsapi-createprocessa) also returns [PROCESS_INFORMATION](https://docs.microsoft.com/en-us/windows/desktop/api/processthreadsapi/ns-processthreadsapi-_process_information), it means managing the process will be same whether starting it from a service or console application.
-
-## Process Wrangling
-
-Once the layer1 process is running we've got a lot of behaviour and handling that is specific to our application.  The most interesting bit is the monitoring that the layer0 service does:
+One of the oddities of our platform is that the EC driver delivers power button presses as low-level keyboard events.
 
 ```csharp
-var objState = (ObjectState)Pinvoke.WaitForSingleObject(layer1ProcInfo.hProcess, 0);
-if (user_logout)
+bool setHWInterface2()
 {
-    // There's no longer a user
-    if (objState == Pinvoke.ObjectState.WaitObject0)
+    cts = new CancellationTokenSource();
+    keyboardHookProcTask = Task.Factory.StartNew((_) =>
     {
-        // Already not running.  Wait for a user to login.
-    }
-    else if (objState == Pinvoke.ObjectState.WaitTimeout)
-    {
-        // Running.  Tell it to stop.
-    }
-}
-else if (user_login_or_fast_user_switching)
-{
-    // There's a user (may or may not have been one before)
-    if(objState == Pinvoke.ObjectState.WaitObject0)
-    {
-        // Not running, so start it.
-    }
-    else if(objState == Pinvoke.ObjectState.WaitTimeout)
-    {
-        // Running as different user.  Stop it, then restart it as new user
-    }
-}
-else
-{
-    // Nothing special has happened.  This is the state we're normally in.
-    if (objState == Pinvoke.ObjectState.WaitObject0)
-    {
-        // Process not running.  Check the exit code to see if it was intentional.
-        if (Pinvoke.GetExitCodeProcess(procInfo.hProcess, out uint lpExitCode) && lpExitCode == (uint)L1ExitCode.UserLoggingOut)
+        lpfn = new HookProc(KeyboardHookProc);
+
+        var moduleHandle = GetModuleHandle(null);
+        //using (var curModule = System.Diagnostics.Process.GetCurrentProcess().MainModule)
+        //{
+        //    var moduleHandle = GetModuleHandle(curModule.ModuleName);
+        //    // SetWindowsHookEx()
+        //}
+        hHook = SetWindowsHookEx(WH_KEYBOARD_LL, lpfn, moduleHandle, 0);
+        if (hHook == IntPtr.Zero)
         {
-            // Process exited but it was told to because user is logging out.  We're probably going to receive a "user logout" event.
+            Log("SetWindowsHookEx failed", LogLevel.Error);
         }
         else
         {
-            // Process stopped/crashed.  Restart it.
+            // SetWindowsHookEx requires a Windows message loop on the thread
+
+            winMsgLoopAppCtx = new ApplicationContext();
+            Application.Run(winMsgLoopAppCtx);
+            // Using Application.DoEvents() seems cleaner, but hook function wasn't getting called
+            //while (!cts.IsCancellationRequested)
+            //{
+            //    Application.DoEvents();
+            //    // Sleep long enough this thread rarely runs, but short enough the button will be responsive
+            //    await Task.Delay(250, cts.Token);
+            //}
+
+            if (!UnhookWindowsHookEx(hHook))
+                Log("UnhookWindowsHookEx failed", LogLevel.Warn);
         }
-    }
-    else if (objState == Pinvoke.ObjectState.WaitTimeout)
-    {
-        // Still running.  Everything ok- do nothing.
-    }
+    }, cts.Token, TaskCreationOptions.LongRunning);
+    return true;
 }
 ```
 
-Here we use [`WaitForSingleObject()`](https://docs.microsoft.com/en-us/windows/desktop/api/synchapi/nf-synchapi-waitforsingleobject) to monitor layer1 process.  The first argument is the layer1 process handle, the second argument is `0` so the function returns immediately with the current state of the process:
-- `WaitTimeout` means it's running
-- `WaitObject0` means it's not
+```csharp
+IntPtr hHook;
+private delegate IntPtr HookProc(int nCode, IntPtr wp, IntPtr lp);
+HookProc lpfn;
+
+IntPtr KeyboardHookProc(int code, IntPtr wParam, IntPtr lParam)
+{
+    if (code >= 0)
+    {
+        // From: https://www.pinvoke.net/default.aspx/Structures/KBDLLHOOKSTRUCT.html
+        var kbScan = (KBDLLHOOKSTRUCT)Marshal.PtrToStructure(lParam, typeof(KBDLLHOOKSTRUCT));
+
+        // Filter spurious power button events, play audio feedback via PC speaker, etc.
+    }
+
+    // Ensure other applications that have installed hooks receive hook notifications
+    return CallNextHookEx(hHook, code, wParam, lParam);
+}
+```
+
+## Big Red Button
+
+```csharp
+static OS.Pinvoke.ConsoleCtrlDelegate ConsoleCtrlDelegate;
+
+public static void StartLayerN(ILayerN layer)
+{
+    // If user hits ctrl-c or closes console window, shut everything down
+    ConsoleCtrlDelegate += ctrlTypes =>
+    {
+        switch (ctrlTypes)
+        {
+            case OS.Pinvoke.CtrlTypes.CTRL_C_EVENT:
+            case OS.Pinvoke.CtrlTypes.CTRL_CLOSE_EVENT:
+                // Tell layer0 and layer1 to exit
+                
+                // Need to wait here otherwise OS terminates the process (without waiting for layer1, etc.)
+                layer.Wait();
+                // We handled the signal and thus return true as per https://docs.microsoft.com/en-us/windows/console/handlerroutine
+                return true;
+        }
+        return false;
+    };
+    OS.Pinvoke.SetConsoleCtrlHandler(ConsoleCtrlDelegate, true);
+
+    //...
+}
+```

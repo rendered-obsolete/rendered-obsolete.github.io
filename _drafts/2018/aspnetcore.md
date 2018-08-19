@@ -8,7 +8,7 @@ tags:
 - netcore
 ---
 
-The bulk of our client UI is HTML5 (via [CEF](https://bitbucket.org/chromiumembedded/cef)) which uses [Apache Thrift](https://thrift.apache.org/) to talk to a Windows service (via HTTP and WebSockets).  As part of our migration to .NET Core we set out to:
+The bulk of our client UI is HTML5 (via [CEF](https://bitbucket.org/chromiumembedded/cef)) which uses [Apache Thrift](https://thrift.apache.org/) to talk to a [XXXXXXXXX Windows service]() (via HTTP and WebSockets).  As part of our migration to .NET Core we set out to:
 - Use the new `netcore` generator in [thrift 0.11](https://github.com/apache/thrift/releases/tag/0.11.0)
 - Handle HTTP requests with `Thrift.Transports.Server.THttpServerTransport` atop [ASP.NET Core](https://docs.microsoft.com/en-us/aspnet/core/) instead of `System.Net.HttpListener` handing requests to `Thrift.Transport.THttpHandler`
 
