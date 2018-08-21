@@ -12,9 +12,9 @@ Part of our client runs as a Windows service for a few reasons:
 - It automatically starts when Windows 10 boots
 - OS can restart it if it fails
 - It will be running even when no user is logged in
-- When required, we have elevated privileges
+- When required, it has elevated privileges
 
-Other than operations requiring elevated privileges, all those reasons only exist in a production environment.  During development we want the convenience of launching/debugging from Visual Studio and easily viewing of stdout/stderr, so we also want it to function as a console application.
+Other than operations requiring elevated privileges, all those reasons only exist in a production environment.  During development we want the convenience of launching/debugging from Visual Studio and easy viewing of stdout/stderr, so we also want it to function as a console application.
 
 In our codebase and documentation this program is referred to as "layer0".
 
@@ -67,16 +67,17 @@ static public int Main(string[] args)
     // Running as a console program
     DoStartup();
 
-    ...
+    //...
 ```
 
-This executable has 3 modes:
+The executable has 3 modes:
 - `layer0.exe --install` installs the service
 - `layer0.exe --service` executes as the service
 - `layer0.exe` executes as a normal console application
 
 ## Service Installation
 
+The `--install` option is used to install the service:
 ```csharp
 public static int InstallService()
 {
@@ -84,13 +85,13 @@ public static int InstallService()
     IntPtr hService = IntPtr.Zero;
     try
     {
-        hSC = OpenSCManager(null, null, SCM_ACCESS.SC_MANAGER_ALL_ACCESS);
-
         string fullPathFilename = null;
         using (var currentProc = Process.GetCurrentProcess())
         {
             fullPathFilename = currentProc.MainModule.FileName;
         }
+
+        hSC = OpenSCManager(null, null, SCM_ACCESS.SC_MANAGER_ALL_ACCESS);
 
         hService = CreateService(hSC, ShortServiceName, DisplayName,
             SERVICE_ACCESS.SERVICE_ALL_ACCESS, SERVICE_TYPE.SERVICE_WIN32_OWN_PROCESS, SERVICE_START.SERVICE_AUTO_START, SERVICE_ERROR.SERVICE_ERROR_NORMAL,
@@ -118,13 +119,16 @@ public static int InstallService()
 }
 ```
 
-[CreateService()](https://docs.microsoft.com/en-us/windows/desktop/api/winsvc/nf-winsvc-createservicea) is the main call.  `SERVICE_AUTO_START` means the service will start automatically.  The application registers itself and it will be passed the `--service` command line argument.
+We first get the path and name of the current executable (layer0.exe).
 
-This places it in services.msc where __Run__ executes `layer0.exe --service`:
+[CreateService()](https://docs.microsoft.com/en-us/windows/desktop/api/winsvc/nf-winsvc-createservicea) is the main call to create a service.  `SERVICE_AUTO_START` means the service will start automatically.  The application specifies itself along with the `--service` command line argument.
+
+This places it in services.msc where __Start__ executes `layer0.exe --service`:  
+![]({{ "/assets/services_layer0.png" | absolute_url }})
 
 ## setPermissions()
 
-Our platform being non-critical to the system, we felt that ordinary users should be able to start/stop it.
+Our platform being non-critical to the system, ordinary users should be able to start/stop it.
 
 Reference these Stack Overflow issues:
 - https://stackoverflow.com/questions/15771998/how-to-give-a-user-permission-to-start-and-stop-a-particular-service-using-c-sha
@@ -174,7 +178,10 @@ if (!ok)
 
 ## Failure Actions
 
-This is a particularly nasty bit of pinvoke.  Blame falls squarely on the function we need [ChangeServiceConfig2()](https://docs.microsoft.com/en-us/windows/desktop/api/winsvc/nf-winsvc-changeserviceconfig2a) because its second parameter specifies what type the third parameter is a pointer to an array of.
+Failure actions specify what happens when the service fails.  This can be accessed from services.msc by right-clicking the service then __Properties->Recovery__:  
+![]({{ "/assets/services_recovery.png" | absolute_url }}){: width="66%" }
+
+This is a particularly nasty bit of pinvoke.  Blame falls squarely on the function to change service configuration parameters, [ChangeServiceConfig2()](https://docs.microsoft.com/en-us/windows/desktop/api/winsvc/nf-winsvc-changeserviceconfig2a), because its second parameter specifies what type the third parameter is a pointer to an array of.
 
 We heavily consulted and munged together the following sources:
 - [pinvoke.net entry for ChangeServiceConfig2()](http://pinvoke.net/default.aspx/advapi32/ChangeServiceConfig2.html)
@@ -187,6 +194,7 @@ We heavily consulted and munged together the following sources:
 ```csharp
 public static void SetServiceRecoveryActions(IntPtr hService, params SC_ACTION[] actions)
 {
+    // RebootComputer requires SE_SHUTDOWN_NAME privilege
     bool needsShutdownPrivileges = actions.Any(action => action.Type == SC_ACTION_TYPE.RebootComputer);
     if (needsShutdownPrivileges)
     {
@@ -236,7 +244,7 @@ public static void SetServiceRecoveryActions(IntPtr hService, params SC_ACTION[]
 
 The majority of this is setting up a [`SERVICE_FAILURE_ACTIONS`](https://docs.microsoft.com/en-us/windows/desktop/api/winsvc/ns-winsvc-_service_failure_actionsa) for the call to `ChangeServiceConfig2()`.  As mentioned in its documentation, if the service controller handles `SC_ACTION_TYPE.RebootComputer` the caller must have `SE_SHUTDOWN_NAME` privilege.  This is fulfilled by `GrantShutdownPrivilege()`.
 
-Usage is reasonable:
+Using this function we can set failure actions programmatically:
 ```csharp
 SetServiceRecoveryActions(hService,
     new SC_ACTION { Type = SC_ACTION_TYPE.RestartService, Delay = oneMinuteInMs },
@@ -284,9 +292,11 @@ static void GrantShutdownPrivilege()
 }
 ```
 
-Alternatively, this can be done with [sc.exe](https://support.microsoft.com/en-us/help/251192/how-to-create-a-windows-service-by-using-sc-exe):
+As an alternative to the pinvoke nightmare, this can also be done with [sc.exe](https://support.microsoft.com/en-us/help/251192/how-to-create-a-windows-service-by-using-sc-exe):
 ```
 sc.exe failure Layer0 actions= restart/60000/restart/60000/""/60000 reset= 86400
 ```
 
-I leave it as an exercise to the reader to guess which we're using more.
+## Next
+
+We've got our Windows service running.  Now we need to have it do something useful.
