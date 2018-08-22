@@ -62,15 +62,20 @@ The [docs for `Microsoft.Win32.SystemEvents`](https://docs.microsoft.com/en-us/d
 
 ## Message Loop
 
-One of the oddities of our platform is that the EC driver delivers power button presses as low-level keyboard events.
+One of the oddities of our platform is that the [EC](https://en.wikipedia.org/wiki/Embedded_controller) driver delivers power button presses as low-level keyboard events.
 
+Install hook and start message loop:
 ```csharp
+private delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wp, IntPtr lp);
+LowLevelKeyboardProc lpfn;
+IntPtr hHook;
+
 bool setHWInterface2()
 {
     cts = new CancellationTokenSource();
     keyboardHookProcTask = Task.Factory.StartNew((_) =>
     {
-        lpfn = new HookProc(KeyboardHookProc);
+        lpfn = new LowLevelKeyboardProc(KeyboardHookProc);
 
         var moduleHandle = GetModuleHandle(null);
         //using (var curModule = System.Diagnostics.Process.GetCurrentProcess().MainModule)
@@ -105,16 +110,21 @@ bool setHWInterface2()
 }
 ```
 
-```csharp
-IntPtr hHook;
-private delegate IntPtr HookProc(int nCode, IntPtr wp, IntPtr lp);
-HookProc lpfn;
+The hook callback passed to [SetWindowsHookEx](https://msdn.microsoft.com/en-us/library/windows/desktop/ms644990%28v=vs.85%29.aspx?f=255&MSPPError=-2147217396) also see [LowLevelKeyboardProc](https://msdn.microsoft.com/en-us/library/windows/desktop/ms644990%28v=vs.85%29.aspx?f=255&MSPPError=-2147217396).
 
+[ApplicationContext](https://docs.microsoft.com/en-us/dotnet/api/system.windows.forms.applicationcontext) to [Application.Run()](https://docs.microsoft.com/en-us/dotnet/api/system.windows.forms.application.run#System_Windows_Forms_Application_Run_System_Windows_Forms_ApplicationContext_)
+
+To later stop it:
+```csharp
+winMsgLoopAppCtx.ExitThread();
+```
+
+Hook callback based off [pinvoke.net sample](https://www.pinvoke.net/default.aspx/Structures/KBDLLHOOKSTRUCT.html):
+```csharp
 IntPtr KeyboardHookProc(int code, IntPtr wParam, IntPtr lParam)
 {
     if (code >= 0)
     {
-        // From: https://www.pinvoke.net/default.aspx/Structures/KBDLLHOOKSTRUCT.html
         var kbScan = (KBDLLHOOKSTRUCT)Marshal.PtrToStructure(lParam, typeof(KBDLLHOOKSTRUCT));
 
         // Filter spurious power button events, play audio feedback via PC speaker, etc.
@@ -126,6 +136,8 @@ IntPtr KeyboardHookProc(int code, IntPtr wParam, IntPtr lParam)
 ```
 
 ## Big Red Button
+
+During development both layer0 and layer1 are usually running as console applications.  Because [XXXXXXXX layer0 will restart layer1](), we originally had to stop layer0 then stop layer1.  This was pretty annoying so we changed it so both close if either windows is closed:
 
 ```csharp
 static OS.Pinvoke.ConsoleCtrlDelegate ConsoleCtrlDelegate;

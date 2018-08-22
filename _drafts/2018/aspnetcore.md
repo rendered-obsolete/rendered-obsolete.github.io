@@ -8,7 +8,7 @@ tags:
 - netcore
 ---
 
-The bulk of our client UI is HTML5 (via [CEF](https://bitbucket.org/chromiumembedded/cef)) which uses [Apache Thrift](https://thrift.apache.org/) to talk to a [XXXXXXXXX Windows service]() (via HTTP and WebSockets).  As part of our migration to .NET Core we set out to:
+The bulk of our client UI is HTML5 (via [CEF](https://bitbucket.org/chromiumembedded/cef)) which uses [Apache Thrift](https://thrift.apache.org/) to talk to a [Windows service]({% post_url /2018/2018-08-21-windows-services %}) (via HTTP and WebSockets).  As part of our migration to .NET Core we set out to:
 - Use the new `netcore` generator in [thrift 0.11](https://github.com/apache/thrift/releases/tag/0.11.0)
 - Handle HTTP requests with `Thrift.Transports.Server.THttpServerTransport` atop [ASP.NET Core](https://docs.microsoft.com/en-us/aspnet/core/) instead of `System.Net.HttpListener` handing requests to `Thrift.Transport.THttpHandler`
 
@@ -63,11 +63,12 @@ The CORS hack needed for CEF to load content directly from disk.
 
 ## After- ASP.[]()NET Core
 
-As I started looking into ASP.[]()NET Core the level of configurability and sheer sophistication was pretty daunting.  More importantly, it wasn't immediately clear how to handle HTTP requests with thrift.
-
-The MS documentation is extensive.  The following will help you get started:
+As I started looking into ASP.[]()NET Core the level of configurability and sheer sophistication was pretty daunting.  The MS documentation is extensive.  The following will help you get started:
 - [ASP.NET Core Web Host](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/host/web-host)
 - [Application Startup in ASP.NET Core](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/startup)
+
+It wasn't immediately clear how to handle HTTP requests with thrift.  Thrift 0.11.0 features a new generator targeting [netcore](https://github.com/apache/thrift/tree/master/lib/netcore).  The netcore client library contains
+[THttpServerTransport with `Task Invoke(HttpContext)`](https://github.com/apache/thrift/blob/master/lib/netcore/Thrift/Transports/Server/THttpServerTransport.cs#L69) which seems to be the [telltale signature of ASP.NET Core](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/middleware/?view=aspnetcore-2.1&tabs=aspnetcore2x).
 
 The following was cobbled together from numerous sources:
 ```csharp

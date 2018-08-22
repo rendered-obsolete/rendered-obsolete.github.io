@@ -8,7 +8,7 @@ tags:
 - pinvoke
 ---
 
-[XXXXXX Previous post]() created a Windows service we call "layer0".
+[Previously]({% post_url /2018/2018-08-21-windows-services %}) we created a Windows service we call "layer0".
 
 Our application has the additional wrinkle that this service needs to interact with the user and their desktop.  [Interactive Services](https://docs.microsoft.com/en-us/windows/desktop/Services/interactive-services) provides guidance how to accomplish this.  Basically, spawn a desktop application as the user and use [IPC](https://en.wikipedia.org/wiki/Inter-process_communication) to communicate between the two.  We refer to this portion of our client as "layer1".
 
@@ -18,7 +18,7 @@ SERVICE_INTERACTIVE_PROCESS
 
 ## Session Events
 
-In order for layer0 service to spawn layer1 process as the user, we need to track user login/logout activity.  Modify [class derived from ServiceBase]().
+In order for layer0 service to spawn layer1 process as the user, we need to track user login/logout activity.  Modify [class derived from ServiceBase]({% post_url /2018/2018-08-21-windows-services %}#the-service).
 
 First, set [ServiceBase.CanHandleSessionChangeEvent](https://docs.microsoft.com/en-us/dotnet/api/system.serviceprocess.servicebase.canhandlesessionchangeevent):
 ```csharp
