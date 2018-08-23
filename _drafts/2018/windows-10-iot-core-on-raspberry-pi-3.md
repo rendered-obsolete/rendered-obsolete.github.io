@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Windows 10 IoT Core on Raspberry Pi 3
+title: Windows 10 IoT Core on Raspberry Pi 3 (2018)
 tags:
 - iot
 - raspi
@@ -8,45 +8,64 @@ tags:
 - win10
 ---
 
-Following up on [an earlier post]({% post_url /2017/2017-11-23-win10-iot-core-redux %}), finally got around to trying to install IoT Core on my actual Raspberry Pi device:
+Decided to go back and re-write my [original post on installing Win10 IoT Core on a Raspberry Pi 3]({% post_url /2017/2017-12-25-windows-10-iot-core-on-raspberry-pi-3 %}) on OSX (without using [IoT Core Dashboard](https://developer.microsoft.com/en-us/windows/iot/Downloads)).
+
+Using mostly the same devices as last time:
 - [Raspberry Pi 3 model B](https://www.raspberrypi.org/products/raspberry-pi-3-model-b/)
 - [7" Touchscreen](https://www.raspberrypi.org/products/raspberry-pi-touch-display/)
-
-My development machine is a [15" Macbook Pro](https://support.apple.com/kb/SP756?locale=en_US) running OSX High Sierra (10.13.6).  Wasn't able to get a Windows 10 VM in VirtualBox to recognize the SD card slot in my adapter (the otherwise fantastic [Satechi type-C multi-port adapater](https://satechi.net/collections/usb-type-c/products/satechi-aluminum-multi-port-adapter-4k)), so started looking for how to flash the image without using [IoT Core Dashboard](https://developer.microsoft.com/en-us/windows/iot/Downloads).
+- [15" Macbook Pro](https://support.apple.com/kb/SP756?locale=en_US) running OSX High Sierra (10.13.6)
+- [Satechi Multi-Port Adapater V2](https://www.amazon.com/Satechi-Aluminum-Multi-Port-Ethernet-Pass-Through/dp/B075FW7H5J/ref=sr_1_3?ie=UTF8&qid=1534991689&sr=8-3&keywords=satechi+v2) (USB-C)
 
 ## Image Preparation
 
-Microsoft has some docs about using [dism](https://docs.microsoft.com/en-us/windows/iot-core/connect-your-device/dism) instead of Dashboard.  From the [IoT Core download page](https://developer.microsoft.com/en-us/windows/iot/Downloads) you can obtain an iso file containing an msi that by default installs the image to: `C:\Program Files (x86)\Microsoft IoT\FFU\RaspberryPi2\flash.ffu`.  ffu2img ([https://github.com/t0x0/random/wiki/ffu2img](https://github.com/t0x0/random/wiki/ffu2img)) can be used to convert the [ffu](https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/deploy-windows-using-full-flash-update--ffu) to an img file usable with [dd](https://developer.apple.com/legacy/library/documentation/Darwin/Reference/ManPages/man1/dd.1.html) found on OSX (and Linux, etc.).
+Microsoft has some docs about using [dism](https://docs.microsoft.com/en-us/windows/iot-core/connect-your-device/dism) instead of Dashboard.
 
-Ensure you're using [Python 2.7](https://www.python.org/download/releases/2.7/) and convert the image:
-```
-python ffu2img.py <path>/flash.ffu
-```
+Similar to last time, we need to obtain an IoT Core image (an [ffu](https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/deploy-windows-using-full-flash-update--ffu))
+and then convert it to an img usable with [dd](https://developer.apple.com/legacy/library/documentation/Darwin/Reference/ManPages/man1/dd.1.html) (found on OSX, Linux, etc.).
 
-Resulting in a __flash.img__ file in the same location as the ffu.
+1. Locate IoT Core Build:
+    - [Try this link](https://go.microsoft.com/fwlink/?LinkId=846058)
+    - Should that not work, from the [IoT Core download page](https://developer.microsoft.com/en-us/windows/iot/Downloads) under "Latest Windows 10 IoT Core Builds" there should he a "For RaspBerry Pi 2 & 3"
+1. Download the iso (at the time of writing `17134.180410-1804.rs4_release_amd64fre_IOTCORE_RPi.iso`) __to a Windows machine__
+1. Double-click iso to mount it and run `Windows_10_IoT_Core_for_RPi.msi` inside
+1. Click through installer to install files to `C:\Program Files (x86)\Microsoft IoT\FFU\RaspberryPi2\`.
+1. Download [ffu2img.py](https://github.com/t0x0/random) ([docs](https://github.com/t0x0/random/wiki/ffu2img)) 
+1. Ensure you're using [Python 2.7](https://www.python.org/download/releases/2.7/) and convert the image:
+    ```
+    python ffu2img.py <path>/flash.ffu [output_filename]
+    ```
 
-## Writing Image to SD Card
+The image conversion should take a minute or two and result in a __flash.img__ file in the same location as the ffu.
 
-To write the image to an SD card I consulted the documentation at [raspberrypi.org](https://www.raspberrypi.org/documentation/installation/installing-images/mac.md).
+The ffu2img repository also contains a py3 script for python 3, but I didn't try it.
 
-I had trouble getting those instructions to work with my card/reader.  No matter what, dd failed with `Operation not permitted`.  In the end I had to:
-1. Insert card into reader and connect reader to laptop
-1. Without unmounting the SD card, run: `sudo diskutil partitionDisk /dev/disk2 1 MBR "Free Space" "%noformat%" 100%`
-1. Disconnect then reconnect the reader (above command seemed to eject the SD card)
-1. Write the image: `sudo dd bs=1m if=PATH/flash.img of=/dev/rdisk2 conv=sync`
+## Write Image to SD Card and Boot
 
-In my case, the SD card is __/dev/disk2__.  /dev/disk2 and /dev/rdisk2 in the above commands should be adjusted appropriately for other cases.
+This time the [raspberrypi.org Mac instructions](https://www.raspberrypi.org/documentation/installation/installing-images/mac.md) work without issue.
 
-Using df can see several partitions were created (/dev/disk2s1, disk2s2, disk2s3, and disk2s6) on the SD card.  Once inserted in the Raspberry Pi device and powered on, IoT Core should boot.
+- My SD card is __/dev/disk4__
+- I made sure to __unmount__ (not _eject_) all `disk4` volumes (in __Disk Utility__ select a volume and check __Device__.  One or more may say `disk4sX`)
+-  Write the img with `sudo dd bs=1m if=PATH/flash.img of=/dev/rdisk4 conv=sync` (takes around 5 minutes)
+- In __Disk Utility__ (or by running `df`) can see several partitions were created (/dev/disk4s1, disk4s2, and disk4s5) on the SD card
+- Eject all the volumes, insert SD card back in the Raspberry Pi, and power on
 
 ## IoT Core Setup
 
+[Last year I wrote]({% post_url /2017/2017-12-25-windows-10-iot-core-on-raspberry-pi-3 %}):
+```
 As it happens, I didn't have a USB keyboard on hand to get the device on the wifi.
 
 Using an ethernet cable to connect the device directly to my laptop, I obtained the device's link-local address from the bottom-left of the touch screen.  The device's admin portal is now accessible by pointing my laptop browser at `http://169.254.236.118:8080` (default username/password is Administrator/p@ssw0rd).
+```
+
+This time I came preparred, but I suspect the same gymnastics would work.
+
+Connected the Pi via ethernet, got a DHCP address (`192.168.2.39`), and pointed a browser at `192.168.2.39:8080` (default username/password is same as before).  The rest is basically the same:
 
 In the left panel, selecting Connectivity, then Network, you can configure the wifi AP:  
 ![]({{ "/assets/iot_dashboard_network.png" | absolute_url }})
 
 Initially the display was upside-down (assuming the HDMI port is "up" as when using [this touchscreen case](https://www.amazon.com/Raspberry-Pi-7-Inch-Touch-Screen/dp/B01GQFUWIC)).  To fix this, in the left panel pick __Device Settings__ and towards the bottom in __Display Orientation__ select `Landscape (Flipped)`:  
 ![]({{ "/assets/iot_dashboard_orientation.png" | absolute_url }})
+
+Now to finally get started on a project.
