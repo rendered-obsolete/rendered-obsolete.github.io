@@ -59,11 +59,16 @@ while (!cts.IsCancellationRequested)
 }
 ```
 
-The CORS hack needed for CEF to load content directly from disk.
+1. Create `THttpHandler` using `TMultiplexedProcessor` instance and `TJSONProtocol`
+    - [Javascript (in the client) doesn't support binary or compact protocols](https://thrift.apache.org/docs/Languages)
+1. Wait for HttpListenerContext with [`GetContextAsync()`](https://docs.microsoft.com/en-us/dotnet/api/system.net.httplistener.getcontextasync)
+1. Pass it to [`ProcessRequest()`](https://github.com/apache/thrift/blob/0.10.0/lib/csharp/src/Transport/THttpHandler.cs#L67)
+
+The CORS hack was needed for CEF to load content directly from disk.
 
 ## After- ASP.[]()NET Core
 
-As I started looking into ASP.[]()NET Core the level of configurability and sheer sophistication was pretty daunting.  The MS documentation is extensive.  The following will help you get started:
+As we started looking into ASP.[]()NET Core the level of configurability and sophistication was pretty daunting.  The MS documentation is extensive and the following will help you get started:
 - [ASP.NET Core Web Host](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/host/web-host)
 - [Application Startup in ASP.NET Core](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/startup)
 
@@ -72,8 +77,6 @@ It wasn't immediately clear how to handle HTTP requests with thrift.  Thrift 0.1
 
 The following was cobbled together from numerous sources:
 ```csharp
-var factory = new Microsoft.Extensions.Logging.LoggerFactory();
-
 try
 {
     webHostBuilder = WebHost.CreateDefaultBuilder()
@@ -111,11 +114,11 @@ This uses the [ConfigureServices() and Configure() helpers instead of a Startup 
 
 Rather than waiting for a routine to return an HTTP request and then passing it to a handler, ASP.[]()NET Core can be configured with ["middleware"](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/middleware/index) to handle requests and process responses.
 
-I initially was trying to add thrift as a service via [ASP.NET Core dependency injection](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection):
+We were initially trying to add thrift as a service via [ASP.NET Core dependency injection](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection):
 ```csharp
 .ConfigureServices(services =>
 {
-    // This doesn't work
+    // Couldn't make variants of these work
     services.AddSingleton<ITAsyncProcessor>(MultiProcessors.HttpProcessor);
     services.AddSingleton<ITProtocolFactory>(new TJsonProtocol.Factory());
 })
@@ -128,9 +131,9 @@ Unable to resolve service for type 'Thrift.ITAsyncProcessor' while attempting to
 
 Services probably aren't the correct mechanism, while middleware seems intended for request/response handling.
 
-The difference between `AddSingleton()`, `AddTransient()`, etc. pertains to the [lifetime of the service](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection#service-lifetimes).
-
-Finally, make sure to call `webHostBuilder.StopAsync()` when finished.  Otherwise you'll get a native exception in the GC finalizer.
+Misc. notes:
+- The difference between `AddSingleton()`, `AddTransient()`, etc. pertains to the [lifetime of the service](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection#service-lifetimes).
+- Make sure to call `webHostBuilder.StopAsync()` on shutdown.  Otherwise you'll get a native exception in the GC finalizer.
 
 ## Conclusions
 
