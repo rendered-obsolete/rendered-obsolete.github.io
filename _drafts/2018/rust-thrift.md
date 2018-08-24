@@ -1,9 +1,20 @@
+---
+layout: post
+title: Rust & Apache Thrift
+tags:
+- rust
+- thrift
+- zplus
+---
+
+Using [Apache Thrift](https://thrift.apache.org/) enables us to generate client libraries [for our SDK](https://github.com/subor/sdk) (still very-WIP) targetting [a variety of languages](https://thrift.apache.org/docs/Languages).  I'm going to create a test library for [Rust](https://www.rust-lang.org/en-US/) that makes a simple RPC call to our [background service]({% post_url /2018/2018-08-21-windows-services %}).
 
 ## Generation
 
-[API Tool](https://github.com/subor/sdk/blob/master/docs/topics/build_sdk_source.md#thrift) to deal with:  
+One of the reasons we introduced our [API Tool](https://github.com/subor/sdk/blob/master/docs/topics/build_sdk_source.md#thrift) was to make it easier to work with our .thrift interface definition files:  
 ![]({{ "/assets/devtool_apitool_rs.png" | absolute_url }})
 
+Click __Generate__ to process all the thrift files:
 ```
 18/08/22 12:54:53  Info ApiTool --ThriftFiles="D:\ruyi\sdk\ThriftFiles" --ThriftExe="D:\ruyi\..\tools\thrift\thrift.exe" --CommonOutput="D:\ruyi\sdk\SDK.Gen.CommonAsync" --ServiceOutput="D:\ruyi\sdk\SDK.Gen.ServiceAsync" --Gen="rs" --Generate
 18/08/22 12:54:53  Info -gen rs -out D:\ruyi\sdk\SDK.Gen.ServiceAsync D:\ruyi\sdk\ThriftFiles\BrainCloudService\BrainCloudServiceSDKDataTypes.thrift
@@ -11,13 +22,19 @@
 18/08/22 12:54:54  Info -gen rs -out D:\ruyi\sdk\SDK.Gen.CommonAsync D:\ruyi\sdk\ThriftFiles\CommonType\CommonTypeSDKDataTypes.thrift
 ```
 
-## Rust Baby Steps
+Note the `-gen rs ...` output showing how we call `thrift.exe`.
 
-```
-cargo new --lib subor
-```
+The particulars of our platform aren't important for this excercise.  You could substitute the [thrift tutorial](https://thrift.apache.org/tutorial/).
 
-I copied the generated .rs files into the `src/` directory.
+## Rust-y Baby Steps
+
+1. Start a new "subor" library:
+    ```
+    cargo new --lib subor
+    ```
+1. Launch [Visual Studio Code](https://code.visualstudio.com/) and install [Rust support](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust).  Open the `subor/` folder cargo created.
+
+1. Copy all the generated .rs files into the `src/` directory.
 
 Right next to `lib.rs`, `localization_service_s_d_k_data_types.rs` catches my eye:
 ```rust
@@ -36,7 +53,7 @@ To bring that file into scope, to the top of `lib.rs` add:
 mod localization_service_s_d_k_data_types;
 ```
 
-If you're rocking [Visual Studio Code](https://code.visualstudio.com/) bring up the terminal with ```^` ``` (that's Ctrl+Backtick- or "grave accent" if you're fancy).  Probably also want [Rust support](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust).
+Bring up the VS Code terminal with ```^` ``` (that's Ctrl+Backtick- or "grave accent" if you're fancy).
 
 Build with `cargo build`:
 ```
@@ -64,7 +81,7 @@ error[E0432]: unresolved import `ordered_float`
    |     ^^^^^^^^^^^^^ Did you mean `self::ordered_float`?
 ```
 
-The crates are `extern`ed in the sub-module, so you either do what it says and prepend `self::` everywhere.  Or, to the top of lib.rs add:
+The crates are `extern`ed in the sub-module, so you either do what it says and prepend `self::` everywhere (_ugh_).  Or, to the top of lib.rs add:
 ```rust
 extern crate ordered_float;
 extern crate thrift;
@@ -82,10 +99,12 @@ mod tests {
 ```
 Use [glob operator](https://doc.rust-lang.org/book/2018-edition/ch07-03-importing-names-with-use.html) (also see [example with tests](https://doc.rust-lang.org/book/2018-edition/ch11-01-writing-tests.html#checking-results-with-the-assert-macro)) to bring everything in that file into scope.
 
-Inside `it_works()` function type `let msg = L` (Note: capital __"L"__) and "intellisense" should work:
+Inside `it_works()` function type `let msg = L` (Note: capital __"L"__) and "intellisense" should work.  After adding some arguments:
 ```rust
 let msg = LanguageChangedMsg::new("stuff".to_owned(), "this".to_owned());
 ```
+
+Again, `cargo build` and `cargo test` and everything should be ok.
 
 ## Client
 
@@ -125,9 +144,12 @@ impl <C: TThriftClient + TLocalizationServiceSyncClientMarker> TLocalizationServ
 }
 ```
 
+Propbably makes sense if you're already familiar with thrift and rust:
+- `TLocalizationServiceSyncClient` defines an interface to access a "service"
+  - It specifies a `get_string()` RPC call
+- An instance can be initialized with `LocalizationServiceSyncClient::new()` given an input and output protocol
+
 The [thrift::protocol module docs](https://docs.rs/thrift/0.0.4/thrift/protocol/index.html) show how to get started:
-
-
 ```rust
 use thrift::protocol::{TBinaryInputProtocol, TBinaryOutputProtocol, TMultiplexedOutputProtocol};
 use thrift::transport::{TTcpChannel, TIoChannel};
