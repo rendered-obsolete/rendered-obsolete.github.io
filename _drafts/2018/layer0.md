@@ -8,19 +8,15 @@ tags:
 - pinvoke
 ---
 
-[Previously]({% post_url /2018/2018-08-21-windows-services %}) we created a Windows service we call "layer0".
+[Previously]({% post_url /2018/2018-08-21-windows-services %}) I discussed a Windows service we call "layer0".
 
 Our application has the additional wrinkle that this service needs to interact with the user and their desktop.  [Interactive Services](https://docs.microsoft.com/en-us/windows/desktop/Services/interactive-services) provides guidance how to accomplish this.  Basically, spawn a desktop application as the user and use [IPC](https://en.wikipedia.org/wiki/Inter-process_communication) to communicate between the two.  We refer to this portion of our client as "layer1".
 
-Owing to [XXXXXXXX our use of]() [Apache Thrift](https://thrift.apache.org/) we a complete messaging solution for IPC between layer1 and layer0 (the service).
-
-SERVICE_INTERACTIVE_PROCESS
-
 ## Session Events
 
-In order for layer0 service to spawn layer1 process as the user, we need to track user login/logout activity.  Modify [class derived from ServiceBase]({% post_url /2018/2018-08-21-windows-services %}#the-service).
+In order for layer0 service to spawn layer1 process as the desktop user, we need to track user login/logout activity.  We're going to modify the [class derived from ServiceBase]({% post_url /2018/2018-08-21-windows-services %}#the-service).
 
-First, set [ServiceBase.CanHandleSessionChangeEvent](https://docs.microsoft.com/en-us/dotnet/api/system.serviceprocess.servicebase.canhandlesessionchangeevent):
+First, enable [ServiceBase.CanHandleSessionChangeEvent](https://docs.microsoft.com/en-us/dotnet/api/system.serviceprocess.servicebase.canhandlesessionchangeevent):
 ```csharp
 public Layer0Service()
 {
@@ -52,7 +48,7 @@ The `Logon` and `Logoff` events are self-explanatory.  `Unlock` (and the corresp
 
 ## Start Process as Desktop User
 
-PInvoke ahoy:
+Code how layer0 service creates a process as the current desktop user:
 ```csharp
 #if DEBUG
 const Pinvoke.CreationFlags Layer1CreationFlags = Pinvoke.CreationFlags.CreateNewConsole;
@@ -136,7 +132,7 @@ Now both the layer0 service and layer1 process are running.
 
 Quick aside.
 
-When a developer is running layer0 as a desktop console application instead of a service, starting layer1 is more straightforward:
+[I mentioned]({% post_url /2018/2018-08-21-windows-services %}) we want our developers to be able to start layer0 as a console application.  When layer0 is a desktop application instead of a service, starting layer1 is more straightforward:
 ```csharp
 Pinvoke.PROCESS_INFORMATION? startLayer1(string exePath, string commandline)
 {
@@ -155,7 +151,7 @@ The canonical solution to start another exe is [`System.Diagnostics.Process`](ht
 
 ## Process Wrangling
 
-Once the layer1 process is running we've got a lot of behaviour and handling that is specific to our application.  The most interesting bit is the monitoring that the layer0 service does of layer1:
+Once the layer1 process is running we've got a lot of behaviour and handling that is specific to our application.  The most interesting bit is the monitoring that layer0 does of layer1:
 
 ```csharp
 var objState = (ObjectState)Pinvoke.WaitForSingleObject(layer1ProcInfo.hProcess, 0);
@@ -205,8 +201,22 @@ else
 }
 ```
 
-Here we use [`WaitForSingleObject()`](https://docs.microsoft.com/en-us/windows/desktop/api/synchapi/nf-synchapi-waitforsingleobject) to monitor layer1 process.  The first argument is the layer1 process handle, the second argument is `0` so the function returns immediately with the current state of the process:
+Behaviour we wanted:
+- Wait for user login to start layer1
+- If layer1 crashes restart it
+- If switch users need to stop layer1 and restart it as new user
+- During user logout stop layer1
+
+Here we use [`WaitForSingleObject()`](https://docs.microsoft.com/en-us/windows/desktop/api/synchapi/nf-synchapi-waitforsingleobject) to monitor the layer1 process.  The first argument is the process handle, the second argument is `0` so the function returns immediately with the current state of the process:
 - `WaitTimeout` means it's running
 - `WaitObject0` means it's not
 
-`GetExitCodeProcess()` is a fairly recent addition.  Looking at the log output we noticed that when a user is logging out layer1 process was exiting and the service tries unsuccessfully to restart it; it either fails to start or immediately exits.  This is similar to shell.  Details will follow when we talk about layer1.
+[`GetExitCodeProcess()`](https://docs.microsoft.com/en-us/windows/desktop/api/processthreadsapi/nf-processthreadsapi-getexitcodeprocess) is a fairly recent addition.  Looking at the log output we noticed that when a user is logging out layer1 process exits and then the service tries unsuccessfully to restart it; it either fails to start or immediately exits.  Layer0 keeps trying to restart layer1 until `OnSessionChange(SessionLogoff)` is called (a few seconds after layer1 first exited).  Part of this will be covered when I discuss details of layer1.
+
+## Detours
+
+[Interactive Services](https://docs.microsoft.com/en-us/windows/desktop/Services/interactive-services) mentions the alternative of passing `SERVICE_INTERACTIVE_PROCESS` to `CreateService()`.  We didn't pursue this approach for two reasons:
+1. `NoInteractiveServices` registry key is set by default starting with Windows 8; `SERVICE_INTERACTIVE_PROCESS` is on its way to being deprecated.
+1. Our application needs to launch 3rd-party applications, and processes launched from a service have an unusual execution environment.  Compatibility issues are a concern.
+
+Owing to [our use of]({% post_url /2018/2018-08-24-aspnetcore-thrift %}) [Apache Thrift](https://thrift.apache.org/) we have a complete messaging solution for IPC between layer1 and layer0 (the service).  Layer0 begins listening before starting layer1, and layer1 connects as soon as it starts.
