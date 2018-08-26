@@ -62,7 +62,7 @@ This time I came preparred, but I suspect the same gymnastics would work.
 
 Connect the Pi via ethernet, got a DHCP address (`192.168.2.39`), and pointed a browser at `192.168.2.39:8080` (default username/password is same as before).  The rest is basically the same:
 
-In the left panel, selecting Connectivity, then Network, you can configure the wifi AP:  
+In the left panel, selecting __Connectivity-> Network__, you can configure the wifi AP:  
 ![]({{ "/assets/iot_dashboard_network.png" | absolute_url }})
 
 Initially the display was upside-down (assuming the HDMI port is "up" as when using [this touchscreen case](https://www.amazon.com/Raspberry-Pi-7-Inch-Touch-Screen/dp/B01GQFUWIC)).  To fix this, in the left panel pick __Device Settings__ and towards the bottom in __Display Orientation__ select `Landscape (Flipped)`:  

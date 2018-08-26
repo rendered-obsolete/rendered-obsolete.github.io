@@ -51,6 +51,7 @@ The `Logon` and `Logoff` events are self-explanatory.  `Unlock` (and the corresp
 Code how layer0 service creates a process as the current desktop user:
 ```csharp
 #if DEBUG
+// Show console window
 const Pinvoke.CreationFlags Layer1CreationFlags = Pinvoke.CreationFlags.CreateNewConsole;
 #else
 const Pinvoke.CreationFlags Layer1CreationFlags = Pinvoke.CreationFlags.CreateNoWindow;
@@ -128,6 +129,14 @@ Highlights:
 
 Now both the layer0 service and layer1 process are running.
 
+Comments:
+- I should attribute the source this code is derived from, but I didn't make a note of it.  There's a number of google results that are fairly similar:
+    - https://blogs.msdn.microsoft.com/winsdk/2009/07/14/launching-an-interactive-process-from-windows-service-in-windows-vista-and-later/
+    - https://www.codeproject.com/Articles/36581/Interaction-between-services-and-applications-at-u
+- Might be able to replace looping over all sessions with [WTSGetActiveConsoleSessionId()](https://docs.microsoft.com/en-us/windows/desktop/api/winbase/nf-winbase-wtsgetactiveconsolesessionid)
+
+
+
 ## Console Executable
 
 Quick aside.
@@ -204,14 +213,14 @@ else
 Behaviour we wanted:
 - Wait for user login to start layer1
 - If layer1 crashes restart it
-- If switch users need to stop layer1 and restart it as new user
+- If switch users, need to stop layer1 and restart it as new user
 - During user logout stop layer1
 
 Here we use [`WaitForSingleObject()`](https://docs.microsoft.com/en-us/windows/desktop/api/synchapi/nf-synchapi-waitforsingleobject) to monitor the layer1 process.  The first argument is the process handle, the second argument is `0` so the function returns immediately with the current state of the process:
 - `WaitTimeout` means it's running
 - `WaitObject0` means it's not
 
-[`GetExitCodeProcess()`](https://docs.microsoft.com/en-us/windows/desktop/api/processthreadsapi/nf-processthreadsapi-getexitcodeprocess) is a fairly recent addition.  Looking at the log output we noticed that when a user is logging out layer1 process exits and then the service tries unsuccessfully to restart it; it either fails to start or immediately exits.  Layer0 keeps trying to restart layer1 until `OnSessionChange(SessionLogoff)` is called (a few seconds after layer1 first exited).  Part of this will be covered when I discuss details of layer1.
+[`GetExitCodeProcess()`](https://docs.microsoft.com/en-us/windows/desktop/api/processthreadsapi/nf-processthreadsapi-getexitcodeprocess) is a fairly recent addition.  Looking at the log output we noticed that after the user initiates logout, layer1 process exits and then the service tries unsuccessfully to restart it; it either fails to start or immediately exits.  Layer0 keeps trying to restart layer1 until `OnSessionChange(SessionLogoff)` is called (a few seconds after layer1 first exited).  We use the exit code to inform layer0 that the process intended to stop.  Part of this will be covered when I discuss details of layer1.
 
 ## Detours
 
