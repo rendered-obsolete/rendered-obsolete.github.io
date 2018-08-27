@@ -139,4 +139,4 @@ Misc. notes:
 
 Unfortunately, we don't have any perfomance tests for this area of code.  Because I would have loved to see the results after learning [what a beast ASP.NET Core is](https://www.ageofascent.com/2016/02/18/asp-net-core-exeeds-1-15-million-requests-12-6-gbps/).
 
-We've got a first version working, but I don't fully understand it yet.  The [same architecture can be used to bulid Net Core console applications](https://odetocode.com/blogs/scott/archive/2018/08/16/three-tips-for-console-applications-in-net-core.aspx), so it would be well-worth investing more time.
+We've got a first version working, but I don't fully understand it yet.  The [same architecture can be used to build Net Core console applications](https://odetocode.com/blogs/scott/archive/2018/08/16/three-tips-for-console-applications-in-net-core.aspx), so it would be well-worth investing more time.
