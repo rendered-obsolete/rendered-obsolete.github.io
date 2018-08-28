@@ -4,14 +4,13 @@ title: Rust & Apache Thrift
 tags:
 - rust
 - thrift
-- zplus
 ---
 
 Using [Apache Thrift](https://thrift.apache.org/) enables us to generate client libraries [for our SDK](https://github.com/subor/sdk) (still very-WIP) targetting [a variety of languages](https://thrift.apache.org/docs/Languages).  I'm going to create a test library for [Rust](https://www.rust-lang.org/en-US/) that makes a simple RPC call to our [background service]({% post_url /2018/2018-08-21-windows-services %}).
 
 ## Generation
 
-One of the reasons we introduced [API Tool](https://github.com/subor/sdk/blob/master/docs/topics/build_sdk_source.md#thrift) was to make it easier to work with our .thrift interface definition files:  
+One of the reasons we introduced [API Tool](https://github.com/subor/sdk/blob/master/docs/topics/build_sdk_source.md#thrift) was to make it easier to work with our [.thrift interface definition files](https://github.com/subor/sdk/tree/master/ThriftFiles):  
 ![]({{ "/assets/devtool_apitool_rs.png" | absolute_url }})
 
 Click __Generate__ to process all the thrift files:
@@ -38,7 +37,7 @@ As a first step I want to build a rust library containing the generated source f
 
 1. Copy all the generated .rs files into the `src/` directory.
 
-Right next to `lib.rs`, `localization_service_s_d_k_data_types.rs` caught my eye and seems like a good place to start:
+Right next to `lib.rs`, `localization_service_s_d_k_data_types.rs` caught my eye and seems like a good place to start.  It contains:
 ```rust
 impl LanguageChangedMsg {
   pub fn new<F1, F2>(new_language: F1, old_language: F2) -> LanguageChangedMsg where F1: Into<Option<String>>, F2: Into<Option<String>> {
@@ -48,6 +47,14 @@ impl LanguageChangedMsg {
     }
   }
   //...
+```
+
+Which was generated from [LocalizationServiceSDKDataTypes.thrift](https://github.com/subor/sdk/blob/master/ThriftFiles/LocalizationService/LocalizationServiceSDKDataTypes.thrift):
+```
+struct LanguageChangedMsg {
+    1: string newLanguage,
+    2: string oldLanguage,
+}
 ```
 
 To bring that file into scope, to the top of `lib.rs` add:
@@ -83,14 +90,14 @@ error[E0432]: unresolved import `ordered_float`
    |     ^^^^^^^^^^^^^ Did you mean `self::ordered_float`?
 ```
 
-The crates are `extern`'d in the sub-module (i.e. `xyz_data_types.rs`), so you either do what it says and prepend `self::` everywhere (_ugh_).  Or, to the top of lib.rs add:
+The crates are `extern`'d in the sub-module (i.e. `localization_service_s_d_k_data_types.rs`), so you either do what it says and prepend `self::` everywhere (_ugh_).  Or, to the top of lib.rs add:
 ```rust
 extern crate ordered_float;
 extern crate thrift;
 extern crate try_from;
 ```
 
-Try using the `LanguageChangedMsg` type in the test:
+Now, try using the `LanguageChangedMsg` type in the test:
 ```rust
 #[cfg(test)]
 mod tests {
@@ -183,19 +190,18 @@ Bi-directional channels like `TTcpChannel` implement [TIoChannel::split()](https
 
 Wrap output protocol with [`TMultiplexedOutputProtocol`](https://docs.rs/thrift/0.0.4/thrift/protocol/struct.TMultiplexedOutputProtocol.html) so we can have multiple `T*SyncClient`s that share a single TCP connection (or other transport).  The first argument, `service_name`, is application-defined name given to the service- here `"SER_L10NSERVICE"`.  Although not a thrift requirement, the server side of our application is expecting it.
 
-When the client wants to do RPC:
-1. 
-Requests from client specify a service and method by name: `SER_L10NSERVICE:GetCurrentLanguage`.  If you check the generated C# and rust source code, notice:
-- Serialized messages use names from the thrift specification
+To do RPC, make request using client method.  If you check the generated C# and rust source code, notice:
 - Rust methods use snake-case: `get_current_language()`
-- C# methods omit `Async` suffix
+- `async` C# methods append `Async` suffix: `GetCurrentLanguageAsync()`
+- Serialized messages specify method by name from the thrift specification: `GetCurrentLanguage`
+- Multiplexing adds service name: `SER_L10NSERVICE:GetCurrentLanguage`
 
 
 ## Server
 
 For the server-side I'm testing with [our latest release](https://github.com/subor/sdk/releases) of [layer0]({% post_url /2018/2018-08-21-windows-services %}).
 
-This is a compatible server in C# using the same thrift file:
+Here's a compatible server in C# using the same thrift files:
 ```csharp
 class Program
 {
@@ -248,3 +254,5 @@ ApplicationError { kind: WrongMethodName, message: "expected GetCurrentLanguage 
 ```
 
 Check the names registered with `TMultiplexedOutputProtocol::new()` (client) and `RegisterProcessor()` (server) match.
+
+Overall, my experience with Rust was like my experience with F#; [if it compiles, it works](http://blog.tamizhvendan.in/blog/2013/08/08/if-your-fsharp-code-compiles-it-usually-works/).
