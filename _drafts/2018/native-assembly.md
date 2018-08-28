@@ -17,7 +17,7 @@ Different hardware and OSes have different caveats.  For the sake of simplicity,
 - Binary targetting "Any CPU" will JIT to "any" architecture (x86, x64, ARM, etc.)- but only one at a time.
 - On 64-bit Windows, an "Any CPU" binary will JIT to x64, and it can only load x64 native DLLs.
 
-## PInvoke
+## Windows "Hack"
 
 [Pinvoke](https://docs.microsoft.com/en-us/cpp/dotnet/how-to-call-native-dlls-from-managed-code-using-pinvoke) is one approach to call functions in native DLLs from C#.
 
@@ -61,7 +61,7 @@ interface ILibADL
 
 class LibADL64 : ILibADL
 {
-    [DllImport("atiadlxx.dll")]
+    [DllImport("atiadlxx.dll")] // 64-bit dll
     static extern int ADL_Adapter_SerialNumber_Get(int adapter, out Int64 serial);
 
     public Int64 GetSerialNumber(int adapter)
@@ -77,7 +77,7 @@ class LibADL64 : ILibADL
 
 class LibADL32 : ILibADL
 {
-    [DllImport("atiadlxy.dll")]
+    [DllImport("atiadlxy.dll")] // 32-bit dll
     static extern int ADL_Adapter_SerialNumber_Get(int adapter, out Int64 serial);
 
     //...
@@ -108,6 +108,7 @@ static void InitializeDelegates(IntPtr nanomsgLibAddr, NanomsgLibraryLoader.Symb
     nn_socket = (nn_socket_delegate)Marshal.GetDelegateForFunctionPointer(lookup(nanomsgLibAddr, "nn_socket"), typeof(nn_socket_delegate));
 }
 ```
+
 Where `lookup` is [`GetProcAddress()`](https://msdn.microsoft.com/en-us/library/windows/desktop/ms683212(v=vs.85).aspx) on Windows (and `dlsym()` on posix platforms).
 
 A similar approach is [used by gRPC](https://github.com/grpc/grpc/blob/master/src/csharp/Grpc.Core/Internal/UnmanagedLibrary.cs#L114).
@@ -124,9 +125,53 @@ But it always ends the same way: frustration trying to debug my (miss-)use of a 
 
 ## "Modern" PInvoke
 
-Necessity being the mother of invention, [supporting multiple platforms](https://blog.3d-logic.com/2015/11/10/using-native-libraries-in-asp-net-5/) begat [advances in nuget packaging]({% post_url /2018/2018-08-15-nupkg-with-native %}) to address the issue.  But has the following drawbacks:
+Necessity being the mother of invention, [supporting multiple platforms](https://blog.3d-logic.com/2015/11/10/using-native-libraries-in-asp-net-5/) begat [advances in nuget packaging]({% post_url /2018/2018-08-15-nupkg-with-native %}) to address the issue.
+
+Been trying to get a [csnng](https://github.com/zplus/csnng) nupkg containing a native library ([nng](https://github.com/nanomsg/nng)) working on OSX:
+1. Build the dynamic library (libnng.dylib):
+    ```
+    mkdir build && cd build
+    cmake -G Ninja -DBUILD_SHARED_LIBS=ON ..
+    ```
+1. Copy into `runtimes/osx-x64/native` of the nupkg
+
+```
+MONO_LOG_MASK=dll
+MONO_LOG_LEVEL=info
+```
+
+In [csnng RepSocket.cs]():
+```csharp
+[DllImport("nng", EntryPoint = "nng_rep0_open", CallingConvention = Cdecl)]
+[return: MarshalAs(I4)]
+private static extern int __Open(ref uint sid);
+```
+
+```
+Mono: DllImport error loading library 'libnng': 'dlopen(libnng, 9): image not found'.
+Mono: DllImport error loading library 'libnng.dylib': 'dlopen(libnng.dylib, 9): image not found'.
+Mono: DllImport error loading library 'libnng.so': 'dlopen(libnng.so, 9): image not found'.
+Mono: DllImport error loading library 'libnng.bundle': 'dlopen(libnng.bundle, 9): image not found'.
+Mono: DllImport error loading library 'nng': 'dlopen(nng, 9): image not found'.
+Mono: DllImport error loading library '/Users/jake/projects/csnng/src/test/bin/Debug/libnng': 'dlopen(/Users/jake/projects/csnng/src/test/bin/Debug/libnng, 9): image not found'.
+Mono: DllImport error loading library '/Users/jake/projects/csnng/src/test/bin/Debug/libnng.dylib': 'dlopen(/Users/jake/projects/csnng/src/test/bin/Debug/libnng.dylib, 9): image not found'.
+Mono: DllImport error loading library '/Users/jake/projects/csnng/src/test/bin/Debug/libnng.so': 'dlopen(/Users/jake/projects/csnng/src/test/bin/Debug/libnng.so, 9): image not found'.
+Mono: DllImport error loading library '/Users/jake/projects/csnng/src/test/bin/Debug/libnng.bundle': 'dlopen(/Users/jake/projects/csnng/src/test/bin/Debug/libnng.bundle, 9): image not found'.
+Mono: DllImport error loading library '/Library/Frameworks/Mono.framework/Versions/5.12.0/lib/libnng': 'dlopen(/Library/Frameworks/Mono.framework/Versions/5.12.0/lib/libnng, 9): image not found'.
+Mono: DllImport error loading library '/Library/Frameworks/Mono.framework/Versions/5.12.0/lib/libnng.dylib': 'dlopen(/Library/Frameworks/Mono.framework/Versions/5.12.0/lib/libnng.dylib, 9): image not found'.
+Mono: DllImport error loading library '/Library/Frameworks/Mono.framework/Versions/5.12.0/lib/libnng.so': 'dlopen(/Library/Frameworks/Mono.framework/Versions/5.12.0/lib/libnng.so, 9): image not found'.
+Mono: DllImport error loading library '/Library/Frameworks/Mono.framework/Versions/5.12.0/lib/libnng.bundle': 'dlopen(/Library/Frameworks/Mono.framework/Versions/5.12.0/lib/libnng.bundle, 9): image not found'.
+Mono: DllImport error loading library '/Library/Frameworks/Mono.framework/Versions/5.12.0/Libraries/libnng': 'dlopen(/Library/Frameworks/Mono.framework/Versions/5.12.0/Libraries/libnng, 9): image not found'.
+Mono: DllImport error loading library '/Library/Frameworks/Mono.framework/Versions/5.12.0/Libraries/libnng.dylib': 'dlopen(/Library/Frameworks/Mono.framework/Versions/5.12.0/Libraries/libnng.dylib, 9): image not found'.
+Mono: DllImport error loading library '/Library/Frameworks/Mono.framework/Versions/5.12.0/Libraries/libnng.so': 'dlopen(/Library/Frameworks/Mono.framework/Versions/5.12.0/Libraries/libnng.so, 9): image not found'.
+Mono: DllImport error loading library '/Library/Frameworks/Mono.framework/Versions/5.12.0/Libraries/libnng.bundle': 'dlopen(/Library/Frameworks/Mono.framework/Versions/5.12.0/Libraries/libnng.bundle, 9): image not found'.
+```
+
+
+But has the following drawbacks:
 - Over-reliance on MSBuild that can be a hassle to debug and get working correctly
 - Necessitates setting __Platform target__ to something other than `Any CPU`
+
 
 ## Performance
 
