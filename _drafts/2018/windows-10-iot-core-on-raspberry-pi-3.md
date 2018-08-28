@@ -35,7 +35,7 @@ and then convert it to an img usable with [dd](https://developer.apple.com/legac
     python ffu2img.py <path>/flash.ffu [output_filename]
     ```
 
-The image conversion should take a minute or two and result in a __flash.img__ file in the same location as the ffu.
+The image conversion should take a minute or two and result in a __flash.img__ file in the same location as the ffu (if you omit `output_filename`).
 
 The ffu2img repository also contains a py3 script for python 3, but I didn't try it.
 
