@@ -188,9 +188,9 @@ fn client() {
 
 Bi-directional channels like `TTcpChannel` implement [TIoChannel::split()](https://docs.rs/thrift/0.0.4/thrift/transport/trait.TIoChannel.html) to create "readable" and "writable" halves.  Each binary protocol can then take ownership of its own half.
 
-Wrap output protocol with [`TMultiplexedOutputProtocol`](https://docs.rs/thrift/0.0.4/thrift/protocol/struct.TMultiplexedOutputProtocol.html) so we can have multiple `T*SyncClient`s that share a single TCP connection (or other transport).  The first argument, `service_name`, is application-defined name given to the service- here `"SER_L10NSERVICE"`.  Although not a thrift requirement, the server side of our application is expecting it.
+Wrap output protocol with [`TMultiplexedOutputProtocol`](https://docs.rs/thrift/0.0.4/thrift/protocol/struct.TMultiplexedOutputProtocol.html) so we can have multiple `T*SyncClient`s that share a single TCP connection (or other transport).  The first parameter, `service_name`, is application-defined name given to the service- here `"SER_L10NSERVICE"`.  Although not a thrift requirement, the server side of our application is expecting it.
 
-To do RPC, make request using client method.  If you check the generated C# and rust source code, notice:
+To do RPC, make a request via a client method.  If you check the generated C# and rust source code, notice:
 - Rust methods use snake-case: `get_current_language()`
 - `async` C# methods append `Async` suffix: `GetCurrentLanguageAsync()`
 - Serialized messages specify method by name from the thrift specification: `GetCurrentLanguage`
