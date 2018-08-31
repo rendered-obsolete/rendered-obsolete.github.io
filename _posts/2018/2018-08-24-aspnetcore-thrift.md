@@ -131,6 +131,27 @@ Unable to resolve service for type 'Thrift.ITAsyncProcessor' while attempting to
 
 Services probably aren't the correct mechanism, while middleware seems intended for request/response handling.
 
+__Update 2018/8/31__
+
+The correct way to do it is:
+```csharp
+.ConfigureServices(services => {
+    //...
+
+    var processor = new TMultiplexedProcessor();
+    processor.RegisterProcessor("test", new TestProcessor());
+
+    services.AddSingleton<ITAsyncProcessor>(processor);
+    services.AddSingleton<ITProtocolFactory, TJsonProtocol.Factory>();
+})
+.Configure(app => {
+    //...
+
+    // Services registered above are passed to THttpServerTransport ctor
+    app.UseMiddleware<Thrift.Transports.Server.THttpServerTransport>();
+});
+```
+
 Misc. notes:
 - The difference between `AddSingleton()`, `AddTransient()`, etc. pertains to the [lifetime of the service](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection#service-lifetimes).
 - Make sure to call `webHostBuilder.StopAsync()` on shutdown.  Otherwise you'll get a native exception in the GC finalizer.
