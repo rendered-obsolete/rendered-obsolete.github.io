@@ -80,6 +80,16 @@ As it turns out
 [assembly: log4net.Config.XmlConfigurator(Watch = true, ConfigFile = "log4net.config")]
 ```
 
+However, [layer1]({% post_url /2018/2018-09-04-layer1 %}) (a .net framework exe) needs it's own config file.  So its `App.config` contains the following to override `XmlConfigurator.ConfigFile` with a value of `log4net.layer1.config`:
+```xml
+<configuration>
+  <appSettings>
+    <!-- This overrides "ConfigFile" of log4net.Config.XmlConfigurator -->
+    <add key="log4net.Config" value="log4net.layer1.config"/>
+  </appSettings>
+</configuration>
+```
+
 ## dotnet
 
 I've previously used [MonoDevelop](https://www.monodevelop.com/) for some time.  Post Microsoft acquisition it was rebranded [Visual Studio for Mac](https://docs.microsoft.com/en-us/visualstudio/mac/) and there was much rejoicing.  The honeymoon is over:
@@ -98,17 +108,17 @@ dotnet sln add l0core
 dotnet add l0core package NDesk.Options
 ```
 
-One thing that was a surprised was although you could add an existing project to the sln with:
-```bash
+One thing that surprised me was although you can add an existing project to the sln with:
+```
 dotnet sln add ../layer0/Layer0Shared/
 ```
 You couldn't easily add a project reference, for example:
-```bash
+```
 dotnet add l0core reference Layer0Shared
 ```
 
 Instead, you have to refer to the actual project:
-```bash
+```
 dotnet add l0core reference ../layer0/Layer0Shared/
 ```
 
@@ -123,3 +133,11 @@ Seems to be [this bug](https://github.com/OmniSharp/omnisharp-vscode/issues/1425
 
 __Start Debugging__ and immediately failing was great:  
 ![]({{ "/assets/vscode_debug.png" | absolute_url }})
+
+## VS Code
+
+On 1.26.1 and after 2 weeks using it as my main C# IDE, my gripes are:
+- Intellisense craps out frequently
+- No "tasks" window
+- Debugging/tests get stuck.  End up `killall dotnet` and restarting VS Code
+- No xml doc assistance: snippet or auto-complete

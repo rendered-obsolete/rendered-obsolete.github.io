@@ -135,38 +135,145 @@ Been trying to get a [csnng](https://github.com/zplus/csnng) nupkg containing a 
     ```
 1. Copy into `runtimes/osx-x64/native` of the nupkg
 
+Set following debug environment variables:
 ```
+# .NET Framework
 MONO_LOG_MASK=dll
 MONO_LOG_LEVEL=info
+# .NET Core
+DYLD_PRINT_LIBRARIES=YES
 ```
+- Visual Studio for Mac: Right-click project Options->Run.Configurations.Default under "Environment Variables"
 
-In [csnng RepSocket.cs]():
+Had the following in [csnng RepSocket.cs]():
 ```csharp
 [DllImport("nng", EntryPoint = "nng_rep0_open", CallingConvention = Cdecl)]
 [return: MarshalAs(I4)]
 private static extern int __Open(ref uint sid);
 ```
 
+Which works fine on Windows, but on OSX:
 ```
 Mono: DllImport error loading library 'libnng': 'dlopen(libnng, 9): image not found'.
 Mono: DllImport error loading library 'libnng.dylib': 'dlopen(libnng.dylib, 9): image not found'.
 Mono: DllImport error loading library 'libnng.so': 'dlopen(libnng.so, 9): image not found'.
 Mono: DllImport error loading library 'libnng.bundle': 'dlopen(libnng.bundle, 9): image not found'.
 Mono: DllImport error loading library 'nng': 'dlopen(nng, 9): image not found'.
-Mono: DllImport error loading library '/Users/jake/projects/csnng/src/test/bin/Debug/libnng': 'dlopen(/Users/jake/projects/csnng/src/test/bin/Debug/libnng, 9): image not found'.
-Mono: DllImport error loading library '/Users/jake/projects/csnng/src/test/bin/Debug/libnng.dylib': 'dlopen(/Users/jake/projects/csnng/src/test/bin/Debug/libnng.dylib, 9): image not found'.
-Mono: DllImport error loading library '/Users/jake/projects/csnng/src/test/bin/Debug/libnng.so': 'dlopen(/Users/jake/projects/csnng/src/test/bin/Debug/libnng.so, 9): image not found'.
-Mono: DllImport error loading library '/Users/jake/projects/csnng/src/test/bin/Debug/libnng.bundle': 'dlopen(/Users/jake/projects/csnng/src/test/bin/Debug/libnng.bundle, 9): image not found'.
-Mono: DllImport error loading library '/Library/Frameworks/Mono.framework/Versions/5.12.0/lib/libnng': 'dlopen(/Library/Frameworks/Mono.framework/Versions/5.12.0/lib/libnng, 9): image not found'.
+Mono: DllImport error loading library '/Users/jake/test/bin/Debug/libnng': 'dlopen(/Users/jake/test/bin/Debug/libnng, 9): image not found'.
+Mono: DllImport error loading library '/Users/jake/test/bin/Debug/libnng.dylib': 'dlopen(/Users/jake/test/bin/Debug/libnng.dylib, 9): image not found'.
+Mono: DllImport error loading library '/Users/jake/test/bin/Debug/libnng.so': 'dlopen(/Users/jake/test/bin/Debug/libnng.so, 9): image not found'.
+...
 Mono: DllImport error loading library '/Library/Frameworks/Mono.framework/Versions/5.12.0/lib/libnng.dylib': 'dlopen(/Library/Frameworks/Mono.framework/Versions/5.12.0/lib/libnng.dylib, 9): image not found'.
-Mono: DllImport error loading library '/Library/Frameworks/Mono.framework/Versions/5.12.0/lib/libnng.so': 'dlopen(/Library/Frameworks/Mono.framework/Versions/5.12.0/lib/libnng.so, 9): image not found'.
-Mono: DllImport error loading library '/Library/Frameworks/Mono.framework/Versions/5.12.0/lib/libnng.bundle': 'dlopen(/Library/Frameworks/Mono.framework/Versions/5.12.0/lib/libnng.bundle, 9): image not found'.
-Mono: DllImport error loading library '/Library/Frameworks/Mono.framework/Versions/5.12.0/Libraries/libnng': 'dlopen(/Library/Frameworks/Mono.framework/Versions/5.12.0/Libraries/libnng, 9): image not found'.
-Mono: DllImport error loading library '/Library/Frameworks/Mono.framework/Versions/5.12.0/Libraries/libnng.dylib': 'dlopen(/Library/Frameworks/Mono.framework/Versions/5.12.0/Libraries/libnng.dylib, 9): image not found'.
-Mono: DllImport error loading library '/Library/Frameworks/Mono.framework/Versions/5.12.0/Libraries/libnng.so': 'dlopen(/Library/Frameworks/Mono.framework/Versions/5.12.0/Libraries/libnng.so, 9): image not found'.
-Mono: DllImport error loading library '/Library/Frameworks/Mono.framework/Versions/5.12.0/Libraries/libnng.bundle': 'dlopen(/Library/Frameworks/Mono.framework/Versions/5.12.0/Libraries/libnng.bundle, 9): image not found'.
+...
 ```
 
+Solution comes from [Using Native Libraries in ASP.NET 5](https://blog.3d-logic.com/2015/11/10/using-native-libraries-in-asp-net-5/) blog:
+1. Preload the dylib
+1. Use `DllImport("__Internal")`
+
+Code initially based off [Nnanomsg](https://github.com/mhowlett/NNanomsg):
+```csharp
+static LibraryLoader()
+{
+    if (Environment.OSVersion.Platform == PlatformID.Unix ||
+                Environment.OSVersion.Platform == PlatformID.MacOSX ||
+                // Legacy mono value.  See https://www.mono-project.com/docs/faq/technical/
+                (int)Environment.OSVersion.Platform == 128)
+    {
+        LoadPosixLibrary();
+    }
+    else
+    {
+        LoadWindowsLibrary();
+    }
+}
+
+
+static void LoadWindowsLibrary()
+{
+    // ...
+}
+
+static void LoadPosixLibrary()
+{
+    const int RTLD_NOW = 2;
+    string rootDirectory = AppDomain.CurrentDomain.BaseDirectory;
+    string assemblyDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+
+    // Environment.OSVersion.Platform returns "Unix" for Unix or OSX, so use RuntimeInformation here
+    var isOsx = System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
+    string libFile = isOsx ? "libnng.dylib" : "libnng.so";
+    // x86 variants aren't in https://docs.microsoft.com/en-us/dotnet/core/rid-catalog
+    string arch = (isOsx ? "osx" : "linux") + "-" + (Environment.Is64BitProcess ? "x64" : "x86");
+
+    var paths = new[]
+        {
+            Path.Combine(rootDirectory, "runtimes", arch, "native", libFile),
+            Path.Combine(rootDirectory, libFile),
+            Path.Combine("/usr/local/lib", libFile),
+            Path.Combine("/usr/lib", libFile)
+        };
+
+    foreach (var path in paths)
+    {
+        if (path == null)
+        {
+            continue;
+        }
+
+        if (File.Exists(path))
+        {
+            var addr = dlopen(path, RTLD_NOW);
+            if (addr == IntPtr.Zero)
+            {
+                // Not using NanosmgException because it depends on nn_errno.
+                var error = Marshal.PtrToStringAnsi(dlerror());
+                throw new Exception("dlopen failed: " + path + " : " + error);
+            }
+            NativeLibraryPath = path;
+            return;
+        }
+    }
+
+    throw new Exception("dlopen failed: unable to locate library " + libFile + ". Searched: " + paths.Aggregate((a, b) => a + "; " + b));
+}
+
+[DllImport("libdl")]
+static extern IntPtr dlopen(String fileName, int flags);
+
+[DllImport("libdl")]
+static extern IntPtr dlerror();
+
+[DllImport("libdl")]
+static extern IntPtr dlsym(IntPtr handle, String symbol);
+```
+
+The use of [System.Runtime.InteropServices.RuntimeInformation](https://docs.microsoft.com/en-us/dotnet/api/system.runtime.interopservices.runtimeinformation) I picked up from [this blog](https://json-formatter.codepedia.info/dotnet-core-to-detect-operating-system-os-platform/).
+
+`[DllImport("libdl")]` will load .dylib on OSX and .so on Linux.
+
+Imported function:
+```csharp
+[DllImport("__Internal", EntryPoint = "nng_rep0_open", CallingConvention = Cdecl)]
+[return: MarshalAs(I4)]
+private static extern int __Open(ref uint sid);
+```
+
+Debug output:
+```
+Native library: /Users/jake/test/bin/Debug/runtimes/osx-x64/native/libnng.dylib
+Mono: DllImport attempting to load: '__Internal'.
+Mono: DllImport loaded library '(null)'.
+Mono: DllImport searching in: '__Internal' ('(null)').
+Mono: Searching for 'nng_rep0_open'.
+Mono: Probing 'nng_rep0_open'.
+Mono: Found as 'nng_rep0_open'.
+```
+
+It looks like there's a few alternatives:
+- Setting [DYLD_xxx_PATH](https://www.mono-project.com/docs/advanced/pinvoke/#macos-framework-and-dylib-search-path)
+- [`.config` file with `<dllmap>`](https://www.mono-project.com/docs/advanced/pinvoke/#library-names)
+- Just copying the dylib to the output path
 
 But has the following drawbacks:
 - Over-reliance on MSBuild that can be a hassle to debug and get working correctly
