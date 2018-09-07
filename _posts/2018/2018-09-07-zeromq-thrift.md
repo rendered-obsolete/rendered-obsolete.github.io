@@ -10,7 +10,7 @@ tags:
 
 The background service portion of our client ([service]({% post_url /2018/2018-08-21-windows-services %}), [layer0]({% post_url /2018/2018-08-28-layer0 %}), [layer1]({% post_url /2018/2018-09-04-layer1 %})) originally used a combination of Thrift transports for RPC and [ZeroMQ](http://zeromq.org/) (via [NetMQ](https://github.com/zeromq/netmq/)) for [pub/sub](https://en.wikipedia.org/wiki/Publish%E2%80%93subscribe_pattern).  Consequently, we had a ton of ports/connections.
 
-[Multiplexing the thrift clients]({% /2018/2018-08-30-rust-thrift %}) with [TMultiplexedProtocol](https://github.com/apache/thrift/blob/master/lib/netcore/Thrift/Protocols/TMultiplexedProtocol.cs) helped.  Our technical director had the idea of using ZeroMQ itself as the transport for thrift.  In effect, multiplexing all our communicating agents over ZeroMQ.
+[Multiplexing the thrift clients]({% post_url /2018/2018-08-30-rust-thrift %}) with [TMultiplexedProtocol](https://github.com/apache/thrift/blob/master/lib/netcore/Thrift/Protocols/TMultiplexedProtocol.cs) helped.  Our technical director had the idea of using ZeroMQ itself as the transport for thrift.  In effect, multiplexing all our communicating agents over ZeroMQ.
 
 We also leverage the [Majordomo protocol](https://rfc.zeromq.org/spec:7/MDP/) (from the [NetMQ samples](https://github.com/NetMQ/Samples/tree/master/src/Majordomo)) to provide additional service-oriented functionality atop ZeroMQ.
 
