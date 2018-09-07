@@ -12,7 +12,7 @@ The background service portion of our client ([service]({% post_url /2018/2018-0
 
 [Multiplexing the thrift clients]({% /2018/2018-08-30-rust-thrift %}) with [TMultiplexedProtocol](https://github.com/apache/thrift/blob/master/lib/netcore/Thrift/Protocols/TMultiplexedProtocol.cs) helped.  Our technical director had the idea of using ZeroMQ itself as the transport for thrift.  In effect, multiplexing all our communicating agents over ZeroMQ.
 
-[Majordomo protocol](https://rfc.zeromq.org/spec:7/MDP/) from the [NetMQ samples](https://github.com/NetMQ/Samples/tree/master/src/Majordomo)
+We also leverage the [Majordomo protocol](https://rfc.zeromq.org/spec:7/MDP/) (from the [NetMQ samples](https://github.com/NetMQ/Samples/tree/master/src/Majordomo)) to provide additional service-oriented functionality atop ZeroMQ.
 
 ## Transport
 
