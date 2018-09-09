@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Loading 32/64-bit Native Libraries in C#
+title: Loading Native Libraries in C#
 tags:
 - csharp
 - pinvoke
@@ -9,7 +9,7 @@ tags:
 - win10
 ---
 
-While possible for C# to call functions in native libraries, you must avoid mixing 32 and 64-bit binaries lest you invite the wrath of `BadImageFormatException`.  Woe unto you.
+While possible for C# to call functions in native libraries, you must avoid mixing 32 and 64-bit binaries at runtime lest you invite the wrath of `BadImageFormatException`.  Woe unto you.
 
 Different hardware and OSes have different caveats.  This is mostly talking about 64-bit Windows 10 and occasionally OSX (64 bit).
 
@@ -17,7 +17,7 @@ Different hardware and OSes have different caveats.  This is mostly talking abou
 
 .Net assemblies can be compiled with a platform target of "Any CPU".  [This SO answer](https://stackoverflow.com/questions/5229768/c-sharp-compiling-for-32-64-bit-or-for-any-cpu) covers it nicely:
 - Binary targetting "Any CPU" will [JIT](https://en.wikipedia.org/wiki/Just-in-time_compilation) to "any" architecture (x86, x64, ARM, etc.)- but only one at a time.
-- On 64-bit Windows, an "Any CPU" binary will JIT to x64, and it can only load x64 native DLLs.
+- On 64-bit Windows 10, an "Any CPU" binary will JIT to x64, and it can only load x64 native DLLs.
 
 What happens if you try to load a 32-bit assembly into a 64-bit process (or vice-versa)?  [`BadImageFormatException`](https://docs.microsoft.com/en-us/dotnet/api/system.badimageformatexception?view=netframework-4.7.2).
 
@@ -99,6 +99,8 @@ else
 }
 ```
 
+Simple and effective.  But doesn't work on OSX (or Linux).
+
 ## GetDelegateForFunctionPointer
 
 [Another approach I first came across](https://github.com/mhowlett/NNanomsg/blob/master/NNanomsg/Interop.cs#L193) when experimenting with [NNanomsg](https://github.com/zplus/NNanomsg) uses [GetDelegateForFunctionPointer()](https://docs.microsoft.com/en-us/dotnet/api/system.runtime.interopservices.marshal.getdelegateforfunctionpointer):
@@ -139,17 +141,6 @@ We've been trying to get a [csnng](https://github.com/zplus/csnng) nupkg contain
     ```
 1. Copy into `runtimes/osx-x64/native` of the nupkg
 
-Set following debug environment variables:
-```
-# .NET Framework
-MONO_LOG_MASK=dll
-MONO_LOG_LEVEL=info
-# .NET Core
-DYLD_PRINT_LIBRARIES=YES
-```
-- Visual Studio for Mac: Right-click project Options->Run.Configurations.Default under "Environment Variables"
-- Visual Studio Code: in `"configurations"` section of `.vscode/launch.json` add `"env": { "DYLD_PRINT_LIBRARIES":"YES" }`
-
 In [RepSocket.cs](https://github.com/zplus/csnng/blob/master/src/Nanomsg2.Sharp/Protocols/Reqrep/RepSocket.cs#L23):
 ```csharp
 [DllImport("nng", EntryPoint = "nng_rep0_open", CallingConvention = Cdecl)]
@@ -172,7 +163,19 @@ Mono: DllImport error loading library '/Library/Frameworks/Mono.framework/Versio
 ...
 ```
 
-Solution comes from [Using Native Libraries in ASP.NET 5](https://blog.3d-logic.com/2015/11/10/using-native-libraries-in-asp-net-5/) blog:
+The additional library loading information is enabled by setting environment variables:
+```
+# .NET Framework
+MONO_LOG_MASK=dll
+MONO_LOG_LEVEL=info
+# .NET Core
+DYLD_PRINT_LIBRARIES=YES
+```
+- In Visual Studio for Mac: Right-click project __Options->Run.Configurations.Default__ under "Environment Variables"
+- Visual Studio Code: in `"configurations"` section of `.vscode/launch.json` add `"env": { "DYLD_PRINT_LIBRARIES":"YES" }`
+
+
+One solution comes from [Using Native Libraries in ASP.NET 5](https://blog.3d-logic.com/2015/11/10/using-native-libraries-in-asp-net-5/) blog:
 1. Preload the dylib (similar to Windows)
 1. Use `DllImport("__Internal")`
 
@@ -180,6 +183,7 @@ Code initially based off [Nnanomsg](https://github.com/mhowlett/NNanomsg):
 ```csharp
 static LibraryLoader()
 {
+    // Figure out which OS we're on.  Windows or "other".
     if (Environment.OSVersion.Platform == PlatformID.Unix ||
                 Environment.OSVersion.Platform == PlatformID.MacOSX ||
                 // Legacy mono value.  See https://www.mono-project.com/docs/faq/technical/
@@ -205,9 +209,12 @@ static void LoadPosixLibrary()
     // x86 variants aren't in https://docs.microsoft.com/en-us/dotnet/core/rid-catalog
     string arch = (isOsx ? "osx" : "linux") + "-" + (Environment.Is64BitProcess ? "x64" : "x86");
 
+    // Search a few different locations for our native assembly
     var paths = new[]
         {
+            // This is where native libraries in our nupkg should end up
             Path.Combine(rootDirectory, "runtimes", arch, "native", libFile),
+            // The build output folder
             Path.Combine(rootDirectory, libFile),
             Path.Combine("/usr/local/lib", libFile),
             Path.Combine("/usr/lib", libFile)
@@ -277,15 +284,16 @@ Works, but requiring every `DllImport` use `"__Internal"` leaves a lot to be des
 - [`.config` file with `<dllmap>`](https://www.mono-project.com/docs/advanced/pinvoke/#library-names)
 - Just copying the dylib to the output path as part of the build (arbitrary scripts can be included as part of a nupkg)
 
-But has the following drawbacks:
-- Over-reliance on MSBuild that can be a hassle to debug and get working correctly
-- Necessitates setting __Platform target__ to something other than `Any CPU`
+Again, this approach works, but has the following drawbacks:
+- Over-reliance on build/package tooling that can be a hassle to debug and get working correctly
+- On Windows, requires setting __Platform target__ to something other than `Any CPU`
+- Argument to `DllImport` must be compile-time constant and requires massaging to get "magic" working on all platforms
 
 ## One Load Context to Rule Them All
 
 Came across ["Best Practices for Assembly Loading"](https://docs.microsoft.com/en-us/dotnet/framework/deployment/best-practices-for-assembly-loading).
 
-Starting looking for information on these "load contexts" and found [an interesting document](https://github.com/dotnet/coreclr/blob/master/Documentation/design-docs/assemblyloadcontext.md#pinvoke-resolution):
+Started looking for information on these "load contexts" and found [an interesting document](https://github.com/dotnet/coreclr/blob/master/Documentation/design-docs/assemblyloadcontext.md#pinvoke-resolution):
 
 > Custom LoadContext can override the AssemblyLoadContext.LoadUnmanagedDll method to intercept PInvokes from within the LoadContext instance so that can be resolved from custom binaries
 
@@ -293,7 +301,7 @@ Ho ho.
 
 Also came across [this post](https://natemcmaster.com/blog/2018/07/25/netcore-plugins/) of someone that works on ASP.[]()NET Core.  [He's using `AssemblyLoadContext` to wrangle plugins](https://github.com/natemcmaster/DotNetCorePlugins), but mentions `LoadUnmanagedDll` is ["the only good way to load unmanaged binaries dynamically"](https://natemcmaster.com/blog/2018/07/25/netcore-plugins/#assemblyloadcontext-the-dark-horse).
 
-To get started, need [System.Runtime.Loader](https://www.nuget.org/packages/System.Runtime.Loader/): `dotnet add nng.NETCore package system.runtime.loader`
+To get started, need [System.Runtime.Loader](https://www.nuget.org/packages/System.Runtime.Loader/) package: `dotnet add nng.NETCore package system.runtime.loader`
 
 First attempt hard-coding paths and filenames:
 ```csharp
@@ -335,7 +343,7 @@ public async Task PushPull()
     //...
 ```
 
-Can't easily call the `static` pinvoke methods directly, but we can use a custom load context to instantiate a type which then calls the pinvokes.
+We can't easily call the `static` pinvoke methods directly, but we can use a custom load context to instantiate a type which then calls the pinvokes.
 
 I rarely find exceptions exciting, but this one is:
 ```
@@ -344,7 +352,7 @@ Exception thrown: 'System.InvalidCastException' in tests.dll: '[A]nng.Tests.Test
 
 Different load contexts, different types.
 
-I'm referencing `nng.NETCore` assembly in my test project and also trying to load it here.  How am I supposed to use a type I don't know about?  This is an opportunity for a C# feature I never use, [`dynamic`](https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/types/using-type-dynamic):
+I'm referencing the `nng.NETCore` assembly (which contains the pinvokes) in my test project and also trying to load it here.  How am I supposed to use a type I don't know about?  This is an opportunity for a C# feature I never use, [`dynamic`](https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/types/using-type-dynamic):
 
 ```csharp
 dynamic factory = Activator.CreateInstance(type);
@@ -379,7 +387,7 @@ Obviously, I don't want to use `dynamic` all over the place.  I refactored thing
 | "interfaces" | | | `interface`s of high-level types using P/Invoke
 | "pinvoke" | interfaces | | P/Invoke methods and wrapper types that use them
 
-That enables me to write the very sensible:
+That enables me to write the very sane:
 ```csharp
 [Fact]
 public async Task PushPull()
@@ -392,6 +400,21 @@ public async Task PushPull()
 ```
 
 And now I can load native binaries from anywhere I like.
+
+Out of curiousity, I wondered if I could add a reference back to the pinvoke, and after the native library had been successfully called use it directly:
+```csharp
+Native.Msg.UnsafeNativeMethods.nng_msg_alloc(out var msg, UIntPtr.Zero);
+```
+
+Nope:
+```
+nng.Tests.PushPullTests.PushPull [FAIL]
+[xUnit.net 00:00:00.5527750]       System.DllNotFoundException : Unable to load shared library 'nng' or one of its dependencies. In order to help diagnose loading problems, consider setting the DYLD_PRINT_LIBRARIES environment variable: dlopen(libnng, 1): image not found
+```
+
+The "default" load context knows not about the native library- it's only in my custom context.
+
+I get the feeling there may be a simpler way to achieve what I want.  Need to investigate this a bit more.
 
 ## Performance
 
