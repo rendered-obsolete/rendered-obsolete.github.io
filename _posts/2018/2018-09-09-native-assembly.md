@@ -137,7 +137,8 @@ We've been trying to get a [csnng](https://github.com/zplus/csnng) nupkg contain
 1. Build the dynamic library (libnng.dylib):
     ```
     mkdir build && cd build
-    cmake -G Ninja -DBUILD_SHARED_LIBS=ON ..
+    cmake -G Ninja -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release ..
+    ninja
     ```
 1. Copy into `runtimes/osx-x64/native` of the nupkg
 
@@ -350,9 +351,9 @@ I rarely find exceptions exciting, but this one is:
 Exception thrown: 'System.InvalidCastException' in tests.dll: '[A]nng.Tests.TestFactory cannot be cast to [B]nng.Tests.TestFactory. Type A originates from 'nng.NETCore, Version=0.0.1.0, Culture=neutral, PublicKeyToken=null' in the context 'Default' at location '/Users/jake/nng.NETCore/tests/bin/Debug/netcoreapp2.1/nng.NETCore.dll'. Type B originates from 'nng.NETCore, Version=0.0.1.0, Culture=neutral, PublicKeyToken=null' in the context 'Default' at location '/Users/jake/nng.NETCore/tests/bin/Debug/netcoreapp2.1/nng.NETCore.dll'.'
 ```
 
-Different load contexts, different types.
+Two types with the same name.  But, different load contexts, different types.
 
-I'm referencing the `nng.NETCore` assembly (which contains the pinvokes) in my test project and also trying to load it here.  How am I supposed to use a type I don't know about?  This is an opportunity for a C# feature I never use, [`dynamic`](https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/types/using-type-dynamic):
+We're referencing the `nng.NETCore` assembly (which contains the pinvokes) in the test project and also trying to load it here.  The tests no longer need that package reference to the pinvokes (which would also get rid of the duplicate types).  But, then how can we use a type we don't know about?  This is an opportunity for a C# feature I never use, [`dynamic`](https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/types/using-type-dynamic):
 
 ```csharp
 dynamic factory = Activator.CreateInstance(type);
@@ -360,7 +361,7 @@ dynamic factory = Activator.CreateInstance(type);
 var pushSocket = factory.CreatePusher(url, true);
 ```
 
-Test passes, hit breakpoints most of the places I expect (neither VS Code nor VS for Mac can hit breakpoints through `dynamic`), but if I set `DYLD_PRINT_LIBRARIES` my assemblies are conspiculously absent:
+Test passes, hit breakpoints most of the places I expect (neither VS Code nor VS for Mac can hit breakpoints through `dynamic`), but if I set `DYLD_PRINT_LIBRARIES` the dynamically loaded assemblies are conspiculously absent:
 ```
 dyld: loaded: /usr/local/share/dotnet/shared/Microsoft.NETCore.App/2.1.2/System.Globalization.Native.dylib
 dyld: loaded: /usr/local/share/dotnet/shared/Microsoft.NETCore.App/2.1.2/System.Native.dylib
@@ -379,7 +380,7 @@ dyld: unloaded: /usr/local/share/dotnet/shared/Microsoft.NETCore.App/2.1.2/libho
 
 It would seem `AssemblyLoadContext.LoadFrom*()` doesn't use `dyld`?  Hmm... not sure about that.
 
-Obviously, I don't want to use `dynamic` all over the place.  I refactored things; remove the test assembly reference to the pinvoke assembly, and introduce a "middle-man"/glue assembly containing interfaces both use:
+Obviously, we don't want to use `dynamic` all over the place.  Tried refactoring things; remove the test assembly reference to the pinvoke assembly, and introduce a "middle-man"/glue assembly containing interfaces both use:
 
 | Assembly | Project References | Dynamically Loads | Notes
 |-|-|-|-
@@ -387,7 +388,7 @@ Obviously, I don't want to use `dynamic` all over the place.  I refactored thing
 | "interfaces" | | | `interface`s of high-level types using P/Invoke
 | "pinvoke" | interfaces | | P/Invoke methods and wrapper types that use them
 
-That enables me to write the very sane:
+That enables us to write the very sane:
 ```csharp
 [Fact]
 public async Task PushPull()
@@ -399,9 +400,9 @@ public async Task PushPull()
     var pushSocket = factory.CreatePusher("ipc://test", true);
 ```
 
-And now I can load native binaries from anywhere I like.
+And now we can load native binaries from anywhere.
 
-Out of curiousity, I wondered if I could add a reference back to the pinvoke, and after the native library had been successfully called use it directly:
+Out of curiousity, if we add a reference back to the pinvoke assembly, can we call pinvoke directly once the native library had been loaded:
 ```csharp
 Native.Msg.UnsafeNativeMethods.nng_msg_alloc(out var msg, UIntPtr.Zero);
 ```
@@ -412,9 +413,9 @@ nng.Tests.PushPullTests.PushPull [FAIL]
 [xUnit.net 00:00:00.5527750]       System.DllNotFoundException : Unable to load shared library 'nng' or one of its dependencies. In order to help diagnose loading problems, consider setting the DYLD_PRINT_LIBRARIES environment variable: dlopen(libnng, 1): image not found
 ```
 
-The "default" load context knows not about the native library- it's only in my custom context.
+The "default" load context knows not about the native library- it's only in the custom context.
 
-I get the feeling there may be a simpler way to achieve what I want.  Need to investigate this a bit more.
+I get the feeling there may be a simpler way to achieve this.  Need to investigate this a bit more.
 
 ## Performance
 
