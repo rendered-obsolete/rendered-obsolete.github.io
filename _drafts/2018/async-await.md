@@ -4,6 +4,7 @@ title: Subtleties of async/await in C#
 tags:
 - csharp
 - async
+- performance
 ---
 
 ## Jargon
@@ -34,6 +35,10 @@ Although not quite as usable as the threads window, the tasks window (when debug
 
 ## Misled and Led-Astray
 
+The continued existance of legacy APIs seemingly encourage incorrect behaviour.
+
+From ["Async/Await - Best Practices in Asynchronous Programming"](https://msdn.microsoft.com/en-us/magazine/jj991977.aspx?f=255&MSPPError=-2147217396) and other sources:
+
 - Task provides [`Result` property](https://docs.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1.result?view=netframework-4.7.2) and [`Wait()`](https://docs.microsoft.com/en-us/dotnet/api/system.threading.tasks.task.wait?view=netframework-4.7.2), but [you might not want to use them](https://blog.stephencleary.com/2012/07/dont-block-on-async-code.html).
 
 - You can start tasks with [`TaskFactory.StartNew()`](https://docs.microsoft.com/en-us/dotnet/api/system.threading.tasks.taskfactory.startnew?view=netframework-4.7.2), but [you might not want to](https://blogs.msdn.microsoft.com/pfxteam/2011/10/24/task-run-vs-task-factory-startnew/) ([also see](https://blog.stephencleary.com/2013/08/startnew-is-dangerous.html)).
@@ -43,6 +48,8 @@ Although not quite as usable as the threads window, the tasks window (when debug
 - `StartNew(..., cancellationTokenSource.Token);` is [a task that might not start, not a cancellable task](https://blog.stephencleary.com/2015/03/a-tour-of-task-part-9-delegate-tasks.html).
 
 - Prefer ["slim" variants](https://docs.microsoft.com/en-us/dotnet/api/system.threading.semaphoreslim?view=netframework-4.7.2) over ["fat" ("non-slim"?) versions](https://docs.microsoft.com/en-us/dotnet/api/system.threading.semaphore?view=netframework-4.7.2) of synchronization primitives
+
+
 
 ## It's Hard
 
@@ -91,7 +98,9 @@ https://docs.microsoft.com/en-us/dotnet/framework/winforms/controls/how-to-make-
 
 __Read.  Read.  Read.__
 
-__Borrow Your Wheels__
+There's tons of documents and resources.  The insight and experience of others is invaluable.  But make sure to get your hands dirty, too.
+
+__Ride on the Wheels of Others__
 
 __Check the source__
 

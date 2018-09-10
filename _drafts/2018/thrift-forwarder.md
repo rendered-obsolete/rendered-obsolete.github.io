@@ -264,9 +264,9 @@ A big ol' `switch` statement 1:1 mapping of `TType` to `TProtocol.(Read|Write)*A
 
 ## Short Way
 
-As it turns out, we've been talking about a component that already does what we want- `TMultiplexedProcessor`; it receives a message, processes the service header and forwards it to a registered processor.
+As it turns out, we've mentioned a component that already does what we want- `TMultiplexedProcessor`; it receives a message, processes the service header and forwards it to a registered processor.
 
-Inside `ProcessAsync()`:
+Inside `TMultiplexedProcessor.ProcessAsync()`:
 ```csharp
 // Create a new TMessage, removing the service name
 var newMessage = new TMessage(

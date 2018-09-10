@@ -1,3 +1,15 @@
+---
+layout: post
+title: A Potpourri of Net Core
+tags:
+- csharp
+- pinvoke
+- osx
+- native
+- win10
+---
+
+Random notes related to netcore that didn't deserve a post of their own.
 
 ## Converting libs
 
@@ -90,6 +102,12 @@ However, [layer1]({% post_url /2018/2018-09-04-layer1 %}) (a .net framework exe)
 </configuration>
 ```
 
+## PackageReference
+
+https://blog.nuget.org/20180409/migrate-packages-config-to-package-reference.html
+https://docs.microsoft.com/en-us/nuget/reference/migrate-packages-config-to-package-reference
+BUG: https://developercommunity.visualstudio.com/content/problem/251740/migrate-packagesconfig-to-packagereference-not-sho.html
+
 ## dotnet
 
 I've previously used [MonoDevelop](https://www.monodevelop.com/) for some time.  Post Microsoft acquisition it was rebranded [Visual Studio for Mac](https://docs.microsoft.com/en-us/visualstudio/mac/) and there was much rejoicing.  The honeymoon is over:
@@ -137,7 +155,51 @@ __Start Debugging__ and immediately failing was great:
 ## VS Code
 
 On 1.26.1 and after 2 weeks using it as my main C# IDE, my gripes are:
-- Intellisense craps out frequently
-- No "tasks" window
-- Debugging/tests get stuck.  End up `killall dotnet` and restarting VS Code
-- No xml doc assistance: snippet or auto-complete
+- Intellisense stops working frequently (need to __Cmd+Shift+p->`restart omnisharp`__)
+- No ["tasks" window](https://docs.microsoft.com/en-us/visualstudio/debugger/using-the-tasks-window?view=vs-2017)
+- Starting debugger or runnings tests get stuck.  End up `killall dotnet` and restarting VS Code
+- No [XML doc](https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/xmldoc/xml-documentation-comments) assistance.  In regular Visual Studio:
+  * `///` starts comment block, and hitting return indents and inserts `///`
+  * [Tags like `<see>`](https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/xmldoc/recommended-tags-for-documentation-comments) auto-complete
+- Non-trivial yet common types (e.g. `System.Assembly`) take debugger a while to evaluate
+
+
+## Appveyor
+
+After adding the project via the web interface either commiting an empty `appveyor.yml` or clicking __NEW BUILD__ will trigger a build and tests.
+
+```
+msbuild "C:\projects\nng-netcore\nng.NETCore.sln" /verbosity:minimal /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+Microsoft (R) Build Engine version 14.0.25420.1
+Copyright (C) Microsoft Corporation. All rights reserved.
+C:\projects\nng-netcore\nng.NETCore\nng.NETCore.csproj(1,1): error MSB4041: The default XML namespace of the project must be the MSBuild XML namespace. If the project is authored in the MSBuild 2003 format, please add xmlns="http://schemas.microsoft.com/developer/msbuild/2003" to the <Project> element. If the project has been authored in the old 1.0 or 1.2 format, please convert it to MSBuild 2003 format.
+```
+
+Appveyor defaults to using msbuild 14.0 which doesn't support the latest project format.  Change my `appveyor.yml` to:
+```yml
+image: Visual Studio 2017
+```
+
+Push (or __NEW BUILD__):
+```
+C:\Program Files\dotnet\sdk\2.1.401\Sdks\Microsoft.NET.Sdk\targets\Microsoft.PackageDependencyResolution.targets(198,5): error NETSDK1004: Assets file 'C:\projects\nng-netcore\nng.NETCore\obj\project.assets.json' not found. Run a NuGet package restore to generate this file. [C:\projects\nng-netcore\nng.NETCore\nng.NETCore.csproj]
+Done Building Project "C:\projects\nng-netcore\nng.NETCore\nng.NETCore.csproj" (default targets) -- FAILED.
+```
+
+To `appveyor.yml` add:
+```yml
+before_build:
+  - cmd: dotnet restore
+```
+## Code Coverage
+https://www.appveyor.com/blog/2017/03/17/codecov/
+https://github.com/codecov/example-csharp
+https://github.com/OpenCover/opencover/wiki/Usage
+
+After first build:
+`Unable to determine a parent commit to compare against.`
+
+
+## Flair
+
+Codecov.io repo __Settings / Badge__
