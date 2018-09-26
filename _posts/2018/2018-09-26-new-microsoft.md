@@ -7,7 +7,7 @@ tags:
 - discuss
 ---
 
-The [recent annoucement that Hyper-V Quick Create now features Ubuntu](https://blogs.windows.com/buildingapps/2018/09/17/run-ubuntu-virtual-machines-made-even-easier-with-hyper-v-quick-create/) served as a reminder of something I originally regarded with cautious amusement, but has now subsisted for long enough I can actually accept it.  Microsoft is no longer the "evil empire" it once was.
+The [recent announcement that Hyper-V Quick Create now features Ubuntu](https://blogs.windows.com/buildingapps/2018/09/17/run-ubuntu-virtual-machines-made-even-easier-with-hyper-v-quick-create/) served as a reminder of something I originally regarded with cautious amusement, but has now subsisted for long enough I can actually accept it.  Microsoft is no longer the "evil empire" it once was.
 
 ## In No Particular Order
 
@@ -31,6 +31,6 @@ On that note, [OpenSSH is an optional Windows component](https://blogs.msdn.micr
 
 Can't leave out the much maligned [Github acquisition](https://blogs.microsoft.com/blog/2018/06/04/microsoft-github-empowering-developers/).  But then [I've already weighed in on this issue]({% post_url /2018/2018-08-11-so-long-to-bitbucket %}).
 
-Honerable mention goes to [Azure](https://azure.microsoft.com/en-us/).  Never used it, but have heard generally good things.  And let's be honest, Amazon/AWS need the competition.
+Honorable mention goes to [Azure](https://azure.microsoft.com/en-us/).  Never used it, but have heard generally good things.  And let's be honest, Amazon/AWS need the competition.
 
 Just the latest chapter in the ["embrace, extend, extinguish"](https://en.wikipedia.org/wiki/Embrace,_extend,_and_extinguish) saga?  Perhaps.
