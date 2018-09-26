@@ -23,11 +23,13 @@ When [Windows Subsystem for Linux](https://docs.microsoft.com/en-us/windows/wsl/
 
 After using Emacs for 3 years and then Vim for almost 15 as my general-purpose text editor of choice, [Visual Studio Code](https://code.visualstudio.com/) has handedly brushed them aside.
 
-[.Net Core](https://github.com/dotnet) seems to have really lit the fire under C#.  My love for it and .Net Standard can scarely be contained.
+[.Net Core](https://github.com/dotnet) seems to have really lit the fire under C#.  My love for it and .Net Standard can scarcely be contained.
 
-Just the other day I found out [PowerShell is also multi-platform](https://github.com/powershell/powershell).  Its remoting functionality was convoluted/clumsy compared to ssh the last time I looked at it (2015), but I have long lusted after its commandline argument auto-completion.  And, if Windows is a necessity in your world, a first-class replacement for cmd.exe was sorely needed.
+Just the other day I found out [PowerShell is multi-platform](https://github.com/powershell/powershell).  Its remoting functionality was convoluted/clumsy compared to ssh the last time I looked at it (2015), but I have long lusted after its commandline argument auto-completion.  And, if Windows is a necessity in your world, a first-class replacement for cmd.exe was sorely needed.
 
-Can't leave out the much maligned [Github acquisition](https://blogs.microsoft.com/blog/2018/06/04/microsoft-github-empowering-developers/).
+On that note, [OpenSSH is an optional Windows component](https://blogs.msdn.microsoft.com/powershell/2017/12/15/using-the-openssh-beta-in-windows-10-fall-creators-update-and-windows-server-1709/).
+
+Can't leave out the much maligned [Github acquisition](https://blogs.microsoft.com/blog/2018/06/04/microsoft-github-empowering-developers/).  But then [I've already weighed in on this issue]({% post_url /2018/2018-08-11-so-long-to-bitbucket %}).
 
 Honerable mention goes to [Azure](https://azure.microsoft.com/en-us/).  Never used it, but have heard generally good things.  And let's be honest, Amazon/AWS need the competition.
 
