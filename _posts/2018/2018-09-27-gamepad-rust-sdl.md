@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Gamepad Input with Rust
+title: Gamepad Input with Rust (cont.)
 tags:
 - rust
 - sdl2
