@@ -16,7 +16,7 @@ Source code: [Github/jeikabu/runng-sys](https://github.com/jeikabu/runng-sys).
 
 ## Rust FFI
 
-The Foreign Function Interface (FFI) is the way you can call [to/from Rust and another programming language](https://github.com/alexcrichton/rust-ffi-examples).  It is akin to Java's [Java-Native-Interface (JNI)](https://en.wikipedia.org/wiki/Java_Native_Interface), .Net's [C++/CLI](https://en.wikipedia.org/wiki/C%2B%2B/CLI) or [PInvoke](https://docs.microsoft.com/en-us/cpp/dotnet/how-to-call-native-dlls-from-managed-code-using-pinvoke), and other mechanisms in many other programming languages.
+Foreign Function Interface (FFI) is the way you can call [to/from Rust and another programming language](https://github.com/alexcrichton/rust-ffi-examples).  It is akin to Java's [Java-Native-Interface (JNI)](https://en.wikipedia.org/wiki/Java_Native_Interface), .Net's [C++/CLI](https://en.wikipedia.org/wiki/C%2B%2B/CLI) or [PInvoke](https://docs.microsoft.com/en-us/cpp/dotnet/how-to-call-native-dlls-from-managed-code-using-pinvoke), and other mechanisms in many other programming languages.
 
 [Bindgen](https://github.com/rust-lang-nursery/rust-bindgen) can automatically generate Rust FFI bindings to C (and some C++) libraries.  Luckily, nng is C.  [This blog post](http://fitzgeraldnick.com/2016/12/14/using-libbindgen-in-build-rs.html) is referenced several places and looks like the origin of the [bindgen tutorial](https://rust-lang-nursery.github.io/rust-bindgen).
 
@@ -122,7 +122,7 @@ Notes:
 
 ## Test Binding
 
-To write a simple test, need to get a look at what was just generated (on OSX must first [Install 'code' command in PATH](https://code.visualstudio.com/docs/setup/mac#_launching-from-the-command-line)):
+To write a simple test, need to get a look at what was just generated in VS Code (on OSX must first [Install 'code' command in PATH](https://code.visualstudio.com/docs/setup/mac#_launching-from-the-command-line)):
 ```bash
 code `find . -name bindings.rs`
 ```
@@ -180,7 +180,7 @@ mod tests {
 }
 ```
 
-Using [`CString`](https://doc.rust-lang.org/std/ffi/struct.CString.html) to create null-terminated strings as suggested by [this SO](https://stackoverflow.com/questions/28649311/what-is-the-proper-way-to-go-from-a-string-to-a-const-i8).  To get a `const char*` to `"abc\0"` in Rust requires:
+Using [`CString`](https://doc.rust-lang.org/std/ffi/struct.CString.html) to create null-terminated strings as suggested by [this SO](https://stackoverflow.com/questions/28649311/what-is-the-proper-way-to-go-from-a-string-to-a-const-i8).  To get a `const char*` pointer to `"abc\0"` in Rust requires:
 ```rust
 let cstring = std::ffi::CString::new("abc").unwrap().as_bytes_with_nul().as_ptr() as *const i8;
 ```
@@ -271,7 +271,7 @@ test_script:
   - cargo test --verbose -- "tests::"
 ```
 
-All the `matrix:` stuff is unfortunate.  I tried to place the `environment` node inside `for`, but didn't result in build permutations.  So, moved it out and `matrix: exclude:` to remove Windows builds on Linux, and vice versa. 
+All the `matrix:` stuff is unfortunate.  I tried to place the `environment` node inside `for`, but it didn't result in build permutations.  So, moved it out and `matrix: exclude:` to remove Windows builds on Linux, and vice versa. 
 
 Use `for` node to have [different configuration for each build matrix job](https://www.appveyor.com/docs/build-configuration/#specializing-matrix-job-configuration).
 
@@ -294,7 +294,7 @@ running: "cmake" "C:\\projects\\runng\\nng" "-Thost=x64" "-G" "Ninja" ...
 
 This is caused by [a recent change](https://github.com/alexcrichton/cmake-rs/pull/57) that adds `-Thost=x64` when compiling with `x86_64-pc-windows-msvc`.  [Submitted a PR](https://github.com/alexcrichton/cmake-rs/pull/63) to avoid `-Thost` with Ninja.
 
-The `i686-pc-windows-msvc` build gets further failing with:
+The `i686-pc-windows-msvc` (32-bit) build gets further failing with:
 ```
 CMake Warning:
   Manually-specified variables were not used by the project:
@@ -302,7 +302,7 @@ CMake Warning:
 thread 'main' panicked at 'Unable to find libclang: "couldn\'t find any of [\'clang.dll\', \'libclang.dll\'], set the LIBCLANG_PATH environment variable to a path where one of these files can be found (skipped: [(C:\\Program Files\\LLVM\\bin\\libclang.dll: invalid DLL (64-bit))])"', libcore\result.rs:945:5
 ```
 
-[llvm is already installed](https://www.appveyor.com/docs/windows-images-software/#llvm) and it found `C:\Program Files\LLVM\bin\libclang.dll` but it's 64-bit when we need 32-bit.  Looks like I'll have to manually install 32-bit llvm...
+[llvm is already installed](https://www.appveyor.com/docs/windows-images-software/#llvm) and it found `C:\Program Files\LLVM\bin\libclang.dll`, but it's 64-bit when we need 32-bit.  Looks like I'll have to manually install 32-bit llvm...
 
 ## Travis
 
@@ -332,9 +332,9 @@ script:
   - cargo test -- "tests::"
 ```
 
-I explicitly avoided `sudo` to ensure this runs in a [containerized environment](https://docs.travis-ci.com/user/reference/overview/#Virtualization-environments).  In particular, using [`addons: apt:`](https://docs.travis-ci.com/user/installing-dependencies/#installing-packages-on-container-based-infrastructure) to install packages instead of `sudo apt-get install`.
+I explicitly avoid `sudo` to enable a [containerized environment](https://docs.travis-ci.com/user/reference/overview/#Virtualization-environments).  In particular, using [`addons: apt:`](https://docs.travis-ci.com/user/installing-dependencies/#installing-packages-on-container-based-infrastructure) to install packages instead of `sudo apt-get install`.
 
-Passing `-- "tests::"` to filter out bindgen's tests when run `cargo test`.  One of those tests fails on Travis for some reason.
+Use `-- "tests::"` with `cargo test` to filter out bindgen's tests.  One of those tests fails on Travis for some reason.
 
 This build completes quickly; takes just over 2 minutes while Appveyor takes more than 4 (mostly to install clang/llvm).
 
