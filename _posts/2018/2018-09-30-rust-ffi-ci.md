@@ -144,33 +144,33 @@ mod tests {
 
             // Reply socket
             let mut rep_socket = nng_socket { id: 0 };
-            assert_eq!(0, nng_rep0_open(&mut rep_socket as *mut nng_socket));
+            assert_eq!(0, nng_rep0_open(&mut rep_socket));
             assert_eq!(0, nng_listen(rep_socket, url, std::ptr::null_mut(), 0));
 
             // Request socket
             let mut req_socket = nng_socket { id: 0 };
-            assert_eq!(0, nng_req0_open(&mut req_socket as *mut nng_socket));
+            assert_eq!(0, nng_req0_open(&mut req_socket));
             assert_eq!(0, nng_dial(req_socket, url, std::ptr::null_mut(), 0));
 
-            // Send request message through request socket
+            // Send message
             let mut req_msg = nng_msg { _unused: [] };
-            let mut msg = &mut req_msg as *mut nng_msg;
-            assert_eq!(0, nng_msg_alloc(&mut msg, 0));
+            let mut req_msg = &mut req_msg as *mut nng_msg;
+            assert_eq!(0, nng_msg_alloc(&mut req_msg, 0));
             // Add a value to the body of the message
             let val = 0x12345678;
-            assert_eq!(0, nng_msg_append_u32(msg, val));
-            assert_eq!(0, nng_sendmsg(req_socket, msg, 0));
+            assert_eq!(0, nng_msg_append_u32(req_msg, val));
+            assert_eq!(0, nng_sendmsg(req_socket, req_msg, 0));
             
             // Receive message with reply socket
             let mut recv_msg = nng_msg { _unused: [] };
-            let mut recv_ptr = &mut recv_msg as *mut nng_msg;
-            assert_eq!(0, nng_recvmsg(rep_socket, &mut recv_ptr, 0));
+            let mut recv_msg = &mut recv_msg as *mut nng_msg;
+            assert_eq!(0, nng_recvmsg(rep_socket, &mut recv_msg, 0));
             // Remove our value from the body of the received message
             let mut recv_val: u32 = 0;
-            assert_eq!(0, nng_msg_trim_u32(recv_ptr, &mut recv_val as *mut u32));
+            assert_eq!(0, nng_msg_trim_u32(recv_msg, &mut recv_val));
             assert_eq!(val, recv_val);
             // Can't do this because nng uses network order (big-endian)
-            //assert_eq!(val, *(nng_msg_body(recv_ptr) as *const u32));
+            //assert_eq!(val, *(nng_msg_body(recv_msg) as *const u32));
 
             nng_close(req_socket);
             nng_close(rep_socket);
@@ -190,7 +190,7 @@ Struggled with uses of `Type**` in the C.  For example, [`nng_msg_alloc()`](http
 pub fn nng_msg_alloc(arg1: *mut *mut nng_msg, arg2: usize) -> ::std::os::raw::c_int;
 ```
 
-`&mut` doesn't automatically convert to `*mut`, so to get `*mut *mut`:
+To get `*mut *mut`:
 ```rust
 // NO; can't convert &mut &mut to *mut *mut
 let msg = &mut &mut recv_msg as *mut *mut nng_msg;
@@ -394,7 +394,7 @@ if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
 fi
 ```
 
-`after_success` step runs code-coverage [only on succcessful builds](https://docs.travis-ci.com/user/customizing-the-build/#the-build-lifecycle).  `after_success.sh` comes from [codecov example for Rust and travis](https://github.com/codecov/example-rust) (also see [kcov notes on codecov](https://github.com/SimonKagstrom/kcov/blob/master/doc/codecov.md)):
+`after_success` step runs code-coverage [only on successful builds](https://docs.travis-ci.com/user/customizing-the-build/#the-build-lifecycle).  `after_success.sh` comes from [codecov example for Rust and travis](https://github.com/codecov/example-rust) (also see [kcov notes on codecov](https://github.com/SimonKagstrom/kcov/blob/master/doc/codecov.md)):
 ```bash
 #!/usr/bin/env bash
 
