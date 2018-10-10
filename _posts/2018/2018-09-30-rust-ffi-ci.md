@@ -202,6 +202,20 @@ let msg = &mut (&mut recv_msg as *mut nng_msg);
 
 The last line is a relief, `as *mut *mut type` is a word-y cast.
 
+__Update 2018/10/10__
+
+I was making things more complicated than I needed to.  Rather than creating an unused `nng_msg` to get the needed pointers:
+```rust
+let mut req_msg = nng_msg { _unused: [] };
+let mut req_msg = &mut req_msg as *mut nng_msg;
+assert_eq!(0, nng_msg_alloc(&mut req_msg, 0));
+```
+Initialize a type-annotated pointer with [`null`](https://doc.rust-lang.org/std/ptr/fn.null_mut.html) (similar to C/C++):
+```rust
+let mut req_msg: *mut nng_msg = std::ptr::null_mut();
+assert_eq!(0, nng_msg_alloc(&mut req_msg, 0));
+```
+
 ## Appveyor
 
 Already using [Appveyor](https://www.appveyor.com/) on [another project]({% post_url /2018/2018-09-21-dotnet %}#appveyor), so decided to start with that.
@@ -293,6 +307,8 @@ running: "cmake" "C:\\projects\\runng\\nng" "-Thost=x64" "-G" "Ninja" ...
 ```
 
 This is caused by [a recent change](https://github.com/alexcrichton/cmake-rs/pull/57) that adds `-Thost=x64` when compiling with `x86_64-pc-windows-msvc`.  [Submitted a PR](https://github.com/alexcrichton/cmake-rs/pull/63) to avoid `-Thost` with Ninja.
+
+__Update 2018/10/10__: Change was merged and 64-bit build is compiling now.
 
 The `i686-pc-windows-msvc` (32-bit) build gets further failing with:
 ```
