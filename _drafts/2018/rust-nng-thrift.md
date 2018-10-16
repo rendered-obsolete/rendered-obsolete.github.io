@@ -3,7 +3,12 @@ layout: post
 title: Rust Next
 tags:
 - rust
+- nng
+- thrift
+- csharp
 ---
+
+[Last time]({% post_url /2018/2018-09-30-rust-ffi-ci %}) I loaded a Rust binary as part of a NetCore application.  Now I'm going to get C# and Rust communicating with Nng and exchange a Thrift message.
 
 ## Json Config
 
@@ -70,9 +75,3 @@ Importance of location of `#[macro_use]` comes from [this SO](https://stackoverf
 ## Thrift
 
 Which is ok, but it's going to get tedious (and error-prone) to maintain structs here (as well as in C#).
-
-
-
-## C# Interop
-
-https://dev.to/living_syn/calling-rust-from-c-6hk
