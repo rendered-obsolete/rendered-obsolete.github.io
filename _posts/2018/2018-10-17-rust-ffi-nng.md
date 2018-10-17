@@ -159,12 +159,12 @@ extern fn pull_callback(arg : *mut ::std::os::raw::c_void) {
                     ctx.start_receive();
 ```
 
-The line extracting `Option<nng_aio>` warrants explanation.  In other places I use the more typical:
+The line extracting `Option<nng_aio>` warrants explanation.  In other places we use the more typical:
 ```rust
 if let Some(ref mut aio) = ctx.aio {
 ```
 
-But I can't do that here:
+But can't do that here:
 ```
 error[E0499]: cannot borrow `*ctx` as mutable more than once at a time
    --> runng/src/protocol/pull.rs:113:37
@@ -186,7 +186,7 @@ impl AsyncPullContext {
     //...
 ```
 
-Basically, I can't unwrap the `Option<_>` field as a mutable reference and in the same scope call a method that also borrows a mutable reference to the struct.  Fine, try removing `mut`:
+Basically, we can't unwrap the `Option<_>` field as a mutable reference and in the same scope call a method that also borrows a mutable reference to the struct.  Fine, try removing `mut`:
 ```
 error[E0502]: cannot borrow `*ctx` as mutable because `ctx.aio.0` is also borrowed as immutable
    --> runng/src/protocol/pull.rs:113:37
@@ -203,9 +203,9 @@ error[E0502]: cannot borrow `*ctx` as mutable because `ctx.aio.0` is also borrow
 
 Right, can't have simultaneous immutable and mutable borrows.  The only thing that would work is multiple immutable borrows.
 
-So, I use [`as_ref()`](https://doc.rust-lang.org/std/option/enum.Option.html#method.as_ref) to get an `Option<&Rc<NngAio>>` then [`map()`](https://doc.rust-lang.org/std/option/enum.Option.html#method.map) to extract the `nng_aio` struct (which is copyable).
+So, use [`as_ref()`](https://doc.rust-lang.org/std/option/enum.Option.html#method.as_ref) to get an `Option<&Rc<NngAio>>` then [`map()`](https://doc.rust-lang.org/std/option/enum.Option.html#method.map) to extract the `nng_aio` struct (which is copyable).  The key point being the immutable borrow no longer lives until the end of the code block.
 
-Technically, this isn't safe.  I'm abusing the fact that the C socket handles are `int`s (which copy).  But, if I were to start copying the handle around and using it different places things would break.  I'm going to look at restructering the code and/or moving `start_receive()`, but it wasn't immediately obvious how to do this.
+Technically, this isn't safe.  We're abusing the fact that the C socket handles are `int`s (which copy).  But, if we start copying the handle around and using it different places things would break.  I'm going to look at restructuring the code and/or moving `start_receive()`, but it wasn't immediately obvious how to do this.
 
 ## Futures
 
