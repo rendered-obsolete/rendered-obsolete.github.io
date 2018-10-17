@@ -8,7 +8,55 @@ tags:
 - csharp
 ---
 
-[Last time]({% post_url /2018/2018-09-30-rust-ffi-ci %}) I loaded a Rust binary as part of a NetCore application.  Now I'm going to get C# and Rust communicating with Nng and exchange a Thrift message.
+[Last time]({% post_url /2018/2018-09-30-rust-ffi-ci %}) 
+Now I'm going to load the Rust binary as part of a NetCore application and get C# and Rust communicating with Nng and exchange a Thrift message.
+
+
+
+# Specialization
+
+https://play.rust-lang.org/?version=nightly&mode=debug&edition=2015
+https://github.com/rust-lang/rust/issues/31844
+https://github.com/rust-lang/rfcs/blob/master/text/1210-impl-specialization.md
+https://stackoverflow.com/questions/34471212/how-to-implement-specialized-versions-of-a-generic-function
+
+
+
+`Send` for pointer types
+https://github.com/rust-lang/rust/issues/21709
+
+## C# Interop
+
+https://dev.to/living_syn/calling-rust-from-c-6hk
+
+Defaults to producing static libraries, to generate a dynamic/shared library to `Cargo.toml` add:
+```toml
+[lib]
+crate-type = ["dylib"]
+```
+
+This will produce a `.dylib` on OSX, `.so` on Linux, `.dll` on Windows, etc.  Also see the [cargo docs](https://doc.rust-lang.org/cargo/reference/manifest.html#building-dynamic-or-static-libraries).
+
+In `lib.rs`:
+```rust
+#[no_mangle]
+pub extern fn start() -> i32 {
+    println!("Start!");
+    0
+}
+```
+
+Run `cargo build`.
+
+For immediate satisfaction I copied it to my .net output folder, but I'll need to look into [loading it as a native assembly]({% post_url /2018/2018-09-09-native-assembly %}).
+
+In the C#:
+```csharp
+[DllImport("rust_input")]
+static extern int start();
+```
+
+
 
 ## Json Config
 
