@@ -13,14 +13,12 @@ Now I'm going to load the Rust binary as part of a NetCore application and get C
 
 
 
-# Specialization
+## Specialization
 
 https://play.rust-lang.org/?version=nightly&mode=debug&edition=2015
 https://github.com/rust-lang/rust/issues/31844
 https://github.com/rust-lang/rfcs/blob/master/text/1210-impl-specialization.md
 https://stackoverflow.com/questions/34471212/how-to-implement-specialized-versions-of-a-generic-function
-
-
 
 `Send` for pointer types
 https://github.com/rust-lang/rust/issues/21709
@@ -28,6 +26,10 @@ https://github.com/rust-lang/rust/issues/21709
 ## C# Interop
 
 https://dev.to/living_syn/calling-rust-from-c-6hk
+
+```
+cargo new --lib --name rust_input
+```
 
 Defaults to producing static libraries, to generate a dynamic/shared library to `Cargo.toml` add:
 ```toml
@@ -54,9 +56,20 @@ In the C#:
 ```csharp
 [DllImport("rust_input")]
 static extern int start();
+
+protected override Task ExecuteAsync(CancellationToken token)
+{
+    return Task.Run(async () => {
+        // Arbitrary sleep to give the broker time to start
+        await Task.Delay(1000);
+        start();
+        while (!token.IsCancellationRequested)
+        {
+            await Task.Delay(TimeSpan.FromMilliseconds(200));
+        }
+    });
+}
 ```
-
-
 
 ## Json Config
 
@@ -102,7 +115,8 @@ struct AppSettings {
 
 #[derive(Deserialize,Debug)]
 struct ZxySettings {
-    http: HttpSettings
+    http: HttpSettings,
+    nng: NngSettings,
 }
 
 #[derive(Deserialize,Debug)]
@@ -110,15 +124,77 @@ struct HttpSettings {
     port: u16
 }
 
-fn main() {
-    let file = File::open("/absolute_project_path/appsettings.json").unwrap();
+#[derive(Deserialize,Debug)]
+struct NngSettings {
+    brokerIn: String,
+    brokerOut: String,
+}
+
+fn load_settings() -> AppSettings {
+    let file = File::open("appsettings.json").unwrap();
     // Deserialize AppSettings from file
     let settings: AppSettings = serde_json::from_reader(file).unwrap();
     println!("{:?}", settings);
+    settings
 }
 ```
 
 Importance of location of `#[macro_use]` comes from [this SO](https://stackoverflow.com/questions/29068716/how-do-you-use-a-macro-from-inside-its-own-crate).
+
+## NNG
+
+Use the [runng crate](https://crates.io/crates/runng) we [developed previously to expose NNG to Rust]({% post_url /2018/2018-10-17-rust-ffi-nng %}):
+```rust
+extern crate runng;
+extern crate futures;
+use runng::{Factory, Dial};
+use runng::protocol::{AsyncPublish, AsyncSocket};
+use runng::msg::NngMsg;
+use futures::future::Future;
+
+#[no_mangle]
+pub extern fn start() -> i32 {
+    println!("Start!");
+
+    let setting = load_settings();
+
+    let factory = runng::Latest::new();
+    let pusher = factory.pusher_open().unwrap();
+    println!("Connecting....");
+    pusher.dial(&setting.zxy.nng.brokerIn).unwrap();
+    println!("Connected!");
+    let mut pusher = pusher.create_async_context().unwrap();
+    let mut msg = NngMsg::new().unwrap();
+    msg.append_u32(0).unwrap(); // For topic appends 4 bytes: 0 0 0 0
+    println!("Sending...");
+    pusher.send(msg).wait().unwrap().unwrap();
+    println!("Sent!");
+
+    0
+}
+```
+
+We can subscribe to this in C#:
+```csharp
+// Load configuration and NNG native dll
+var config = new ConfigurationBuilder()
+    .AddJsonFile("appsettings.json")
+    .Build();
+var brokerOut = config.GetSection("zxy:nng").GetValue<string>("brokerOut");
+var factory = LoadNngFactory();
+
+// Create subscriber that connects to output/publishing end of broker
+using (var subscriber = factory.SubscriberCreate(brokerOut).Unwrap().CreateAsyncContext(factory).Unwrap())
+{
+    var topic = new byte[]{0, 0, 0, 0};
+    subscriber.Subscribe(topic);
+    Console.WriteLine("Receiving...");
+    var msg = await subscriber.Receive(cts.Token);
+    Console.WriteLine("Received!");
+}
+```
+
+One thing that's fantastic about our microservice architecture is once we start a Rust service and it connects to NNG, we can interact with it the same as our C# services.  No need to deal with managed to unmanaged interop which gets pretty hairy for non-trivial types.
 
 ## Thrift
 

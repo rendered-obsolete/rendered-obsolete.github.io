@@ -9,11 +9,17 @@ tags:
 
 [Existing architecture/implementation]({% post_url /2018/2018-10-15-zplus-microservices %}) ("the post-mortem"):
 
-- [ASP.NetCore]({% post_url /2018/2018-08-24-aspnetcore-thrift %}) there is a ["generic host"](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/host/generic-host) for normal applications with 
-- Several benefits to replacing [ZeroMQ](http://zeromq.org/) with [NNG](https://github.com/nanomsg/nng)
-
 ## .NET Core Generic Host
 
+ASP.[]()NET Core also has a ["generic host"](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/host/generic-host) for normal applications- those that don't process HTTP requests.
+
+```csharp
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+```
+
+In `Program.cs`:
 ```csharp
 class Program
 {
@@ -21,35 +27,28 @@ class Program
     {
         var host = new HostBuilder()
         .ConfigureHostConfiguration(configBuilder => {
-            configBuilder.AddJsonFile("appsettings.json");
-            // configBuilder.AddJsonFile("local.json", optional: true);
-            configBuilder.AddCommandLine(args);
+            //...
         })
         .ConfigureServices((hostContext, services) => {
-            services.AddLogging();
-            var config = new ServiceConfiguration();
-            hostContext.Configuration.Bind("zxy:services", config);
-            var zxy = new ZxyContext(services);
-            services.AddSingleton<IZxyContext>(zxy);
-            PluginLoader.Load(services, config);
-        })
-        .ConfigureLogging((context, loggingBuilder) => {
-            
+            //...
         })
         .Build();
         await host.RunAsync();
     }
 }
-
 ```
 
+`ConfigureServices()` is used to register services ("dependencies") with the service ("dependency injection") container.
+
 ## Services
+
+[IHostedService](https://docs.microsoft.com/en-us/dotnet/api/microsoft.extensions.hosting.ihostedservice) defines methods for background tasks that are managed by the host.  [Microsoft.Extensions.Hosting.BackgroundService](https://docs.microsoft.com/en-us/dotnet/api/microsoft.extensions.hosting.backgroundservice) is a base class for implementing long-running services.
 
 Reading:
 - [Background tasks with hosted services](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/host/hosted-services)
 - [Implement background tasks in microservices](https://docs.microsoft.com/en-us/dotnet/standard/microservices-architecture/multi-container-microservice-net-applications/background-tasks-with-ihostedservice)
 
-[ASP.NetCore host]({% post_url /2018/2018-08-24-aspnetcore-thrift %}):
+Service that starts our [ASP.NET Core WebHost]({% post_url /2018/2018-08-24-aspnetcore-thrift %}):
 ```csharp
 public class HttpXy : BackgroundService
 {
@@ -73,10 +72,11 @@ public class HttpXy : BackgroundService
 }
 ```
 
-Uses [Microsoft.Extensions.Hosting.BackgroundService](https://docs.microsoft.com/en-us/dotnet/api/microsoft.extensions.hosting.backgroundservice)
+ASP.NET Core uses constructor-based dependency injection (DI) so the constructor parameters (its dependencies) will be resolved from the registered services.
 
-It can be registered with [`AddHostedService()`](https://docs.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.servicecollectionhostedserviceextensions.addhostedservice) or [`AddSingleton()`](https://docs.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.servicecollectionserviceextensions.addsingleton):
+Each `BackgroundService` can be registered with the generic host using [`AddHostedService()`](https://docs.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.servicecollectionhostedserviceextensions.addhostedservice) or [`AddSingleton()`](https://docs.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.servicecollectionserviceextensions.addsingleton):
 ```csharp
+    // In Program.cs
     var host = new HostBuilder()
     .ConfigureServices((hostContext, services) => {
         //services.AddSingleton(typeof(IHostedService), typeof(HttpXy));
@@ -112,7 +112,7 @@ public class MEF2Plugins
             var configuration = new ContainerConfiguration();
             var asm = Assembly.LoadFrom(file);
             configuration.WithAssembly(asm);
-            containers.Add(new Plugin { Filename = file, Host = configuration.CreateContainer() });
+            containers.Add(configuration.CreateContainer());
         }
     }
 
@@ -121,7 +121,7 @@ public class MEF2Plugins
         var ret = new List<T>();
         foreach (var container in containers)
         {
-            ret.AddRange(container.Host.GetExports<T>());
+            ret.AddRange(container.GetExports<T>());
         }
         return ret;
     }
@@ -149,8 +149,6 @@ public static void Load(IServiceCollection services, ServiceConfiguration config
 
 ## Configuration
 
-It's perhaps only implied in the post-mortem, but configuration was a bit of a mess.
-
 Came across this blog that showed how to use json, but didn't really seem complete:
 https://dzone.com/articles/read-config-data-in-net-core-test-project-net-core
 
@@ -162,7 +160,7 @@ https://docs.microsoft.com/en-us/aspnet/core/fundamentals/configuration/options
 But [this post](https://www.strathweb.com/2016/09/strongly-typed-configuration-in-asp-net-core-without-ioptionst/) shows how to use POCO configuration without any dependency on `Microsoft.Extensions.Options`.
 
 
-`Main.cs`:
+`Program.cs`:
 ```csharp
 using Microsoft.Extensions.Configuration;
 
@@ -184,10 +182,22 @@ In `appsettings.json`:
         "http":{
             "port":8283
         },
+        "nng":{
+            "brokerIn": "ipc://zxy-brokerIn",
+            "brokerOut": "ipc://zxy-brokerOut"
+        },
     },
 }
 ```
 
+Need to copy `appsettings.json` to the output folder.  Add to project file:
+```xml
+<ItemGroup>
+    <None Update="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
+</ItemGroup>
+```
+
+each service gets its own configuration section (i.e. `zxy:http`) that is accessible in a type-safe way (via `Config` instance):
 ```csharp
 class Config
 {
@@ -208,20 +218,18 @@ public class HttpXy : BackgroundService
         section.Bind(config);
         zxyContext = context;
     }
-```
 
-In this way each service gets its own configuration section (i.e. `zxy:http`) that is accessible in a type-safe way (via `Config` instance):
-```csharp
     protected override Task ExecuteAsync(CancellationToken token)
     {
         var webHostBuilder = WebHost.CreateDefaultBuilder()
         .UseConfiguration(configuration)
         .UseKestrel(options => {
-            //var port = configuration.GetSection("zxy:http").GetValue<int>("port");
             var port = config.Port;
             options.Listen(IPAddress.Loopback, port);
         })
 ```
+
+Alternatively, individual values can be loaded with the longer `configuration.GetSection("zxy:http").GetValue<int>("port")`.
 
 This works because the default WebHostBuilder [looks for `urls`](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/host/web-host#server-urls).
 
@@ -238,7 +246,26 @@ In particular, note that the "section" and "key" values are separated by "__`:`_
 
 ## Logging
 
-https://docs.microsoft.com/en-us/aspnet/core/fundamentals/logging/
+Definitely read [_Logging in ASP.NET Core_](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/logging/).
+
+```csharp
+// Bring extension methods into scope
+using Microsoft.Extensions.Logging;
+```
+
+```
+dotnet <project_name> add package Microsoft.Extensions.Logging.EventSource
+```
+
+```csharp
+    var host = new HostBuilder()
+    .ConfigureLogging((context, loggingBuilder) => {
+        loggingBuilder.AddEventSourceLogger();
+    })
+```
+
+Let's you use [PerfView](https://github.com/Microsoft/perfview).
+
 
 ## Secrets
 
@@ -251,6 +278,8 @@ https://www.stevejgordon.co.uk/running-net-core-generic-host-applications-as-a-w
 
 ## Nng
 
+Several benefits to replacing [ZeroMQ](http://zeromq.org/) with [NNG](https://github.com/nanomsg/nng)
+
 We've been using [ZeroMQ](http://zeromq.org/) (actually, [NetMQ](https://github.com/zeromq/netmq/)).  Along with [NetMQ.WebSockets](https://github.com/NetMQ/NetMQ.WebSockets) for [WebSocket](https://en.wikipedia.org/wiki/WebSocket) support.
 
 Our overlay and input-hooking (C++) moved to [nanomsg](https://github.com/nanomsg/nanomsg) for IPC/named-pipe support but also supports [WebSocket](https://nanomsg.org/v1.1.4/nn_ws.html).
@@ -260,3 +289,71 @@ Did some initial investigation [forking](https://github.com/zplus/NNanomsg) [NNa
 In the course of that found [NNG (nanomsg-next-generation)](https://github.com/nanomsg/nng) is being developed as the successor to nanomsg (with the latter now in "maintinence mode").
 
 [forking](https://github.com/zplus/csnng) [csnng](https://github.com/zplus/csnng).  Again, to convert it to .Net Standard and fix some issues.  In the end abandoning it for [nng.NETCore](https://github.com/subor/nng.NETCore).
+
+
+```csharp
+class NngConfig
+{
+    public string BrokerIn {get; set;}
+    public string BrokerOut {get; set;}
+}
+
+public class NngBroker : BackgroundService
+{
+    public NngBroker(FactoryType factory, IConfiguration configuration)
+    {
+        this.factory = factory;
+
+        // Read configuration
+        config = new NngConfig();
+        var nngSection = configuration.GetSection("zxy:nng");
+        nngSection.Bind(config);
+    }
+
+    protected override async Task ExecuteAsync(CancellationToken token)
+    {
+        // Create simple nng broker that receives messages with puller and publishes them
+        var pullSocket = factory.PullerCreate(config.BrokerIn, true).Unwrap();
+        var input = pullSocket.CreateAsyncContext(factory).Unwrap();
+        var output = factory.PublisherCreate(config.BrokerOut).Unwrap().CreateAsyncContext(factory).Unwrap();
+
+        while (!token.IsCancellationRequested)
+        {
+            var msg = await input.Receive(token);
+            Console.WriteLine("Broker: " + msg);
+            if (!await output.Send(msg))
+            {
+                await Console.Error.WriteLineAsync("Failed!");
+            }
+        }
+    }
+
+    FactoryType factory;
+    NngConfig config;
+}
+```
+
+Where `FactoryType` is dependency for creating nng resources [via NNG native assemly]({% post_url /2018/2018-09-09-native-assembly %}#one-load-context to-rule-them-all) ([nng.NETCore source](https://github.com/subor/nng.NETCore/blob/master/nng.Shared/AssemblyLoadContext.cs)):
+```csharp
+[Export(typeof(ISingletonPlugin))]
+public class NngSingletonPlugin : ISingletonInstancePlugin
+{
+    public Type ServiceType()
+    {
+        return typeof(FactoryType);
+    }
+
+    public object CreateInstance()
+    {
+        var path = Path.GetDirectoryName(GetType().Assembly.Location);
+        var loadContext = new NngLoadContext(path);
+        var factory = NngLoadContext.Init(loadContext);
+        return factory;
+    }
+```
+
+## Conclusion
+
+We've got a good start for a new layer0: microservices loaded from plugins, HTTP server for HTML5 UI, configuration and logging, messaging via Thrift (probably) over NNG, and CI/CD.
+
+Microsoft was hardly the first DI solution and mostly likely isn't the best, but it plays nicely with ASP.NET Core, .NET Core in general, and the rest of the Microsoft ecosystem.
