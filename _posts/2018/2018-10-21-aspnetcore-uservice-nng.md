@@ -107,7 +107,7 @@ public class HttpPlugin : IServicePlugin
 ```
 
 This time we're keeping the classes we [Export](https://docs.microsoft.com/en-us/dotnet/api/system.composition.exportattribute) as simple as possible because
-[GetExports()](https://docs.microsoft.com/en-us/dotnet/api/system.composition.compositioncontext.getexports) instantiates them.  Previously, some of our types had non-trivial initialization code, such that they were expensive to load even if we ended up not using them.
+ [GetExports()](https://docs.microsoft.com/en-us/dotnet/api/system.composition.compositioncontext.getexports) instantiates them.  Previously, some of our types had non-trivial initialization code, such that they were expensive to load even if we ended up not using them.
 
 We create composition containers for all shared libraries found in our plugin directory:
 ```csharp
@@ -162,7 +162,7 @@ ASP.[]()NET Core has an extensive system for application configuration.  Backgro
 - Early on came across [this blog](https://dzone.com/articles/read-config-data-in-net-core-test-project-net-core) on how to use JSON, but doesn't really seem complete
 - [Here](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/configuration/index) is the MS documentation on configuration in ASP.[]()NET Core
 - Closely related is [safe-guarding sensitive data](https://docs.microsoft.com/en-us/aspnet/core/security/app-secrets) like passwords
-- [This blog](https://weblog.west-wind.com/posts/2016/May/23/Strongly-Typed-Configuration-Settings-in-ASPNET-Core) shows how to have strongy-typed configuration via `IOptions<T>`
+- [This blog](https://weblog.west-wind.com/posts/2016/May/23/Strongly-Typed-Configuration-Settings-in-ASPNET-Core) shows how to have strongly-typed configuration via `IOptions<T>`
 - And the [relevant MS documentation](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/configuration/options) that goes into additional detail
 - [This post](https://www.strathweb.com/2016/09/strongly-typed-configuration-in-asp-net-core-without-ioptionst/) covers using POCO configuration without any dependency on `Microsoft.Extensions.Options`
 
@@ -182,7 +182,7 @@ In `appsettings.json`:
 }
 ```
 
-Configuration data is heirarchical: `"zxy"` is a section and `"http"` and `"nng"` are subsections of it.
+Configuration data is hierarchical: `"zxy"` is a section and `"http"` and `"nng"` are subsections of it.
 
 Need to copy `appsettings.json` to the output folder.  To the project file add:
 ```xml
