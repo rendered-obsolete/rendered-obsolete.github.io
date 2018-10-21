@@ -1,11 +1,11 @@
 ---
 layout: post
-title: Rust Next
+title: ASP.NET Core Generic Host with Rust Services
 tags:
 - rust
 - nng
-- thrift
 - csharp
+- netcore
 ---
 
 [Last time]({% post_url /2018/2018-09-30-rust-ffi-ci %}) 

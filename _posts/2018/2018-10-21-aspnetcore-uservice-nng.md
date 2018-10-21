@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Microservice-based Application with .NET Core Generic Host
+title: Microservice-based Application with ASP.NET Core Generic Host
 tags:
 - netcore
 - csharp
