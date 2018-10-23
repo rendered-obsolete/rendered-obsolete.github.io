@@ -3,15 +3,17 @@ layout: post
 title: RPC forwarding for Thrift
 tags:
 - thrift
+- csharp
 ---
 
 - Bridge different transports/protocols (e.g. HTTP<->named pipe)
 - Message routing/filtering
 
-First, I'll go over the long way because it's interesting to understand how thrift works.  Then, I'll cover the short way.
+First, I'll go over the long way because it's interesting to understand how Thrift messages are structured.  Then, I'll cover the short way.
 
-## ITAsyncProcessor
+## Message Processor
 
+Derive a class from `ITAsyncProcessor` to process messages:
 ```csharp
 public class ForwardingProcessor : ITAsyncProcessor
 {
@@ -48,15 +50,15 @@ void Register(TMultiplexedProcessor multiplexor)
 }
 ```
 
-`ZeroMqProtocol` is [our ZeroMQ transport for Thrift](zerqmq-thrift).
+`ZeroMqProtocol` is our [ZeroMQ transport for Thrift]({% post_url /2018/2018-09-07-zeromq-thrift %}).
 
 TMultiplexedProcessor is [ASP.NET Core]({% post_url /2018/2018-08-24-aspnetcore-thrift %}).
-1. HTTP client connects and [sends message like `SER_L10NSERVICE:GetCurrentLanguage`](rust-thrift)
+1. HTTP client connects and [sends message like `SER_L10NSERVICE:GetCurrentLanguage`]({% post_url /2018/2018-08-30-rust-thrift %})
 1. ASP.[]()NET Core dispatches it to `THttpHandler` middleware (`TMultiplexedProcessor` instance using `TJSONProtocol`)
 1. It's mapped to `ForwardingProcessor` instance whose `ProcessAsync()` is called
 1. RPC request is written to `ZeroMqProtocol`
 
-## ProcessAsync
+## Long Way
 
 ```csharp
 public async Task<bool> ProcessAsync(TProtocol fromSrc, TProtocol toSrc, CancellationToken token)
@@ -109,7 +111,7 @@ public async Task<bool> ProcessAsync(TProtocol fromSrc, TProtocol toSrc, Cancell
 The `IsForwarded()` function is a placeholder for filtering logic we may want to do.  This is currently hard-coded to return `true`, but if/when we get around to make use of it the early return may need to use `TProtocolUtil.SkipAsync()` and/or write a response of some kind.
 
 
-## TStruct
+### Forward TStruct
 
 ```csharp
 /// <summary>
@@ -163,9 +165,9 @@ Again, this code is heavily based off the generated source code.
 
 The handling of `TType.Stop` which eschews `ReadFieldEnd()` as well as `WriteFieldBegin|End()`.
 
-`await Task.WhenAll(task, ...)` uses `WhenAll()` to overlap independent operations.
+`await Task.WhenAll(task, ...)` uses [`WhenAll()`](https://docs.microsoft.com/en-us/dotnet/api/system.threading.tasks.task.whenall) to overlap independent operations.
 
-## TType
+### Forward TType
 
 ```csharp
 async Task forwardElement(TType elementType, TProtocol iprot, TProtocol oprot, CancellationToken token)
@@ -254,11 +256,11 @@ A big ol' `switch` statement 1:1 mapping of `TType` to `TProtocol.(Read|Write)*A
 
 `TType.List`, `TType.Map`, and `TType.Set` are all similar.  Begin/End Read/Write pairs between which we recurse into `forwardElement()` for each element of the collection.
 
-`TType.Struct` recurses into [`forwardStruct()`](#tstruct) to handle nested structures.
+`TType.Struct` recurses into [`forwardStruct()`](#forward-tstruct) to handle nested structures.
 
 `TType.Void` throws an exception because I suspect it cannot happen:
 - We have no examples of a `void` struct member
-- [`TProtocolUtil.SkipAsync()`]() implementation doesn't handle `TType.Void`
+- [`TProtocolUtil.SkipAsync()`](https://github.com/apache/thrift/blob/af7ecd6a2b15efe5c6b742cf4a9ccb31bcc1f362/lib/netcore/Thrift/Protocols/Utilities/TProtocolUtil.cs#L27) implementation doesn't handle `TType.Void`
 
 `default` case currently cannot happen as we handle all `TType` values.  But we `TProtocolUtil.SkipAsync()` in case someone adds a type.
 
@@ -266,7 +268,7 @@ A big ol' `switch` statement 1:1 mapping of `TType` to `TProtocol.(Read|Write)*A
 
 As it turns out, we've mentioned a component that already does what we want- `TMultiplexedProcessor`; it receives a message, processes the service header and forwards it to a registered processor.
 
-Inside `TMultiplexedProcessor.ProcessAsync()`:
+Inside [`TMultiplexedProcessor.ProcessAsync()`](https://github.com/apache/thrift/blob/af7ecd6a2b15efe5c6b742cf4a9ccb31bcc1f362/lib/netcore/Thrift/TMultiplexedProcessor.cs#L41):
 ```csharp
 // Create a new TMessage, removing the service name
 var newMessage = new TMessage(
@@ -281,7 +283,7 @@ return
             cancellationToken);
 ```
 
-Where `StoredMessageProtocol` is:
+Where [`StoredMessageProtocol` is](https://github.com/apache/thrift/blob/af7ecd6a2b15efe5c6b742cf4a9ccb31bcc1f362/lib/netcore/Thrift/TMultiplexedProcessor.cs#L122):
 ```csharp
 private class StoredMessageProtocol : TProtocolDecorator
 {
