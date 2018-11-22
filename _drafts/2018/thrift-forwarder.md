@@ -6,14 +6,16 @@ tags:
 - csharp
 ---
 
-- Bridge different transports/protocols (e.g. HTTP<->named pipe)
-- Message routing/filtering
+I started this post some time ago.  I was convinced we could improve on the current implementation and that would make for an interesting read.  Instead, we'll likely drop Apache Thrift so the improved version will never happen.  This might still be valuable (or interesting, at least) to someone, so here's the current version.
 
-First, I'll go over the long way because it's interesting to understand how Thrift messages are structured.  Then, I'll cover the short way.
+We have a need to forward Thrift RPC calls in a message-agnostic manner.  This is useful for various reasons:
+
+- Bridge different transports/protocols (e.g. HTTP<->named pipe)
+- Message routing/filtering/logging or other processing
 
 ## Message Processor
 
-Derive a class from `ITAsyncProcessor` to process messages:
+A Thrift message processor is created by deriving from [`ITAsyncProcessor`](https://github.com/apache/thrift/blob/master/lib/netcore/Thrift/ITAsyncProcessor.cs):
 ```csharp
 public class ForwardingProcessor : ITAsyncProcessor
 {
@@ -37,8 +39,6 @@ public class ForwardingProcessor : ITAsyncProcessor
 }
 ```
 
-Mostly boilerplate implementing a `ITAsyncProcessor`.
-
 Usage:
 ```csharp
 void Register(TMultiplexedProcessor multiplexor)
@@ -50,15 +50,18 @@ void Register(TMultiplexedProcessor multiplexor)
 }
 ```
 
-`ZeroMqProtocol` is our [ZeroMQ transport for Thrift]({% post_url /2018/2018-09-07-zeromq-thrift %}).
+The [TMultiplexedProcessor](https://github.com/apache/thrift/blob/master/lib/netcore/Thrift/TMultiplexedProcessor.cs) could be, for example, the same processor we're using with [ASP.NET Core]({% post_url /2018/2018-08-24-aspnetcore-thrift %}).  `ZeroMqProtocol` is our [ZeroMQ transport for Thrift]({% post_url /2018/2018-09-07-zeromq-thrift %}).  This would have the effect of bridging HTTP and ZeroMQ.
 
-TMultiplexedProcessor is [ASP.NET Core]({% post_url /2018/2018-08-24-aspnetcore-thrift %}).
+The resulting message flow is:
+
 1. HTTP client connects and [sends message like `SER_L10NSERVICE:GetCurrentLanguage`]({% post_url /2018/2018-08-30-rust-thrift %})
 1. ASP.[]()NET Core dispatches it to `THttpHandler` middleware (`TMultiplexedProcessor` instance using `TJSONProtocol`)
 1. It's mapped to `ForwardingProcessor` instance whose `ProcessAsync()` is called
 1. RPC request is written to `ZeroMqProtocol`
 
 ## Long Way
+
+Our first (and current) implementation deserializes the message from one `TProtocol` and serializes it to another:
 
 ```csharp
 public async Task<bool> ProcessAsync(TProtocol fromSrc, TProtocol toSrc, CancellationToken token)
@@ -264,9 +267,9 @@ A big ol' `switch` statement 1:1 mapping of `TType` to `TProtocol.(Read|Write)*A
 
 `default` case currently cannot happen as we handle all `TType` values.  But we `TProtocolUtil.SkipAsync()` in case someone adds a type.
 
-## Short Way
+## Short Way?
 
-As it turns out, we've mentioned a component that already does what we want- `TMultiplexedProcessor`; it receives a message, processes the service header and forwards it to a registered processor.
+We've mentioned a component that already does what we want- `TMultiplexedProcessor`; it receives a message, processes the service header and forwards it to a registered processor.
 
 Inside [`TMultiplexedProcessor.ProcessAsync()`](https://github.com/apache/thrift/blob/af7ecd6a2b15efe5c6b742cf4a9ccb31bcc1f362/lib/netcore/Thrift/TMultiplexedProcessor.cs#L41):
 ```csharp
@@ -306,3 +309,7 @@ private class StoredMessageProtocol : TProtocolDecorator
     }
 }
 ```
+
+We suspect there's a way to leverage this to implement `ForwardingProcessor.ProcessAsync()` without deserializing then reserializing each message.  Problem is that as a `TProtocolDecorator` it's defining a static pipeline of sorts, but it's not actively pulling the messages through such that they can be written out somewhere else.
+
+Sadly, this is as far as we will take things.
