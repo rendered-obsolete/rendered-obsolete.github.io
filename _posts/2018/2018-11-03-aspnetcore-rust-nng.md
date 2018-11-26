@@ -3,15 +3,17 @@ layout: post
 title: ASP.NET Core Generic Host with Rust Services
 tags:
 - rust
-- nng
 - csharp
 - netcore
+- showdev
+- nng
+- thrift
 ---
 
 This has been a long time coming, previously we:
-- [Used Rust for Thrift client]({% post_url /2018/2018-08-30-rust-thrift %})
-- [Made Rust FFI bindings to NNG]({% post_url /2018/2018-09-30-rust-ffi-ci %})
-- [Started an application using ASP.NET Core's generic host and NNG]({% post_url /2018/2018-10-21-aspnetcore-uservice-nng %})
+- [Thrift client in Rust]({% post_url /2018/2018-08-30-rust-thrift %})
+- [Rust FFI bindings to NNG]({% post_url /2018/2018-09-30-rust-ffi-ci %})
+- [ASP.NET Core generic host application with NNG]({% post_url /2018/2018-10-21-aspnetcore-uservice-nng %})
 
 Now we're going to load a Rust binary as part of our .NET Core application and get C# and Rust communicating with NNG and Thrift.
 
@@ -22,13 +24,17 @@ Came across [this highly relevant blog](https://dev.to/living_syn/calling-rust-f
 cargo new --lib --name rust_input
 ```
 
-Which defaults to producing static libraries.  In order to generate a dynamic/shared library in `Cargo.toml` add:
+Which defaults to producing static libraries.  In order to generate a dynamic/shared library, to `Cargo.toml` add:
 ```toml
 [lib]
 crate-type = ["dylib"]
 ```
 
 This will produce a `.dylib` on OSX (and presumably a `.so` on Linux and `.dll` on Windows).  Also see the [cargo docs](https://doc.rust-lang.org/cargo/reference/manifest.html#building-dynamic-or-static-libraries).
+
+__Update 2018/11/26__
+
+The [2018 edition guide mentions `cdylib`](https://rust-lang-nursery.github.io/edition-guide/rust-2018/platform-and-target-support/cdylib-crates-for-c-interoperability.html) crate type.  In release, it results in a 780508 byte dynamic library instead of 1334912 bytes.
 
 In `lib.rs`:
 ```rust
@@ -41,7 +47,7 @@ pub extern fn start() -> i32 {
 
 Run `cargo build`.
 
-For immediate satisfaction I copied the generated `target/debug/librust_input.dylib` to my .net output folder, but I'll need to look into [loading it as a native assembly]({% post_url /2018/2018-09-09-native-assembly %}).
+For immediate satisfaction, we can copy the generated `target/debug/librust_input.dylib` to our .NET output folder, but we'll need to look into [loading it as a native assembly]({% post_url /2018/2018-09-09-native-assembly %}).
 
 In C# we'll create [a background service]({% post_url /2018/2018-10-21-aspnetcore-uservice-nng %}):
 ```csharp
@@ -204,7 +210,6 @@ And now we get to the part that delayed this post.
 
 Similar to how we structure [our SDK](https://subor.github.io/api/cs/en-US/html/87e8780b-8e28-7c0d-fa86-89f98b06162b.htm), we want all the Thrift interfaces in a central library we reference from our various services.
 
-
 `cargo new --lib --name zxy` and in `Cargo.toml`:
 ```toml
 [package]
@@ -245,7 +250,7 @@ dyld: unloaded: /XXX/zxy/output/Debug/plugins/netstandard2.0/librust_input.dylib
 
 Not particularly helpful.
 
-On OSX use `otool` to check dependencies (on Windows we usually use [Depedency Walker](http://dependencywalker.com/)):
+On OSX use `otool` to check shared library dependencies (on Windows we usually use [Depedency Walker](http://dependencywalker.com/)):
 ```bash
 $ otool -L target/debug/librust_input.dylib
 target/debug/librust_input.dylib:
@@ -255,7 +260,7 @@ target/debug/librust_input.dylib:
         /usr/lib/libresolv.9.dylib (compatibility version 1.0.0, current version 1.0.0)
 ```
 
-Remove `zxy` from `[dependencies]` and `cargo build`:
+Now remove `zxy` from `[dependencies]` and `cargo build`:
 ```bash
 $ otool -L target/debug/librust_input.dylib
 target/debug/librust_input.dylib:
@@ -301,7 +306,7 @@ thrift -gen netcore -out . thrift/input.thrift
 thrift -gen rs -out src thrift/input.thrift
 ```
 
-In C#:
+C# "server":
 ```csharp
 public class InputXy : BackgroundService
 {
@@ -333,7 +338,7 @@ class Processor : zxy.SDK.Input.Input.IAsync
 }
 ```
 
-In rust_input crate, create our Thrift client [similar to before]({% post_url /2018/2018-08-30-rust-thrift %}):
+In rust_input crate, create our Thrift client ([similar to before]({% post_url /2018/2018-08-30-rust-thrift %})):
 ```rust
 extern crate zxy;
 extern crate thrift;
@@ -378,4 +383,4 @@ Just to be clear, this doesn't use NNG; it's Thrift over TCP.
 
 One thing that's fantastic about our microservice architecture is once we start a Rust service we can interact with it the same as our C# services (i.e. via Thrift RPC or NNG pub/sub).  No need to deal with managed to unmanaged interop which [gets pretty hairy for non-trivial types]({% post_url /2018/2018-08-21-windows-services %}#failure-actions).
 
-First thing that came to mind was actually relacing the C# broker with a Rust implementation so [it isn't affected by that pesky garbage collector](https://docs.microsoft.com/en-us/dotnet/standard/garbage-collection/fundamentals#what-happens-during-a-garbage-collection).
+First thing that came to mind was actually replacing the C# broker with a Rust implementation so [it isn't affected by that pesky garbage collector](https://docs.microsoft.com/en-us/dotnet/standard/garbage-collection/fundamentals#what-happens-during-a-garbage-collection).
