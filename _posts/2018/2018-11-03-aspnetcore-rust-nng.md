@@ -34,7 +34,11 @@ This will produce a `.dylib` on OSX (and presumably a `.so` on Linux and `.dll` 
 
 __Update 2018/11/26__
 
-The [2018 edition guide mentions `cdylib`](https://rust-lang-nursery.github.io/edition-guide/rust-2018/platform-and-target-support/cdylib-crates-for-c-interoperability.html) crate type.  In release, it results in a 780508 byte dynamic library instead of 1334912 bytes.
+The [2018 edition guide mentions `cdylib`](https://rust-lang-nursery.github.io/edition-guide/rust-2018/platform-and-target-support/cdylib-crates-for-c-interoperability.html) crate type.  In release, it results in a 780,508 byte library instead of 1,334,912 bytes:
+```toml
+[lib]
+crate-type = ["cdylib"]
+```
 
 In `lib.rs`:
 ```rust
