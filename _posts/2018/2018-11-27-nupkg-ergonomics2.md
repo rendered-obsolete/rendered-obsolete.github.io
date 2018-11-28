@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Nupkg Ergonomics or, The ongoing saga of C# bindings to NNG native library
+title: Dev.to
 tags:
 - dotnet
 - nuget
