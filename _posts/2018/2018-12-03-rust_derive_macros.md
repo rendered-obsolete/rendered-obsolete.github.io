@@ -22,7 +22,7 @@ Quick summary of the problem we're trying to solve.
 
 ### Problem
 
-NNG has a straight-forward C API.  Instead of the function overloading you would find in C++ (or many other languages), there's a collection of functions for each type.  The `nng_socket` type has __get__ and __set__ option functions:
+NNG has a straight-forward C API.  Instead of the function overloading you would find in C++ (or many other languages), there's a collection of functions for each type.  The `nng_socket` type has __get__ and __set__ option functions (about a dozen in total):
 ```c
 int nng_getopt_bool(nng_socket s, const char *opt, bool *bvalp);
 int nng_getopt_int(nng_socket s, const char *opt, int *ivalp);
@@ -98,7 +98,7 @@ impl SetOpts for NngSocket {
 }
 ```
 
-## Derive Mode Procedural Macros
+## Derive Mode Procedural Macro
 
 Start a new library module with `cargo new --lib runng_derive` and in `Cargo.toml`:
 ```toml
@@ -117,7 +117,7 @@ quote = "0.6"
 ```
 
 Notes:
-1. `proc-macro = true` is needed otherwise get:
+1. `proc-macro = true` is needed to avoid:
 
         error: the `#[proc_macro_derive]` attribute is only usable with crates of the `proc-macro` crate type
 
@@ -278,7 +278,7 @@ pub struct NngSocket {
 }
 ```
 
-It's pretty easy to walk through the hierarchy of `enums` and `struct`s representating the source code:
+It's pretty easy to walk through the hierarchy of `enums` and `struct`s representing the source code:
 ```rust
 fn get_nng_member(ast: &syn::DeriveInput) -> Option<syn::Ident> {
     match ast.data {
