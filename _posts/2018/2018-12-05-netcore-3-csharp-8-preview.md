@@ -73,6 +73,16 @@ namespace Test
 }
 ```
 
+__Update__:
+
+Per [this SO](https://stackoverflow.com/questions/53633538/how-to-enable-nullable-reference-types-feature-of-c-sharp-8-0-for-the-whole-proj), can be enabled for an entire project via:
+```xml
+<PropertyGroup>
+  <NullableReferenceTypes>true</NullableReferenceTypes>
+  <LangVersion>8.0</LangVersion>
+</PropertyGroup>
+```
+
 `dotnet build`:
 ```
 Program.cs(10,27): error CS8600: Converting null literal or possible null value to non-nullable type. [/XXX/junk/junk.csproj]
