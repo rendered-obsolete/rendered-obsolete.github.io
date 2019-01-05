@@ -1,0 +1,129 @@
+---
+layout: post
+title: Thrift 0.12
+tags:
+- thrift
+- csharp
+- architecture
+---
+
+Since using [protobuf](https://github.com/protocolbuffers/protobuf) on a former project I've developed a love (obsession?) for serialization libraries.  On our [current project](https://github.com/subor/sdk) we use [Apache Thrift](https://github.com/apache/thrift) which we're in the process of updating to the recently released 0.12.
+
+## Apache Thrift
+
+One lesson learned from using protobuf was we wasted a lot of effort on the messaging layer: identification (multiplexing different message types over a single channel), framing, error handling, connection management, etc.  [gRPC](https://grpc.io/) was still in its infancy so we looked at solutions that provided a more complete solution including a transport abstraction.  We settled on [Apache Thrift](https://github.com/apache/thrift).
+
+I've already written extensively about Thrift ([0]({% post_url /2018/2018-08-24-aspnetcore-thrift %})
+[1]({% post_url /2018/2018-08-30-rust-thrift %})
+[2]({% post_url /2018/2018-09-07-zeromq-thrift %})
+[3]({% post_url /2018/2018-11-03-aspnetcore-rust-nng %})
+[4]({% post_url /2018/2018-11-22-thrift-forwarder %})), so I'll close with some notes I had laying around about building it on OSX.
+
+### 0.11
+
+As is often the case, doing things on macOS takes a touch more effort.  
+Mostly followed directions from [https://thrift.apache.org/docs/install/os_x](https://thrift.apache.org/docs/install/os_x):
+
+- boost 1.67
+
+      ./bootstrap.sh
+      sudo ./b2 threading=multi address-model=64 variant=release stage install
+
+- Both openssl 1.0.2o and 1.1.0h built but libevent ended up with linker errors
+- libevent 2.1.8 (without encryption)
+    
+      ./configure --disable-openssl --prefix=/usr/local && make -j4 && sudo make install
+
+- bison 3.0.4
+
+      # Could not get compiling on OSX 10.13.4
+      ./configure && make -j4 && sudo make install
+      # Instead install via brew
+      brew install bison
+      export PATH=/usr/local/opt/bison/bin:$PATH
+
+- thrift 0.11
+
+      ./configure --prefix=/usr/local --with-boost=/usr/local --with-libevent=/usr/local
+      make -j4 && sudo make install
+
+### 0.12
+
+After just over a year without updates, [Thrift 0.12](https://github.com/apache/thrift/releases) was finally released at the tail-end of 2018.  Dependencies are the same as with 0.11, but ran into some issues.
+
+`make` failed with:
+```
+libtool: compile:  g++ -std=c++11 -DHAVE_CONFIG_H -I. -I../.. -I../../lib/cpp/src/thrift -I../../lib/c_glib/src/thrift -I/usr/local/include -I/usr/local/include -I./src -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -Wall -Wextra -pedantic -g -O2 -MT src/thrift/transport/TSocket.lo -MD -MP -MF src/thrift/transport/.deps/TSocket.Tpo -c src/thrift/transport/TSocket.cpp  -fno-common -DPIC -o src/thrift/transport/.libs/TSocket.o
+src/thrift/transport/TSocket.cpp:173:15: error: out-of-line definition of
+      'hasPendingDataToRead' does not match any declaration in
+      'apache::thrift::transport::TSocket'
+bool TSocket::hasPendingDataToRead() {
+              ^~~~~~~~~~~~~~~~~~~~
+src/thrift/transport/TSocket.cpp:179:3: error: unknown type name
+      'THRIFT_IOCTL_SOCKET_NUM_BYTES_TYPE'
+  THRIFT_IOCTL_SOCKET_NUM_BYTES_TYPE numBytesAvailable;
+  ^
+src/thrift/transport/TSocket.cpp:181:40: error: use of undeclared identifier
+      'FIONREAD'
+  int r = THRIFT_IOCTL_SOCKET(socket_, FIONREAD, &numBytesAvailable);
+```
+
+Turns out it was picking up 0.11 header files from `/usr/local/include/thrift/` and had to delete those.
+
+Next, failed with:
+```
+Making all in test
+composer install --working-dir=../../..
+make[4]: composer: No such file or directory
+make[4]: *** [deps] Error 1
+```
+
+"Composer" seems to be some php thing.  Despite running configure using `--without-php` and `--without-php_extension`.
+
+
+We didn't investigate this, but it can be avoided by not building the tests:`./configure --disable-tests`.
+
+## Pain Points
+
+### Unions
+
+The `netcore` generator was released as part of 0.11
+```thrift
+struct PlayMsg{
+      1: string url,
+}
+union RequestMsg{
+      1: PlayMsg Play,
+}
+```
+
+An abridged version of the generated code:
+```csharp
+public abstract partial class RequestMsg : TAbstractBase {
+
+      public abstract object Data { get; }
+
+      public class Play : RequestMsg {
+            private PlayMsg _data;
+            public override object Data { get { return _data; } }
+            public Play(PlayMsg data) : base(true) {
+                  this._data = data;
+            }
+```
+
+[Pattern matching](https://docs.microsoft.com/en-us/dotnet/csharp/pattern-matching) introduced with C# 7:
+```csharp
+switch (message)
+{
+case RequestMsg.Play msg:
+    // Need a cast here T_T
+    PlayMsg play = (PlayMsg)msg.Data;
+```
+
+Note the cast to `PlayMsg` because of `object Data`.  This kind of nonsense has no place in a strongly-typed universe.  Luckily, [it's a bug](https://issues.apache.org/jira/browse/THRIFT-4715) that will hopefully get fixed in 0.12.1 without having to wait for 0.13.
+
+### Nuget
+
+We're thrilled that the Thrift team is back to publishing a [package to nuget](https://www.nuget.org/packages/ApacheThrift/).  It contains .NET 3.5, 4.5, and Standard 2.0 libraries.  [As I wrote before]({% post_url /2018/2018-11-27-nupkg-ergonomics %}#when-to-not-multi-target), we have the problem where .NET Framework 4.6.1 projects use the 4.5 project while we want to use the Standard library (in Thrift they're modestly different).
+
+We're on the fence about reporting this "issue".  Feels more particular to our decisions.  Feels like it should be part of [`<PackageReference>`](https://docs.microsoft.com/en-us/nuget/consume-packages/package-references-in-project-files).
