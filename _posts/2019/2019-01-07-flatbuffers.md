@@ -144,9 +144,10 @@ Using [`std::process::Command`](https://doc.rust-lang.org/std/process/struct.Com
 Not entirely sure I believe the results.  Not knowing much about any of the three libraries, we're likely comparing slightly different things.
 
 Basic write:  
-![]({{ "https://github.com/jeikabu/proto_benchmarks/blob/master/imgs/basic_write/violin.svg" | absolute_url }})
+![](https://raw.githubusercontent.com/jeikabu/proto_benchmarks/master/imgs/basic_write/violin.svg)
+
 
 Complex build:  
-![]({{ "https://github.com/jeikabu/proto_benchmarks/blob/master/imgs/complex_build/violin.svg" | absolute_url }})
+![](https://raw.githubusercontent.com/jeikabu/proto_benchmarks/master/imgs/complex_build/violin.svg)
 
 Also found [rust-serialization-benchmarks](https://github.com/erickt/rust-serialization-benchmarks) which hasn't been updated in 3 years and seems to use [Bencher](https://doc.rust-lang.org/1.1.0/test/struct.Bencher.html) for benchmarking.
