@@ -1,10 +1,11 @@
 ---
 layout: post
-title: Docker and Vagrant
+title: Migrating to Vagrant/Docker/QEMU
 tags:
 - devops
 - docker
 - vagrant
+- qemu
 ---
 
 Need testing various version of Windows: 7, 10, 10 LTSB ("IoT Enterprise").
@@ -23,49 +24,64 @@ Previously Jenkins [node/agent label](https://jenkins.io/doc/book/pipeline/synta
 Vagrant Windows guest VMs
 https://www.vagrantup.com/docs/boxes/base.html#windows-boxes
 
+We're in the process of evaluating Windows 10 Enterprise LTSC (the OS formerlly known as Windows 10 "IoT Enterprise"/LTSB) which is comparable to Windows 10 Enterprise version 1809/RS5.  I'm installing to VirtualBox as `win10_ltsc_2019`.
+
 ### WinRM
 
-If necessary, make current network connection "Private" otherwise the WinRM configuration will fail: 
+[Windows Remote Mangement](https://docs.microsoft.com/en-us/windows/desktop/WinRM/portal)
+
+Make current network connection "Private" otherwise the WinRM configuration will fail: 
 ```powershell
 Get-NetConnectionProfile
 # Get "Name" value from output
 Set-NetConnectionProfile -Name "Name from above" -NetworkCategory Private
 ```
 
-### SSH/RDP
+`vagrant resume` there's a problem with WinRM:
+```
+default: WinRM transport: negotiate
+```
+
+In my case I'm on a domain and the connection will eventually rename itself.  Once that happens I need to set the category to "Private" again.
+
+### RDP/SSH
+
+[Enable Remote Desktop](https://docs.microsoft.com/en-us/windows-server/remote/remote-desktop-services/clients/remote-desktop-allow-access) for `vagrant rdp` to work.
 
 In order for `vagrant ssh` to work, must install OpenSSH server:
 - Windows 10 RS3/1709 and later, it's an [optional component](https://blogs.msdn.microsoft.com/powershell/2017/12/15/using-the-openssh-beta-in-windows-10-fall-creators-update-and-windows-server-1709/)
 - For ealier versions including Windows 10 LTSB 2016 (RS1), https://github.com/PowerShell/Win32-OpenSSH/releases
 
-In either case, [you need to add the vagrant public key](https://www.vagrantup.com/docs/boxes/base.html#default-user-settings) to `~/.ssh/authorized_keys`:
-https://stackoverflow.com/questions/16212816/setting-up-openssh-for-windows-using-public-key-authentication
-
-While you're at it enable Remote Desktop.
+In either case, you also need to:
+- [Add the vagrant public key](https://www.vagrantup.com/docs/boxes/base.html#default-user-settings) to `~/.ssh/authorized_keys` (see [this SO](https://stackoverflow.com/questions/16212816/setting-up-openssh-for-windows-using-public-key-authentication))
+- Have sshd start automatically: `sc config sshd start= auto`
 
 ### Boxing
 
-At this point a PowerShell guru would probably head right into provisioning.  [With AppVeyor]({% post_url /2018/2018-09-21-dotnet %}#code-coverage) I got some mileage out of [Chocolatey](https://chocolatey.org/), but my shell-fu is woefully inadequate to automate Windows machine setup.
+At this point a PowerShell guru would probably head right into provisioning.  [With AppVeyor]({% post_url /2018/2018-09-21-dotnet %}#code-coverage) I got some mileage out of [Chocolatey](https://chocolatey.org/), but my shell-fu is woefully inadequate to fully automate Windows.
 
-Neat scripts and Vagrantfiles in this repo for working with Windows and Docker:
-https://github.com/StefanScherer/docker-windows-box
+A very common Visual Studio:
+- [Full Visual Studio](https://visualstudio.microsoft.com/downloads/)
+- ["BuildTools"](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2017) (a streamlined version of VS)
+- [Visual Studio container](https://docs.microsoft.com/en-us/visualstudio/install/build-tools-container?view=vs-2017)
+
 
 Working with boxes is straight-forward.  In the case of virtual box:
 https://www.vagrantup.com/docs/virtualbox/boxes.html#packaging-the-box
 ```bash
 # Save the base image somewhere
 vagrant package --base win10_ltsc_2019 --output /shared_folder/win10_ltsc_2019.box
+
+# Remove the box if it already exists
+vagrant box remove win10_ltsc_2019
 # Add the saved base image to list of available "boxes"
 vagrant box add --name win10_ltsc_2019 /shared_folder/win10_ltsc_2019.box
 ```
 
-Keep in mind none of this is fast as it involves 5-15GB VM images.  This should be used for relatively "static" configuration; I wouldn't want to mess with it every day or even every week.
+Keep in mind none of this is fast as it involves 5-15GB VM images.  This should be used for relatively "static" configuration; I wouldn't want to mess with it every day or even every week.  For things that change frequently (like your software) there's "shared folders".
 
-__Installing Visual Studio__
-https://www.microsoft.com/net/download (or [archives](https://www.microsoft.com/net/download/archives))
-
-Visual Studio container
-https://docs.microsoft.com/en-us/visualstudio/install/build-tools-container?view=vs-2017
+Neat scripts and Vagrantfiles in this repo for working with Windows and Docker:
+https://github.com/StefanScherer/docker-windows-box
 
 
 ## Vagrantfile
@@ -105,7 +121,7 @@ Likewise, `vagrant ssh`:
 
 ## QEMU
 
-Been wanting to extend testing to more "exotic" platforms like ARM64/aarch64.  [This juicy Travis-CI issue](https://github.com/travis-ci/travis-ci/issues/3376) got us heading in that direction.
+Been wanting to extend testing to more "exotic" platforms, particularly ARM64/aarch64.  [This juicy Travis-CI issue](https://github.com/travis-ci/travis-ci/issues/3376) got us heading in that direction.
 
 Originally using Debian "Jessie", but "Stretch" is [first with ARM64 support](https://wiki.debian.org/LTS).
 
@@ -123,6 +139,8 @@ Linux f190ea8ef8cc 4.15.0-43-generic #46-Ubuntu SMP Thu Dec 6 14:45:28 UTC 2018 
 ```
 
 Note __aarch64__.  Pretty slick.
+
+### Rust
 
 [Dockerfile](https://github.com/jeikabu/runng/blob/docker_arm64/Dockerfile):
 ```docker
@@ -158,3 +176,65 @@ docker run -it --rm jeikabu/debian-rust:arm64v8-stretch-1.32.0
 https://www.tomaz.me/2013/12/02/running-travis-ci-tests-on-arm.html
 https://blog.hypriot.com/post/setup-simple-ci-pipeline-for-arm-images/
 https://hub.docker.com/r/arm64v8/rust/
+
+### .NET Core
+
+[Dockerfile ARM64](https://github.com/dotnet/dotnet-docker/blob/master/3.0/sdk/stretch/arm64v8/Dockerfile)
+
+```docker
+FROM multiarch/debian-debootstrap:arm64-stretch
+
+RUN apt-get update && apt-get install -y \
+    curl \
+    gnupg \
+    icu-devtools
+
+# From:
+# https://github.com/dotnet/dotnet-docker/blob/master/3.0/sdk/stretch/arm64v8/Dockerfile
+ENV DOTNET_SDK_VERSION 3.0.100-preview-010184
+RUN curl -SL --output dotnet.tar.gz https://dotnetcli.blob.core.windows.net/dotnet/Sdk/$DOTNET_SDK_VERSION/dotnet-sdk-$DOTNET_SDK_VERSION-linux-arm64.tar.gz \
+    && dotnet_sha512='3fd7338fdbcc194cdc4a7472a0639189830aba4f653726094a85469b383bd3dc005e3dad4427fee398f76b40b415cbd21b462bd68af21169b283f44325598305' \
+    && echo "$dotnet_sha512 dotnet.tar.gz" | sha512sum -c - \
+    && mkdir -p /usr/share/dotnet \
+    && tar -zxf dotnet.tar.gz -C /usr/share/dotnet \
+    && rm dotnet.tar.gz \
+    && ln -s /usr/share/dotnet/dotnet /usr/bin/dotnet
+```
+
+If you're outside North America you might want to use the download URLs in the [release notes](https://github.com/dotnet/core/tree/master/release-notes).  In China, downloading from [https://download.visualstudio.microsoft.com](https://download.visualstudio.microsoft.com) was many times faster than https://dotnetcli.blob.core.windows.net like in their Dockerfile.  YMMV.
+
+Let's run our tests:
+```bash
+docker run -t -v $(pwd):/usr/src jeikabu/debian-dotnet-sdk:arm64v8-stretch /bin/bash -c "cd /usr/src; dotnet test"
+```
+
+One last comment.  `icu-devtools` package is there otherwise you'll get:
+```
+root@79106a1b502f:/# cd /usr/src
+root@864d67ab40bb:/usr/src# dotnet clean
+qemu: Unsupported syscall: 283
+FailFast:
+Couldn't find a valid ICU package installed on the system. Set the configuration flag System.Globalization.Invariant to true if you want to run with no globalization support.
+
+   at System.Environment.FailFast(System.String)
+   at System.Globalization.GlobalizationMode.GetGlobalizationInvariantMode()
+   at System.Globalization.GlobalizationMode..cctor()
+   at System.Globalization.CultureData.CreateCultureWithInvariantData()
+   at System.Globalization.CultureData.get_Invariant()
+   at System.Globalization.CultureData.GetCultureData(System.String, Boolean)
+   at System.Globalization.CultureInfo..ctor(System.String, Boolean)
+   at System.Reflection.RuntimeAssembly.GetLocale()
+   at System.Reflection.RuntimeAssembly.GetName(Boolean)
+   at System.Reflection.Assembly.GetName()
+   at System.Diagnostics.Tracing.EventPipeController.GetAppName()
+   at System.Diagnostics.Tracing.EventPipeController..ctor()
+   at System.Diagnostics.Tracing.EventPipeController.Initialize()
+   at System.StartupHookProvider.ProcessStartupHooks()
+qemu: uncaught target signal 6 (Aborted) - core dumped
+Aborted (core dumped)
+```
+
+There's several blogs and StackOverflow questions containing solutions that seem to be variants from the [dotnet documentation for RHEL](https://github.com/dotnet/core/blob/master/Documentation/build-and-install-rhel6-prerequisites.md).  Not trying to create pedantically tiny images, so adding `icu-devtools` package will suffice.
+
+### Travis
+
