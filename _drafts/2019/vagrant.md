@@ -1,46 +1,42 @@
 ---
 layout: post
-title: Migrating to Vagrant
+title: Reusable Windows VMs with Vagrant
 tags:
 - devops
 - vagrant
 ---
 
-Need testing various version of Windows: 7, 10, 10 LTSB ("IoT Enterprise").
+We need to test our software against various versions of Windows: 7, 10, 10 LTSB ("IoT Enterprise").  Thus far we've used manually configured physical machines exposed via [Jenkins](https://jenkins.io/) [node/agent label](https://jenkins.io/doc/book/pipeline/syntax/#agent).  This was easy to get working initially but has been problematic:
+- Scalability: static set of machines that can be a bottleneck before releases
+- Fail-fast/Debuggable: have to wait for PR to percolate through build pipeline to find out something doesn't work and then take the node offline to debug
+- Reproducability: manual configuration is error-prone, people make changes to the environment, etc.
 
-Previously Jenkins [node/agent label](https://jenkins.io/doc/book/pipeline/syntax/#agent) physical machines that were manually configured:
-- Scalability: static set of machines that became a bottleneck before releases
-- Fail-fast/Debuggable: had to wait for PR to percolate through build pipeline to find out it didn't work and then take the node offline to debug
-- Reproducable: manually configured error-prone, people would make changes to the environment, etc.
-
-[AppVeyor]({% post_url /2018/2018-09-21-dotnet %})
-[Travis]({% post_url /2018/2018-09-30-rust-ffi-ci %})
-
+Our recent success with [AppVeyor]({% post_url /2018/2018-09-21-dotnet %}) and 
+[Travis CI]({% post_url /2018/2018-09-30-rust-ffi-ci %}) inspired us to look for something more dynamic.  This is some of the initial work we've done moving to Windows VMs with [Vagrant](https://www.vagrantup.com/).
 
 ## Windows VM
 
-Vagrant Windows guest VMs
-https://www.vagrantup.com/docs/boxes/base.html#windows-boxes
+[Vagrant's documentation for Windows guest VMs](https://www.vagrantup.com/docs/boxes/base.html#windows-boxes) is pretty good.
 
-We're in the process of evaluating Windows 10 Enterprise LTSC (the OS formerlly known as Windows 10 "IoT Enterprise"/LTSB) which is comparable to Windows 10 Enterprise version 1809/RS5.  I'm installing to VirtualBox as `win10_ltsc_2019`.
+We're in the process of evaluating Windows 10 Enterprise LTSC (the OS formerlly known as Windows 10 "IoT Enterprise"/LTSB) which is comparable to Windows 10 Enterprise version 1809/RS5.  We've installed it to a [Virtual Box](https://www.virtualbox.org/) VM named `win10_ltsc_2019`.
 
 ### WinRM
 
-[Windows Remote Mangement](https://docs.microsoft.com/en-us/windows/desktop/WinRM/portal)
+Vagrant uses [Windows Remote Mangement](https://docs.microsoft.com/en-us/windows/desktop/WinRM/portal) to manage Windows VMs.
 
-Make current network connection "Private" otherwise the WinRM configuration will fail: 
+Inside the VM, make sure the current network connection is "Private" otherwise the WinRM configuration will fail: 
 ```powershell
 Get-NetConnectionProfile
 # Get "Name" value from output
-Set-NetConnectionProfile -Name "Name from above" -NetworkCategory Private
+Set-NetConnectionProfile -Name "NAME FROM ABOVE" -NetworkCategory Private
 ```
 
-`vagrant resume` there's a problem with WinRM:
+Problems with the WinRM configuration with manifest later as commands like `vagrant resume` hanging with:
 ```
 default: WinRM transport: negotiate
 ```
 
-In my case I'm on a domain and the connection will eventually rename itself.  Once that happens I need to set the category to "Private" again.
+In our case, we're on a domain and the connection will eventually rename itself.  Once that happens we needed to set the category to "Private" again.
 
 ### RDP/SSH
 
@@ -54,36 +50,34 @@ In either case, you also need to:
 - [Add the vagrant public key](https://www.vagrantup.com/docs/boxes/base.html#default-user-settings) to `~/.ssh/authorized_keys` (see [this SO](https://stackoverflow.com/questions/16212816/setting-up-openssh-for-windows-using-public-key-authentication))
 - Have sshd start automatically: `sc config sshd start= auto`
 
-### Boxing
+## Boxing
 
-At this point a PowerShell guru would probably head right into provisioning.  [With AppVeyor]({% post_url /2018/2018-09-21-dotnet %}#code-coverage) I got some mileage out of [Chocolatey](https://chocolatey.org/), but my shell-fu is woefully inadequate to fully automate Windows.
+At this point a PowerShell guru would probably head right into provisioning.  [With AppVeyor]({% post_url /2018/2018-09-21-dotnet %}#code-coverage) we got some mileage out of [Chocolatey](https://chocolatey.org/), but our shell-fu is woefully inadequate to fully automate Windows.
 
-A very common Visual Studio:
+For this exercise we're going to manually install software.  Once we've fashioned an environment to our liking, we want to preserve it for later re-use as development environments, build nodes, etc.
+
+Arguably the most common Windows component is Visual Studio which has a bevy of install choices:
 - [Full Visual Studio](https://visualstudio.microsoft.com/downloads/)
 - ["BuildTools"](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2017) (a streamlined version of VS)
 - [Visual Studio container](https://docs.microsoft.com/en-us/visualstudio/install/build-tools-container?view=vs-2017)
 
-
-Working with boxes is straight-forward.  In the case of virtual box:
-https://www.vagrantup.com/docs/virtualbox/boxes.html#packaging-the-box
+Once your software is installed, working with the VM as a Vagrant "box" is straight-forward.  In the case of [Virtual Box](https://www.virtualbox.org/), we [package the VM](https://www.vagrantup.com/docs/virtualbox/boxes.html#packaging-the-box) for later reuse:
 ```bash
 # Save the base image somewhere
 vagrant package --base win10_ltsc_2019 --output /shared_folder/win10_ltsc_2019.box
 
+# Elsewhere...
 # Remove the box if it already exists
 vagrant box remove win10_ltsc_2019
 # Add the saved base image to list of available "boxes"
 vagrant box add --name win10_ltsc_2019 /shared_folder/win10_ltsc_2019.box
 ```
 
-Keep in mind none of this is fast as it involves 5-15GB VM images.  This should be used for relatively "static" configuration; I wouldn't want to mess with it every day or even every week.  For things that change frequently (like your software) there's "shared folders".
-
-Neat scripts and Vagrantfiles in this repo for working with Windows and Docker:
-https://github.com/StefanScherer/docker-windows-box
-
+Keep in mind none of this is fast as it involves 5-15GB VM images (depending on the version of Windows and how much you install).  This should be used for relatively "static" configuration; I wouldn't want to mess with it every day or even every week.  For things that change frequently (like your software) there's "shared folders".
 
 ## Vagrantfile
 
+With our VM image ready, we need a `Vagrantfile` to get things going:
 ```ruby
 Vagrant.configure("2") do |config|
     config.vm.box = "win10_ltsc_2019"
@@ -94,7 +88,7 @@ Vagrant.configure("2") do |config|
 end
 ```
 
-`vagrant up`:
+Run `vagrant up`:
 ```
 ==> default: Forwarding ports...
     default: 3389 (guest) => 3389 (host) (adapter 1)
@@ -102,8 +96,10 @@ end
     default: 5986 (guest) => 55986 (host) (adapter 1)
     default: 22 (guest) => 2222 (host) (adapter 1)
 ==> default: Mounting shared folders...
-    default: /vagrant => /Users/jake/projects/nng.NETCore
+    default: /vagrant => /Users/XXX/nng.NETCore
 ```
+
+Note the last line.  The project directory on the host (`/Users/XXX/nng.NETCore`) is accessible to the VM as a "shared folder".
 
 Port `3389` is RDP so `vagrant rdp` works.  I added a (very belated) [answer to Stack Overflow](https://stackoverflow.com/questions/28906432/vagrant-rdp-windows2012r2-how-do-i-rdp-into-my-vagrant-box) about this:
 
@@ -117,3 +113,16 @@ $ vagrant rdp
 Likewise, `vagrant ssh`:  
 ![]({{ "/assets/vagrant_ssh_win10.png" | absolute_url }})
 
+## Next
+
+This gives us a good start that accomplishes a few of our goals:
+- On-demand Windows environments
+- Reproducable at both developer's workstations and for building/testing
+
+But we still need a few improvements before we can fully migrate:
+- General automation
+    - A previous project had PowerShell scripts for installing/running our software that we should either track down or re-write
+- Integration into Jenkins pipeline
+- Provisioning
+    - Truth be told, the environment is fairly static, so maintaining read-only VM images should suffice for now
+    - [This repo](https://github.com/StefanScherer/docker-windows-box) has neat scripts and Vagrantfiles for working with Windows and Docker

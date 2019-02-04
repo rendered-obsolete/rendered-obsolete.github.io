@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Migrating to Vagrant
+title: Migrating to Docker/Qemu
 tags:
 - devops
 - docker
