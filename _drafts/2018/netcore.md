@@ -11,6 +11,11 @@ tags:
 
 Random notes related to netcore that didn't deserve a post of their own.
 
+
+Mixing <TargetFramework> and <TargetFrameworks>:
+C:\Program Files\dotnet\sdk\3.0.100-preview-009812\Sdks\Microsoft.NET.Sdk\targets\Microsoft.PackageDependencyResolution.targets(220,5): error NETSDK1005: Assets file 'D:\usr\nng.NETCore\tests\obj\project.assets.json' doesn't have a target for '.NETCoreApp,Version=v2.1'. Ensure that restore has run and that you have included 'netcoreapp2.1' in the TargetFrameworks for your project. [D:\usr\nng.NETCore\tests\tests.csproj]
+
+
 ## Converting libs
 
 ```
@@ -107,3 +112,49 @@ However, [layer1]({% post_url /2018/2018-09-04-layer1 %}) (a .net framework exe)
 https://blog.nuget.org/20180409/migrate-packages-config-to-package-reference.html
 https://docs.microsoft.com/en-us/nuget/reference/migrate-packages-config-to-package-reference
 BUG: https://developercommunity.visualstudio.com/content/problem/251740/migrate-packagesconfig-to-packagereference-not-sho.html
+
+## dotnet xunit
+
+https://andrewlock.net/running-tests-with-dotnet-xunit-using-cake/
+
+
+Add to csproj:
+```xml
+<ItemGroup>
+    <DotNetCliToolReference Include="dotnet-xunit" Version="2.3.1" />
+</ItemGroup>
+```
+
+`dotnet xunit`
+
+[Make sure](https://github.com/xunit/xunit/issues/1358) run from directory containing project with `DotNetCliToolReference`.
+
+```
+dotnet xunit -method "zxy.Tests.HostRests.Test2"
+Detecting target frameworks in tests.csproj...
+Building for framework netcoreapp2.1...
+  zxy -> /Users/jake/projects/zxy/output/Debug/bin/netstandard2.0/zxy.dll
+  zxy0 -> /Users/jake/projects/zxy/output/Debug/bin/netcoreapp2.1/zxy0.dll
+NngTests.cs(58,26): warning CS0219: The variable 'sendString' is assigned but its value is never used [/Users/jake/projects/zxy/zxy/tests/tests.csproj]
+  tests -> /Users/jake/projects/zxy/output/Debug/bin/netcoreapp2.1/tests.dll
+Running .NET Core 2.1.0 tests for framework netcoreapp2.1...
+It was not possible to find any compatible framework version
+The specified framework 'Microsoft.NETCore.App', version '2.1.0' was not found.
+  - Check application dependencies and target a framework version installed at:
+      /usr/local/share/dotnet/
+  - Installing .NET Core prerequisites might help resolve this problem:
+      http://go.microsoft.com/fwlink/?LinkID=798306&clcid=0x409
+  - The .NET Core framework and SDK can be installed from:
+      https://aka.ms/dotnet-download
+  - The following versions are installed:
+      2.0.0 at [/usr/local/share/dotnet/shared/Microsoft.NETCore.App]
+      2.0.5 at [/usr/local/share/dotnet/shared/Microsoft.NETCore.App]
+      2.1.1 at [/usr/local/share/dotnet/shared/Microsoft.NETCore.App]
+      2.1.2 at [/usr/local/share/dotnet/shared/Microsoft.NETCore.App]
+```
+
+## Managed Debug Assistants
+
+https://docs.microsoft.com/en-us/dotnet/framework/debug-trace-profile/diagnosing-errors-with-managed-debugging-assistants
+
+https://docs.microsoft.com/en-us/dotnet/framework/debug-trace-profile/callbackoncollecteddelegate-mda

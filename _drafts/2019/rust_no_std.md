@@ -48,15 +48,13 @@ include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 Add `#![no_std]` to the top of `lib.rs` and build:
 ```rust
 error[E0433]: failed to resolve: could not find `std` in `{{root}}`
-    --> /Users/jake/projects/runng/target/debug/build/runng-sys-c34663584b4c622a/out/bindings.rs:2697:22
+    --> /XXX/runng/target/debug/build/runng-sys-c34663584b4c622a/out/bindings.rs:2697:22
      |
 2697 |     pub fp_offset: ::std::os::raw::c_uint,
      |                      ^^^ could not find `std` in `{{root}}`
 ```
 
-Embedded Rust Book [mentions](https://rust-embedded.github.io/book/interoperability/c-with-rust.html#automatically-generating-the-interface) cty crate.
-
-`lib.rs` add [`ctypes_prefix`](https://docs.rs/bindgen/0.47.0/bindgen/struct.Builder.html#method.ctypes_prefix) before calling `generate`:
+Embedded Rust Book [mentions](https://rust-embedded.github.io/book/interoperability/c-with-rust.html#automatically-generating-the-interface) cty crate containing no_std compatible definitions of `c_int` et al for bindgen.  In `lib.rs` add [`ctypes_prefix`](https://docs.rs/bindgen/0.47.0/bindgen/struct.Builder.html#method.ctypes_prefix) before calling `generate`:
 ```rust
 let bindings = bindgen::Builder::default()
     .header("wrapper.h")
@@ -74,7 +72,7 @@ cty = "0.1"
 Build:
 ```rust
 error[E0433]: failed to resolve: could not find `std` in `{{root}}`
-    --> /Users/jake/projects/runng/target/debug/build/runng-sys-c34663584b4c622a/out/bindings.rs:1965:31
+    --> /XXX/runng/target/debug/build/runng-sys-c34663584b4c622a/out/bindings.rs:1965:31
      |
 1965 | pub type nng_aio_cancelfn = ::std::option::Option<
      |                               ^^^ could not find `std` in `{{root}}`

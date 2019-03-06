@@ -22,6 +22,36 @@ Fixed:
 https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/fixed-statement
 https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/unsafe-code-pointers/fixed-size-buffers
 
+https://docs.microsoft.com/en-us/dotnet/api/system.runtime.compilerservices.unsafe
+https://www.nuget.org/packages/System.Runtime.CompilerServices.Unsafe/
+`dotnet add nng.NETCore package System.Runtime.CompilerServices.Unsafe`
+```csharp
+public void Send(ReadOnlySpan<byte> message)
+{
+    unsafe {
+        fixed (byte* ptr = &message[0])
+```
+
+One things that's awkward is converting a raw pointer to `Memory`.  I wanted to create an object that tracks unmanaged memory:
+```csharp
+class Alloc : IDisposable {
+  Memory<byte> memory;
+  public Alloc(int size) {
+    byte* ptr = nng_alloc(size);
+    // ???
+  }
+  public Dispose() {
+    nng_free()
+  }
+}
+```
+
+You can get a span, but then there's no way to convert a `Span` to `Memory`:
+```csharp
+var span = new Span<byte>(ptr, size);
+//memory = span.ToMemory() ???
+```
+
 stackalloc:
 https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/stackalloc
 
