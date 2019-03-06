@@ -7,7 +7,7 @@ tags:
 - ffi
 ---
 
-Lifetimes are one of Rust's marquee features and pivotal to its safety gurantees.  My understanding of them felt largely academic until I found a situation doing FFI to native code that warranted further investigation.
+Lifetimes are one of Rust's marquee features and pivotal to its safety guarantees.  My understanding of them felt largely academic until I found a situation doing FFI to native code that warranted further investigation.
 
 ## Lifetimes 101
 
@@ -115,7 +115,7 @@ fn stats() {
 } // root dropped here calling nng_stats_free()
 ```
 
-Unfortunately, the following also "works" (it compiles and maybe runs), but is results in "undefined behavior":
+Unfortunately, the following also "works" (it compiles and maybe runs), but results in "undefined behavior":
 ```rust
 fn naughty_code() {
     let mut naughty_child: Option<_> = None;
@@ -140,15 +140,15 @@ I was pretty sure this was a job for lifetimes.
 
 Once you give a struct a lifetime it "infects" everything it touches:
 ```rust
-pub struct NngStatRoot<'root> {
+pub struct NngStatChild<'root> {
     node: *mut nng_stat,
 }
-impl<'root> NngStatRoot<'root> {
-    // Create a snapshot of statistics
-    pub fn create() -> Option<NngStatRoot<'root>> {
+
+impl<'root> NngStatChild<'root> {
+    pub fn new(node: *mut nng_stat) -> Option<NngStatChild<'root>> {
         //...
     }
-//...
+    //...
 ```
 
 In particular, note `impl<'root>`.  Without that you get:
@@ -156,24 +156,24 @@ In particular, note `impl<'root>`.  Without that you get:
 error[E0261]: use of undeclared lifetime name `'root`
   --> runng/tests/tests/stream_tests.rs:77:18
    |
-77 | impl NngStatRoot<'root> {
-   |                  ^^^^^ undeclared lifetime
+77 | impl NngStatChild<'root> {
+   |                   ^^^^^ undeclared lifetime
 ```
 
-After applying the lifetime everywhere you'll evetually get:
+After applying the lifetime everywhere you'll eventually get:
 ```rust
 error[E0392]: parameter `'root` is never used
   --> runng/tests/tests/stream_tests.rs:73:24
    |
-73 | pub struct NngStatRoot<'root> {
-   |                        ^^^^^ unused type parameter
+73 | pub struct NngStatChild<'root> {
+   |                         ^^^^^ unused type parameter
    |
    = help: consider removing `'root` or using a marker such as `std::marker::PhantomData`
 ```
 
 Lifetime `'root` is unused.  It cannot be applied to the pointer:
 ```rust
-pub struct NngStatRoot<'root> {
+pub struct NngStatChild<'root> {
     // NB: doesn't compile
     node: *'root mut nng_stat,
 }
@@ -181,7 +181,7 @@ pub struct NngStatRoot<'root> {
 
 Lifetimes don't go on pointers, only references (`&`):
 ```rust
-pub struct NngStatRoot<'root> {
+pub struct NngStatChild<'root> {
     node: &'root mut nng_stat,
 }
 ```
@@ -193,28 +193,23 @@ Switching to a reference has two problems:
 The helpful compiler message alludes to another solution, [`std::marker::PhantomData`](https://doc.rust-lang.org/std/marker/struct.PhantomData.html), which allows our struct to "act like" it owns a reference:
 
 ```rust
-pub struct NngStatRoot<'root> {
+pub struct NngStatChild<'root> {
     node: *mut nng_stat,
     _phantom: marker::PhantomData<&'root nng_stat>,
 }
 
-impl<'root> NngStatRoot<'root> {
-    pub fn create() -> Result<NngStatRoot<'root>> {
-        unsafe {
-            let mut node: *mut nng_stat = std::ptr::null_mut();
-            let res = nng_stats_get(&mut node);
-            if res == 0 {
-                Some(NngStatRoot {
-                    node,
-                    // "Initialize" the phantom
-                    _phantom: marker::PhantomData,
-                })
-            } else {
-                None
-            }
+impl<'root> NngStatChild<'root> {
+    pub fn new(node: *mut nng_stat) -> Option<NngStatChild<'root>> {
+        if node.is_null() {
+            None
+        } else {
+            Some(NngStatChild {
+                node,
+                // "Initialize" the phantom
+                _phantom: marker::PhantomData,
+            })
         }
     }
-}
 ```
 
 What's cool is `PhantomData` is a [Zero-Sized Type](https://doc.rust-lang.org/nomicon/exotic-sizes.html#zero-sized-types-zsts); it has no runtime cost (neither CPU nor memory), it exists only at compile-time:
