@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Raspberry Pi 3 Raspbian Omnibus
+title: Raspberry Pi 3/Zero Raspbian Primer
 tags:
 - raspi
 - linux
@@ -8,46 +8,30 @@ tags:
 
 That day has come.
 
-I've had a Raspberry Pi 3 with a touchscreen [running Windows 10 IoT Core]({% post_url /2018/2018-09-02-win10-iot-core-raspi %}) on my desk at work for a while now.  IoT Core isn't dead, I see it reboot for updates every now and then.
+I've had a Raspberry Pi 3 B with a touchscreen [running Windows 10 IoT Core]({% post_url /2018/2018-09-02-win10-iot-core-raspi %}) on my desk at work for a while now.  IoT Core isn't dead, I see it reboot for updates every now and then.
 
 https://github.com/Microsoft?utf8=%E2%9C%93&q=iotcore&type=&language=
 
 [Raspbian](https://www.raspberrypi.org/downloads/).
 
-## 
+# Raspberry Pi 3
+
+## SSH and VNC
+Pretty much the first thing I ever do is get SSH working so I can use a single keyboard/mouse/screen/etc.
 
 
-__Rotate Screen 180 Degrees__  
-
-In `/boot/config.txt` add:
-```
-lcd_rotate=2
-```
-
-__Screen Brightness__  
-
-In the evening the default brightness is alarming:
-```
-sudo sh -c "echo 80 > /sys/class/backlight/rpi_backlight/brightness"
-```
-
-Max brightness seems to be `200`.  Up to `255` seems dimmer and higher than that results in "I/O Error".
-
-
-__Virtual Keyboard__  
-
-Regardless if you call it a "soft keyboard", "on-screen keyboard", or something else, you definitely want one.  Regardless if you prefer iOS or Android, prepare to be disappointed:
-```
-sudo apt-get install matchbox-keyboard
-```
-
-__SSH__
 ```
 sudo raspi-config
 ```
-_Interfacing Options > SSH > Yes_
 
-When it comes to Linux configuration, one of the best investments you can make   is setting up "SSH Key-Based Authentication".  If that means nothing to you look into it, it will change your life.  There's numerous excellent guides on the internet, so I won't bother.
+- _Interfacing Options > VNC > Yes_
+- _Interfacing Options > SSH > Yes_
+
+When it comes to Linux configuration, one of the best investments you can make is setting up "SSH Key-Based Authentication".  If that means nothing to you look into it, it will change your life.  There's numerous excellent guides on the internet, but if you're on Linux/macOS you should be able to:
+```bash
+# Replace with IP address of your Pi
+ssh-copy-id pi@192.168.X.Y
+```
 
 Speaking of investments, given the premium placed on screen real-estate don't overlook the `-X` option to ssh (on macOS/OSX you also need [XQuartz](https://www.xquartz.org/)):  
 
@@ -55,142 +39,71 @@ Speaking of investments, given the premium placed on screen real-estate don't ov
 
 xrdp vs VNC
 
-```
-sudo raspi-config
-```
-_Interfacing Options > VNC > Yes_
+If you're using a VNC client other than RealVNC you may not be able to connect.  TigerVNC complains: `No matching security types`.
+https://www.raspberrypi.org/documentation/remote-access/vnc/
 
-## Visual Studio Code
-
-[This post](https://www.hanselman.com/blog/BuildingVisualStudioCodeOnARaspberryPi3.aspx) seems to be the standard source for building VS Code.
+## Firmware
 
 ```
-git clone https://github.com/microsoft/vscode
-cd vscode
-./scripts/npm.sh install --arch=armhf
+sudo rpi-update
 ```
 
-Launch VS Code:
+## Screen
+
+If you've got some kind of small display (like the [7" touchscreen](https://www.raspberrypi.org/products/raspberry-pi-touch-display/))
+
+- Rotate screen 180 degrees.  In `/boot/config.txt` add:
+    ```
+    lcd_rotate=2
+    ```
+- Adjust screen brightness (max brightness is `255`, higher than that results in "I/O Error"):
+    ```
+    sudo sh -c "echo 80 > /sys/class/backlight/rpi_backlight/brightness"
+    ```
+- Virtual Keyboard.  Regardless if you call it a "soft keyboard", "on-screen keyboard", or something else, you might want one.  Regardless if you prefer iOS or Android, prepare to be disappointed:
+    ```
+    sudo apt-get install matchbox-keyboard
+    ```
+
+__General Linux Goodness__
+
+In `~/.inputrc`:
 ```
-./scripts/code.sh
+set completion-ignore-case on
 ```
 
-You'll run into problems with `yarn` if you blindly attempt `apt-get install yarn` you end up `cmdtest`.  Following the [instructions from yarnpkg.com](https://yarnpkg.com/en/docs/install#debian-stable):
-```bash
-# Remove it "just in case"
-sudo apt-get remove cmdtest
-curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
-echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
-```
+## Software
 
-Install yarn and other pre-requisites:
+Pretty much the first thing you're going to want to do is:
 ```bash
 sudo apt-get update
-sudo apt-get install -y yarn libx11-dev libsecret-1-dev libxkbfile-dev
+sudo apt-get install -y vim screen
 ```
 
-The last three are mentioned in the VS Code pre-requisites and without which your will end up with errors:
-```
-
-```
+- [Visual Studio Code](https://github.com/headmelted/codebuilds/releases)
+- [PowerShell Core](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-core-on-linux?view=powershell-6#raspbian)
 
 
-Likewise, if you `apt-get install` nodejs the version you get is too old and you'll run into errors like:
-```
-npm ERR! Error: Method Not Allowed
-npm ERR!     at errorResponse (/usr/share/npm/lib/cache/add-named.js:260:10)
-npm ERR!     at /usr/share/npm/lib/cache/add-named.js:203:12
-npm ERR!     at saved (/usr/share/npm/node_modules/npm-registry-client/lib/get.js:167:7)
-npm ERR!     at FSReqWrap.oncomplete (fs.js:135:15)
-```
+# Zero
 
-`./scripts/code.sh`:
-```
-[08:24:09] 'electron' errored after 11 s
-[08:24:09] Error: No asset for version 3.1.3, platform linux and arch arm found
-    at /home/pi/vscode/node_modules/gulp-atom-electron/src/download.js:83:15
-    <SNIP CALLSTACK>
-    github-releases-ms/node_modules/request/request.js:1083:12)
-[08:24:17] Syncronizing built-in extensions...
-[08:24:17] You can manage built-in extensions with the --builtin flag
-[08:24:17] [marketplace] ms-vscode.node-debug@1.32.1 ✔︎
-[08:24:17] [marketplace] ms-vscode.node-debug2@1.31.6 ✔︎
-[08:24:17] [marketplace] ms-vscode.references-view@0.0.26 ✔︎
-./scripts/code.sh: line 50: /home/pi/vscode/.build/electron/code-oss: No such file or directory
-```
+Somewhat on impulse I ordered a [Raspberry Pi Zero "W"](https://www.raspberrypi.org/products/raspberry-pi-zero/).  Not sure how I hadn't heard about this until now (first came out in 2015, "Zero W" with Wifi/Bluetooth in 2017), but as soon as I saw it I had to have one:
 
-`npm install electron`
-```
-Error: GET https://github.com/electron/electron/releases/download/v4.0.5/electron-v4.0.5-linux-arm.zip returned 404
-/home/pi/vscode/node_modules/electron/install.js:49
-  throw err
-  ^
+![](/assets/raspi_zero.jpg)
 
-Error: Failed to find Electron v4.0.5 for linux-arm at https://github.com/electron/electron/releases/download/v4.0.5/electron-v4.0.5-linux-arm.zip
-```
+Way back in 2000 or so I did a project with wireless "Motes" running [TinyOS](https://en.wikipedia.org/wiki/TinyOS):
 
-The version is wrong; need `3.1.3` instead of `4.0.5`, and if we check 
-https://github.com/electron/electron/releases/tag/v3.1.3
+![](/assets/mote.jpg)
 
-`npm install --arch=armv7l electron@v3.1.3`
+I can't remember which exact model we had but they all seem to have had around 4 __KB__ of SRAM and 512 __KB__ flash memory.  Here we are 20 years later and the Zero is an absolute beefcake with 512 MB RAM and a 16 GB micro SD card (not to mention a single-core 32-bit ARM CPU).
 
-```
-> vscode-ripgrep@1.2.5 postinstall /home/pi/vscode/node_modules/vscode-ripgrep
-> node ./lib/postinstall.js
+- [Raspberry Pi OTG Mode](https://gist.github.com/gbaman/50b6cca61dd1c3f88f41)
+- [Setting Up Pi OTG - The Quick Way](https://gist.github.com/gbaman/975e2db164b3ca2b51ae11e45e8fd40a)
+- Adafruit guide https://learn.adafruit.com/turning-your-raspberry-pi-zero-into-a-usb-gadget/overview
 
-Downloading ripgrep failed: Error: No asset named ripgrep-0.10.0-pcre-linux-armv7l.zip found
-```
-`npm install --arch=arm vscode-ripgrep@1.2.5`
+One important difference is the Zero is __armv6__ ([like the Raspberry Pi 1](https://en.wikipedia.org/wiki/Raspberry_Pi#Specifications)) instead of __armv7__ like the Raspberry Pi 3.  This means the provided .NET Core, PowerShell, and VS Code won't work.  I may need to look into building .NET Core from source, but I doubt VS Code would run well, TBH.
 
+Thankfully, Rust works!  All we really need is Rust anyway.
 
-`./scripts/npm.sh install --arch=armv7l`:
-```
-Error: Cannot find module '/usr/local/lib/nodejs/node-v10.15.1-linux-armv7l/lib/node_modules/npm/node_modules/node-gyp/bin/node-gyp.js'
-```
-`sudo npm install -g gyp`
+4.14.79 -> 4.19.27
 
-`ELECTRON_MIRROR="https://npm.taobao.org/mirrors/electron/"`
-https://github.com/Microsoft/vscode/wiki/How-to-Contribute#getting-the-sources
-
-nodejs.org provides armv7 binaries and instructions:
-https://nodejs.org/en/download/
-https://github.com/nodejs/help/wiki/Installation
-
-There's two other sources of pre-built binaries:
-- https://node-arm.herokuapp.com/
-- https://deb.nodesource.com
-
-
-```
-libGL error: No matching fbConfigs or visuals found
-libGL error: failed to load driver: swrast
-App threw an error during load
-Error: Cannot find module 'minimist'
-```
-
-Ensure OpenGL driver is enabled:
-1. `sudo raspi-config`
-1. __Advanced > GL Driver > GL (full KMS)__
-
-`npm install minimist --arch=armv7l`
-
-```
-{ errorCode: 'load',
-  moduleId: 'iconv-lite',
-  neededBy: [ 'vs/base/node/encoding' ],
-  detail:
-   { Error: Cannot find module 'iconv-lite'
-   <SNIP CALLSTACK>
-```
-
-```
-{ Error: Could not locate the bindings file. Tried:
- → /home/pi/projects/vscode/node_modules/spdlog/build/spdlog.node
- <SNIP>
- ```
-
-```
-(code-oss:12960): Gtk-WARNING **: cannot open display: localhost:10.0
-```
-
-Alternatively, there's pre-built binaries available from [http://code.headmelted.com/](http://code.headmelted.com/).
+Later part of a DARPA project involving sensor network of radar nodes, "ubiquitous computing" laboratory.
