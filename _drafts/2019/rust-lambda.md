@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Rust `no_std`
+title: Rust on Lambda
 tags:
 - rust
 - aws

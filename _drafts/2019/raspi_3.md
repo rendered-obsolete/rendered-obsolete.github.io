@@ -1,0 +1,113 @@
+---
+layout: post
+title: Raspberry Pi 3 Rasbian Primer
+tags:
+- raspi
+- linux
+---
+
+That day has come.
+
+There's been a Raspberry Pi 3 B with a touchscreen [running Windows 10 IoT Core]({% post_url /2018/2018-09-02-win10-iot-core-raspi %}) on my desk at work for a while now.
+
+[We've been using docker and Qemu to test aarch64/ARM64]({% post_url /2019/2019-02-06-docker-qemu %}), but [.NET Core for ARM32 doesn't work atop Qemu](https://github.com/dotnet/coreclr/issues/6298).  So we need an actual device running Debian.  It just so happens I have another Pi 3!
+
+## Install Rasbian
+
+1. [Download Raspbian](https://www.raspberrypi.org/downloads/)
+1. [Install](https://www.raspberrypi.org/documentation/installation/installing-images/README.md)
+
+For example, on macOS using `diskutil list` I see my SD card reader is /dev/disk2.
+```bash
+diskutil unmountDisk /dev/disk2
+sudo dd bs=1m if=~/Downloads/2018-11-13-raspbian-stretch.img of=/dev/rdisk2 conv=sync
+sudo diskutil eject /dev/rdisk2
+```
+
+## SSH and VNC
+Pretty much the first thing I ever do is get SSH working so I can use a single keyboard/mouse/screen/etc.  While you're there you can turn on VNC:
+```
+sudo raspi-config
+```
+
+- _Interfacing Options > SSH > Yes_
+- _Interfacing Options > VNC > Yes_
+
+When it comes to Linux configuration, one of the best investments you can make is setting up "SSH Key-Based Authentication".  If that means nothing to you, look into it, it will change your life.  There's numerous excellent guides on the internet, but if you're on Linux/macOS you should be able to:
+```bash
+# Replace with IP address of your Pi
+ssh-copy-id pi@192.168.X.Y
+# From now on you can ssh in without a password
+ssh pi@192.168.X.Y
+```
+
+Speaking of investments, given the premium placed on screen real-estate don't overlook the `-X` option to ssh (on macOS/OSX you also need [XQuartz](https://www.xquartz.org/)):  
+
+![](/assets/ssh_x_pi.png)
+
+VNC will give you access to the full desktop (alternatively you can look into xrdp).
+
+If you use a VNC client other than RealVNC you may not be able to connect.  TigerVNC complains: `No matching security types`.  Either use RealVNC or follow [VNC configuration instructions](https://www.raspberrypi.org/documentation/remote-access/vnc/).
+
+## Screen
+
+If you've got some kind of small display (like the [7" touchscreen](https://www.raspberrypi.org/products/raspberry-pi-touch-display/)) you might be interested in additional configuration.
+
+- Rotate screen 180 degrees.  In `/boot/config.txt` add:
+    ```
+    lcd_rotate=2
+    ```
+- Adjust screen brightness (max brightness is `255`, higher than that results in "I/O Error"):
+    ```
+    sudo sh -c "echo 80 > /sys/class/backlight/rpi_backlight/brightness"
+    ```
+- Virtual Keyboard.  Regardless if you call it a "soft keyboard", "on-screen keyboard", or something else, you might want one.  Regardless if you prefer iOS or Android, prepare to be disappointed:
+    ```
+    sudo apt-get install matchbox-keyboard
+    ```
+
+## Software
+
+Update the firmware (may not be necessary with recent devices):
+```
+sudo rpi-update
+```
+
+For case-insensitive shell auto-completion, in `~/.inputrc`:
+```
+set completion-ignore-case on
+```
+
+Pretty much the first thing you're going to want to do is:
+```bash
+sudo apt-get update
+sudo apt-get install -y vim screen # Other stuff...
+```
+
+If you haven't already, take the time to learn vim or emacs.  Nano/pico are the Linux moral equivalent of Windows Notepad.  It takes a month to feel productive, but totally worth it.  If you go with emacs and have a gimpy ctrl key (like Mac laptops), you might want to swap "caps lock" and ctrl:
+- MacOS: __System Preferences > Keyboard > Keyboard > Modifier Keys...__
+- Win10: in PowerShell ([from this SO](https://superuser.com/questions/949385/map-capslock-to-control-in-windows-10)- [you are using PowerShell, right?]({% post_url /2019/2019-03-15-powershell %}))
+```powershell
+$hexified = "00,00,00,00,00,00,00,00,02,00,00,00,1d,00,3a,00,00,00,00,00".Split(',') | % { "0x$_"}
+$kbLayout = 'HKLM:\System\CurrentControlSet\Control\Keyboard Layout'
+New-ItemProperty -Path $kbLayout -Name "Scancode Map" -PropertyType Binary -Value ([byte[]]$hexified)
+```
+
+Because everything takes longer on low-end devices, "screen" is handy if you plan to leave the Pi plugged in somewhere and use a laptop.  It allows you to have a session persist after you clam up:
+```bash
+screen # Start a session
+screen -S <name> # Start session with <name>
+# Ctrl-a d # Detach from the session
+screen -x # Attach to running session
+screen -r <name> # Attach to session with <name>
+screen -dRR # Attach to session creating/detaching as needed (if multiple use first)
+screen -ls # List sessions
+screen -e xy # Change command character
+# For example, since Ctrl-a interferes with bash's default emacs mode:
+screen -e^gg
+# Now `Ctrl-g d` detaches and `Ctrl-g g` is a literal `Ctrl-g`
+```
+
+More stuff:  
+- [Visual Studio Code](https://github.com/headmelted/codebuilds/releases)
+- [PowerShell Core](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-core-on-linux?view=powershell-6#raspbian)
