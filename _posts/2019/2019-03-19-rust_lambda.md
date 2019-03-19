@@ -106,8 +106,9 @@ There's a few other interesting panels:
 - __Basic settings__: configure memory allowance and timeout
 
 From [AWS Lambda Limits](https://docs.aws.amazon.com/lambda/latest/dg/limits.html):
-|||
-|-|-
+
+| Category | Limit
+|-|-|
 | Memory | 128 MB to 3008 MB
 | Function timeout | 90 seconds (15 minutes)
 | Package size | 50MB zipped, 250MB unzipped
