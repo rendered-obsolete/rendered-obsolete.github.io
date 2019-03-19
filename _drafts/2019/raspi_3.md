@@ -45,13 +45,13 @@ Speaking of investments, given the premium placed on screen real-estate don't ov
 
 ![](/assets/ssh_x_pi.png)
 
-VNC will give you access to the full desktop (alternatively you can look into xrdp).
+VNC will give you access to the full desktop (alternatively, look into xrdp).
 
 If you use a VNC client other than RealVNC you may not be able to connect.  TigerVNC complains: `No matching security types`.  Either use RealVNC or follow [VNC configuration instructions](https://www.raspberrypi.org/documentation/remote-access/vnc/).
 
 ## Screen
 
-If you've got some kind of small display (like the [7" touchscreen](https://www.raspberrypi.org/products/raspberry-pi-touch-display/)) you might be interested in additional configuration.
+If you've got some kind of small display (like the [7" touchscreen](https://www.raspberrypi.org/products/raspberry-pi-touch-display/)) you may need additional configuration.
 
 - Rotate screen 180 degrees.  In `/boot/config.txt` add:
     ```
@@ -109,5 +109,5 @@ screen -e^gg
 ```
 
 More stuff:  
-- [Visual Studio Code](https://github.com/headmelted/codebuilds/releases)
+- There's no official arm32 VS Code releases, but there's [community provided binaries](https://github.com/headmelted/codebuilds/releases)
 - [PowerShell Core](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-core-on-linux?view=powershell-6#raspbian)
