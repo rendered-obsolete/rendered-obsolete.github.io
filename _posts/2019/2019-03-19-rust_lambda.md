@@ -167,6 +167,6 @@ Sure enough, in [Requirements and Restrictions](https://docs.aws.amazon.com/Amaz
 
 _Words cannot convey my sadness_.
 
-Seems that there's some interest in using runtimes other than nodejs.  Here's an issue in a [pre-cursor to aws-lambda-rust-runtime](https://github.com/srijs/rust-aws-lambda/issues/28) and another for [golang](https://github.com/aws/aws-lambda-go/issues/52).  To went ahead and [prodded the aws-lambda-rust-runtime project](https://github.com/awslabs/aws-lambda-rust-runtime/issues/88), but was promptly rebuffed.  Fine, fine... "loose lips sink ships" and all that.
+Seems that there's some interest in using runtimes other than nodejs.  Here's an issue in a [pre-cursor to aws-lambda-rust-runtime](https://github.com/srijs/rust-aws-lambda/issues/28) and another for [golang](https://github.com/aws/aws-lambda-go/issues/52).  Went ahead and [prodded the aws-lambda-rust-runtime project](https://github.com/awslabs/aws-lambda-rust-runtime/issues/88), but was promptly rebuffed.  Fine, fine... "loose lips sink ships" and all that.
 
 We'll be back...
