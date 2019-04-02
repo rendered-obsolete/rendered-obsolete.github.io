@@ -31,7 +31,7 @@ Equipment:
 Optional, but occasionally useful:
 
 - Power adapter with USB micro-B connector or another USB-A to micro-B cable like above
-    - You can power the Zero via a cable from your PC to the micro USB port labeled "USB" on the Zero, but it's convenient to have seperate power so you can unplug the first
+    - You can power the Zero via a cable from your PC to the micro USB port labeled "USB" on the Zero, but it's convenient to have separate power so you can unplug the first
 - mini HDMI to standard/type-A HDMI adapter or cable (to connect Zero to external display)
 - USB-A (female) to micro-B (male) __OTG__ adapter (to connect/keyboard mouse to Zero)
 

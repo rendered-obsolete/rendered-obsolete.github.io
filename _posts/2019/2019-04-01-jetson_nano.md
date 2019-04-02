@@ -12,10 +12,10 @@ tags:
 
 The recent release of the [Jetson Nano](https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/jetson-nano/) is an inexpensive alternative to Jetson TX1:
 
-Platform | CPU | GPU | Memory | Storage | MSRP
+| Platform | CPU | GPU | Memory | Storage | MSRP
 |-|-|-|-|-|-
-| Jetson TX1 ([Tegra X1](https://en.wikipedia.org/wiki/Tegra#Comparison)) | 4x ARM Cortex A57 @ __1.73 GHz__ | __256x__ Maxwell @ __998 MHz__ | 4GB LPDDR4 (25.6 GB/s) | __16 GB eMMC__ | $499
-| Jetson Nano | 4x ARM Cortex A57 @ 1.43 GHz | 128x Maxwell @ 921 MHz | 4GB LPDDR4 (25.6 GB/s) | Micro SD | __$99__
+| Jetson TX1 ([Tegra X1](https://en.wikipedia.org/wiki/Tegra#Comparison)) | 4x ARM Cortex A57 @ __1.73 GHz__ | __256x__ Maxwell @ __998 MHz__ (__1 TFLOP__) | 4GB LPDDR4 (25.6 GB/s) | __16 GB eMMC__ | $499
+| Jetson Nano | 4x ARM Cortex A57 @ 1.43 GHz | 128x Maxwell @ 921 MHz (472 GFLOPS) | 4GB LPDDR4 (25.6 GB/s) | Micro SD | __$99__
 
 Basically, for 1/5 the price you get 1/2 the GPU.  [Detailed comparison](https://elinux.org/Jetson) of the entire Jetson line.
 
@@ -67,9 +67,9 @@ Purely for amusement also throwing in the results for the [Raspberry Pi Zero]({%
 
 |Test | Pi Zero | Pi 3 B | Nano | Notes
 |-|-|-|-|-|-
-| glxgears | 107 | | 2350 | FPS.  When not using [GL/KMS](#glxgears) the Zero only manages 7.7 FPS
+| glxgears | 107 | 560 | 2350 | FPS.  Zero using "Full KMS", when not using only manages 7.7 FPS.  3B using "Fake KMS", "Full KMS" caused display to stop working.
 | glmark2 | 399 | 383 | 1996 | On the Pi's several tests failed to run
-| build runng | 66:00 | 2:15 | 1:08 | Minutes:seconds.  `cargo clean; time cargo build` [runng](https://github.com/jeikabu/runng) [like we did on the Pi Zero]({% post_url /2019/2019-03-28-raspi_zero %}#cross-compiling)
+| build runng | 3960 | 135 | 68 | Seconds.  `cargo clean; time cargo build` [runng](https://github.com/jeikabu/runng) [like we did on the Pi Zero]({% post_url /2019/2019-03-28-raspi_zero %}#cross-compiling)
 
 ### Phoronix Test Suite
 
@@ -89,13 +89,13 @@ phoronix-test-suite benchmark 1809111-RA-ARMLINUX005
 | 7-Zip Compression | 205 | 1863 | 3996 | 4526
 | C-Ray | | 2357 | 943 | 851 | Seconds (lower is better)
 | Primesieve | | 1543 | 466 | 401 | Seconds (lower is better)
-| AOBench | | 333 | 190 | 165 | Seconds (lower is better)
-| FLAC Audio Encoding | | 387.09 | 103.57 | 78.86 | Seconds (lower is better)
-| LAME MP3 Encoding | | 352.66 | 143.82 | 113.14 | Seconds (lower is better)
-| Perl (Pod2html) | | 1.2945 | 0.7154 | 0.6007 | Seconds (lower is better)
+| AOBench | 778 | 333 | 190 | 165 | Seconds (lower is better)
+| FLAC Audio Encoding | 971.18 | 387.09 | 103.57 | 78.86 | Seconds (lower is better)
+| LAME MP3 Encoding | 780 | 352.66 | 143.82 | 113.14 | Seconds (lower is better)
+| Perl (Pod2html) | 5.3830| 1.2945 | 0.7154 | 0.6007 | Seconds (lower is better)
 | PostgreSQL (Read Only) | | 6640 | 12410 | 16079
-| Redis (GET) | | 213067 | 568431 | 484688
-| PyBench | | 24349 | 7030 | 6348 | ms (lower is better)
+| Redis (GET) | 34567 | 213067 | 568431 | 484688
+| PyBench | 76419 | 24349 | 7030 | 6348 | ms (lower is better)
 | Scikit-Learn | | 844 | 496 | 434 | Seconds (lower is better)
 
 The "Pi 3 B" and "TX1" columns are reproduced from the OpenBenchmarking.org results.  There's also an [older set of benchmarks](https://www.phoronix.com/vr.php?view=24384), `1703199-RI-ARMYARM4104`.
@@ -103,7 +103,7 @@ The "Pi 3 B" and "TX1" columns are reproduced from the OpenBenchmarking.org resu
 Check out the graphs (_woo hoo!_):
 ![](/assets/nano_pts.png)
 
-These all seem to be predominantly CPU benchmarks where the TX1 predictably bests the Nano by 10-20% oweing to its 20% higher CPU clock.
+These all seem to be predominantly CPU benchmarks where the TX1 predictably bests the Nano by 10-20% owing to its 20% higher CPU clock.
 
 Don't let the name "TTSIOD 3D Renderer" fool you, it's a [software renderer](https://github.com/ttsiodras/renderer) (i.e. non-hardware-accelerated; no GPUs were harmed by that test).  Further evidenced by the "Socionext Developerbox" showing.  Socionext isn't some new, up-and-coming GPU company, that device has a __24 core__ ARM Cortex A53 @ 1 GHz (yes, _24_- that's not a typo).
 
