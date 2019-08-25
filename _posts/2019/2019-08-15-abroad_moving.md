@@ -11,7 +11,7 @@ So you got a job overseas.  Great!  Now you need to get there.
 
 If your new employer has top-notch relocation services, you're probably taken care of.  If you're on your own (even partially), this is for you.
 
-Most important of all, remain clam and don't be afraid to ask questions or for help.  My friends and (ex-)co-workers have provided much-needed assistance and support over the years.
+Most important of all, remain calm and don't be afraid to ask questions or for help.  My friends and (ex-)co-workers have provided much-needed assistance and support over the years.
 
 ## My Background
 
@@ -32,7 +32,7 @@ Keep in mind things have to go through customs at your destination and some item
 
 ## Packing
 
-Once you've got your worldy belongings pared down to the bare necessities, it's time to figure out how to get things there.
+Once you've got your worldly belongings pared down to the bare necessities, it's time to figure out how to get things there.
 
 Start organizing your stuff in terms of what's going to get moved when and how.  When's the last time you need it here, and how soon do you need it there?
 
@@ -52,7 +52,7 @@ Find out in advance how stringent the destination is regarding imports and levyi
 
 More valuable items you may want to bring as checked luggage on your flight.  Over the years I've flown with 3 generations of video game consoles this way.  You can move __a lot__ of stuff this way, and while it's cheaper and safer than shipping it requires more lifting on your part.
 
-Depending on the route, you'll be permitted checked luggage with limits on one or more of: weight, dimenions, and number of items.  Keep in mind the normal rules regarding checked luggage apply.  In particular, lithium ion batteries are prohibited.
+Depending on the route, you'll be permitted checked luggage with limits on one or more of: weight, dimensions, and number of items.  Keep in mind the normal rules regarding checked luggage apply.  In particular, lithium ion batteries are prohibited.
 
 Pre-weigh your luggage with a body scale.  You really don't want to get to the airport and be surprised to find out you're overweight.  The fees can be steep ($100 or more).
 
@@ -66,7 +66,7 @@ One of the problems I faced as a tech person is, if you can't ship or place devi
 
 I filled a maximum allowed carry-on with electronics.
 
-If you do this you're going to bring a ton of electronics through security and you're bag will likely get pulled.  So, make sure to leave yourself plenty of time at the airport.
+If you do this you're going to bring a ton of electronics through security and your bag will likely get pulled.  So, make sure to leave yourself plenty of time at the airport.
 
 Some airlines like Emirates and Qatar have stricter carry-on policies than American carriers.  At check-in they've asked to weigh my carry-on.  Again, it doesn't hurt to weigh things before you go to the airport.
 
@@ -81,9 +81,9 @@ If you're unsure of the process, or have a large number of items and aren't in a
 ## Pets
 
 Pets add an additional layer of complexity.  Additional requirements may include:
-- Dogs and cats are generally ok (some breeds may be restricted), other animals may not be
+- Dogs and cats are generally ok (some breeds may be restricted), other animals may not be permitted
 - Some airlines permit animals in the cabin, some don't
-- Most airlines will only permit animals as checked luggage/cargo when the air temperature is below a certain amount (Summer flight may not be allowed)
+- Most airlines will only permit animals as checked luggage/cargo when the air temperature is below a certain amount (a Summer flight may not be possible)
 - Microchip and rabies vaccine (at least a month but not more than a year before departure)
 - Blood work 3 months before
 - Deal with export process for departure, and import for arrival
@@ -94,12 +94,12 @@ Check requirements for the airlines and both the origin and destination countrie
 
 At some point you may or may not find need to invoke the assistance of an agent.  This is especially common regarding visas and pets.
 
-Make inqueries to multiple agents.  You'll may get substantially different pricing, service, and answers.
+Make inquiries to multiple agents.  You may get substantially different pricing, service, and answers.
 
 The next step up from this is relocation companies.  I've never done this.  But, if you have a lot of stuff, children, or just want to avoid all the hassle, you can pay money to make the problems go away.  The prices vary wildly and depend on the services/quantities involved, but in general it's $1000s.
 
 ## Also...
 
-Don't overlook the luggage storage service available in many airports.  If you make a mistake regarding the luggage policy, have back-to-back flights, or whatever you can leave items there for a nominal fee.
+Don't overlook the luggage storage service available in many airports.  If you make a mistake regarding the luggage policy, have back-to-back flights, or whatever, you can leave items there for a nominal fee.
 
-Dealing with banking and currency exchange is a pretty big topic.  I'm going to cover that in the next post.  But it's a good idea to arrange some foreign currency before you leave.  Note customs restrictions on "currency and monetary instruments", but a few hundred dollars worth should be fine so long as you only use it for backup.  If the foreign currency isn't available where you are, obtain USD/Euros or some other "generally accepted" currency.
+Dealing with banking and currency exchange is a pretty big topic.  I'm going to cover that in the next post.  But it's a good idea to arrange some foreign currency before you leave.  Note customs restrictions on "currency and monetary instruments", but a few hundred dollars worth should be plenty if it's only for backup.  If the foreign currency isn't available where you are, obtain USD/Euros or some other "generally accepted" currency.
