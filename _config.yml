@@ -16,7 +16,7 @@
 title: Rendered Obsolete
 email: renderedobsolete@gmail.com
 description: >- # this means to ignore newlines until "baseurl:"
-  Programming, C#, rustlang, C++ (when I have to), Subor Z+, whimsy
+  Programming, C#, rustlang, C++ (when I have to), whimsy
 baseurl: "" # the subpath of your site, e.g. /blog
 url: "https://rendered-obsolete.github.io" # the base hostname & protocol for your site, e.g. http://example.com
 
