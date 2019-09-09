@@ -1,7 +1,8 @@
 ---
 title: Amazon Lumberyard Intro
-published: false
-tags: lumberyard,gamedev
+tags:
+- lumberyard
+- gamedev
 canonical_url: 
 series: lumberyard
 ---
