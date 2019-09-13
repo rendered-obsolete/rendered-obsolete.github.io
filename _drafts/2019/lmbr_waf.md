@@ -1,8 +1,17 @@
+---
+layout: post
+title: Lumberyard and WAF
+tags:
+- lumberyard
+- gamedev
+canonical_url: 
+series: Amazon Lumberyard
+---
 
 ## Working with Waf
 
 Regenerate Visual Studio solution file in `dev/Solutions/`:
-```bat
+```powershell
 ./lmbr_waf.bat msvs
 ```
 
@@ -12,12 +21,14 @@ Check the project's `_WAF_/wscript` for the list of files:
 def build(bld):
     bld.CryFileContainer(
         # SNIP
+        target             = 'CryCommon',
+        vs_filter          = 'Common',
         file_list          = 'crycommon.waf_files',
         # SNIP
 )
 ```
 
-`.waf_files` is json specifying the files and VS solution filter:
+`.waf_files` is json specifying the files and VS solution filters:
 ```json
 {
     "none":
@@ -34,7 +45,7 @@ def build(bld):
     ...
 ```
 
-Produces:
+Produces:  
 ![](/assets/lmbr_vs_waf_files.png)
 
 `./lmbr_waf.bat configure`
@@ -44,6 +55,8 @@ https://docs.aws.amazon.com/lumberyard/latest/userguide/waf-using-spec.html
 
 
 https://docs.aws.amazon.com/lumberyard/latest/userguide/waf-project-settings.html
+
+https://docs.aws.amazon.com/lumberyard/latest/userguide/waf-adding-third-party-libraries.html
 
 ## Tips
 
