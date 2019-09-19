@@ -1,22 +1,33 @@
 ---
 layout: post
-title: Lumberyard and WAF
+title: Lumberyard and Waf
 tags:
 - lumberyard
 - gamedev
+- waf
 canonical_url: 
 series: Amazon Lumberyard
 ---
 
-## Working with Waf
+
+## Waf Basics
+
+`Tools/build/waf-1.7.13/`
+
+| File | Description
+|-|-|
+| `wscript` | 
+| `*.waf_files` | 
 
 Regenerate Visual Studio solution file in `dev/Solutions/`:
 ```powershell
 ./lmbr_waf.bat msvs
 ```
 
-Adding a file to a project:
-Check the project's `_WAF_/wscript` for the list of files:
+
+## Adding a File
+
+Check the project's `_WAF_/wscript` for the list of files.  Here's `Code\CryEngine\CryCommon\wscript`:
 ```python
 def build(bld):
     bld.CryFileContainer(
@@ -45,16 +56,22 @@ def build(bld):
     ...
 ```
 
-Produces:  
+```powershell
+./lmbr_waf.bat configure
+```
+
+Generates a `Common` folder with a "CryCommon" project containing `QTangent.h` in the root and `Interfaces_h` "folder":  
 ![](/assets/lmbr_vs_waf_files.png)
 
-`./lmbr_waf.bat configure`
+## Adding a Spec
 
 Adding a spec:
 https://docs.aws.amazon.com/lumberyard/latest/userguide/waf-using-spec.html
 
 
 https://docs.aws.amazon.com/lumberyard/latest/userguide/waf-project-settings.html
+
+## Adding a 3rd-Party Library
 
 https://docs.aws.amazon.com/lumberyard/latest/userguide/waf-adding-third-party-libraries.html
 
