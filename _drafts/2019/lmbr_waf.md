@@ -9,25 +9,51 @@ canonical_url:
 series: Amazon Lumberyard
 ---
 
+Learning how to work with Lumberyard's build system is a key part of development.  [Waf](https://waf.io/) is positioned as a "meta build system"- a framework to make build systems.
 
 ## Waf Basics
 
-`Tools/build/waf-1.7.13/`
+Lumberyard's build system is extensively documented in the [User Guide](https://docs.aws.amazon.com/lumberyard/latest/userguide/waf-intro.html).
 
-| File | Description
-|-|-|
-| `wscript` | 
-| `*.waf_files` | 
+Key files/file-types:
 
-Regenerate Visual Studio solution file in `dev/Solutions/`:
+| File | Description | Details
+|-|-|-|
+| `wscript` | Module script | [docs](https://docs.aws.amazon.com/lumberyard/latest/userguide/waf-files-module-files-wscript.html)
+| `*.waf_files` | List of files for modules | [docs](https://docs.aws.amazon.com/lumberyard/latest/userguide/waf-files-filelist.html)
+| `Tools/build/waf-1.x.y/` | Build script source code (Python)
+| `_WAF_/specs/` | Specs- build configurations with lists of modules | [spec format]
+
+Key commands:
 ```powershell
+# Help and list of commands
+./lmbr_waf.bat --help
+# List all commands
+./lmbr_waf.bat --list
+# GUI to create/edit `dev/_WAF_/usersettings.options`
+./lmbr_waf.bat show_option_dialog
+# Configure the project using `usersettings.options`
+./lmbr_waf.bat configure
+# Regenerate Visual Studio solution in `visual_studio_solution_folder` (default: `dev/Solutions/`)
 ./lmbr_waf.bat msvs
 ```
 
+Waf build-related commands follow the format `(build|clean|package|deploy)_PLATFORM[_ARCH]_TOOLCHAIN_CONFIG`:
+```powershell
+./lmbr_waf.bat clean_win_x64_vs2017_profile
+# Use _WAF_/specs/engine_and_editor.json spec
+./lmbr_waf.bat build_win_x64_vs2017_profile -p engine_and_editor
+./lmbr_waf.bat build_win_x64_vs2017_profile --project-spec=engine_and_editor
+```
 
-## Adding a File
+Settings in `usersettings.options` can be overridden:
+```powershell
+./lmbr_waf.bat build_win_x64_vs2017_profile --enabled-game-projects=SamplesProject
+```
 
-Check the project's `_WAF_/wscript` for the list of files.  Here's `Code\CryEngine\CryCommon\wscript`:
+## Adding/Removing a File
+
+Check the project's `wscript` for the list of files.  Here's `Code\CryEngine\CryCommon\wscript`:
 ```python
 def build(bld):
     bld.CryFileContainer(
@@ -39,7 +65,7 @@ def build(bld):
 )
 ```
 
-`.waf_files` is json specifying the files and VS solution filters:
+`crycommon.waf_files` is json specifying the files and VS solution filters:
 ```json
 {
     "none":
@@ -56,32 +82,118 @@ def build(bld):
     ...
 ```
 
+Re-generate Visual Studio projects:
 ```powershell
+# If `generate_vs_projects_automatically` is enabled
 ./lmbr_waf.bat configure
+# Otherwise
+./lmbr_waf.bat msvs
 ```
 
-Generates a `Common` folder with a "CryCommon" project containing `QTangent.h` in the root and `Interfaces_h` "folder":  
+Creates a solution with a `Common` filter containing a "CryCommon" project with `QTangent.h` in the root and a `Interfaces_h` sub-filter:  
 ![](/assets/lmbr_vs_waf_files.png)
 
 ## Adding a Spec
 
-Adding a spec:
-https://docs.aws.amazon.com/lumberyard/latest/userguide/waf-using-spec.html
+It's easy to create a new spec to only build a particular subset of modules.  The Lumberyard User Guide has good documentation:
+- ["Adding a Spec"](https://docs.aws.amazon.com/lumberyard/latest/userguide/waf-using-spec.html)
+- [spec format]
 
+For example, we can create a spec to build the editor plugins- which are otherwise only built with the `all` spec.
 
-https://docs.aws.amazon.com/lumberyard/latest/userguide/waf-project-settings.html
+1. Create `_WAF_/specs/editor_plugins.json`:
+    ```json
+    {
+        "description": "Editor Plugins",
+        "visual_studio_name": "Editor Plugins",
 
-## Adding a 3rd-Party Library
+        "modules" :
+        [
+            "AssetTagging",
+            "ComponentEntityEditorPlugin",
+            "CryDesigner",
+            "DeploymentTool",
+            "EditorAnimation",
+            "EditorAssetImporter",
+            "EditorModularBehaviorTree",
+            "EditorUI_QT",
+            "FBXPlugin",
+            "FFMPEGPlugin",
+            "MaglevControlPanel",
+            "MetricsPlugin",
+            "ParticleEditorPlugin",
+            "PerforcePlugin",
+            "ProjectSettingsTool",
+            "UiCanvasEditor"
+        ]
+    }
+    ```
+1. Add the new spec to `specs_to_include_in_project_generation`: via __Visual Studio Project Generator__ tab of `./lmbr_waf.bat show_option_dialog`.  Or, in `_WAF_/user_settings.options`:
+    ```ini
+    [Visual Studio Project Generator]
+    specs_to_include_in_project_generation = all,editor_plugins
+    ```
+1. Generate Visual Studio files:
+    ```powershell
+    ./lmbr_waf.bat msvs
+    # Or, if `generate_vs_projects_automatically` is enabled
+    ./lmbr_waf.bat configure
+    ```
+1. Build: select `[Editor Plugins]` configuration in Visual Studio.  Or:
+    ```powershell
+    ./lmbr_waf.bat build_win_x64_vs2017_profile -p editor_plugins
+    ```
 
-https://docs.aws.amazon.com/lumberyard/latest/userguide/waf-adding-third-party-libraries.html
+## Upgrading
+
+With [Lumberyard 1.21 released](https://forums.awsgametech.com/t/lumberyard-release-notes-beta-1-21-september-2019/), now is also a good time to walk through a simple engine upgrade.
+
+1. Update git repo
+    - Update
+        ```powershell
+        # Assumes you're working on a fork.  If not, skip this and replace `upsteam` with `origin`
+        git remote add upstream https://github.com/aws/lumberyard.git
+
+        git fetch --all
+        git checkout master
+        git pull upstream master
+        ```
+    - Optionally, if you subscribe to the ["nuke it from orbit"](https://www.google.com/search?q=nuke+it+from+orbit) school of thought:
+        ```powershell
+        Remove-Item -Recurse -Path ./dev,./3rdParty
+        # Restore dev/ and 3rdParty/
+        git reset --hard
+        # Remove untracked files/directories
+        git clean -fd
+        ```
+1. Update binaries and 3rd-party dependencies
+    ```powershell
+    ./git_bootstrap.exe
+    # If it doesn't start automatically
+    ./SetupAssistant.bat
+    ```
+1. Re-initialize Waf
+    ```powershell
+    cd dev/
+    ./lmbr_waf.bat configure
+    ```
 
 ## Tips
 
-The configurations have rather long names, embiggen __Solution Configurations__ drop-down:
-![](/assets/lmbr_vs_sln_config.png)
+- The configurations have rather long names.  You can embiggen the __Solution Configurations__ drop-down ([from here](https://visualstudioextensions.vlasovstudio.com/2014/08/14/adjusting-the-width-of-solution-configurations-drop-down-list-in-the-visual-studio-toolbar/)):
 
-https://visualstudioextensions.vlasovstudio.com/2014/08/14/adjusting-the-width-of-solution-configurations-drop-down-list-in-the-visual-studio-toolbar/
+    1. __Tools__ > __Customize...__  
+    1. __Commands__ tab, __Toolbar__: "Standard"
+    1. In _Preview:_ select __Solution Configurations__
+    1. Click __Modify Selection__ button
+    1. Here's _Width_ of  __150__:  
+    ![](/assets/lmbr_vs_sln_config.png)
 
-If you're a licensed Playstation/Xbox developer you can get access to Lumberyard PS4/Xbone code from the [FAQ](https://aws.amazon.com/lumberyard/faq/#Q._How_do_I_get_started_with_Xbox_and_PlayStation_game_development.3F):
 
-> If you are a licensed Microsoft Xbox developer, please e-mail your name, studio name, and the licensed e-mail address to lumberyard-consoles@amazon.com. If you are a licensed Sony PlayStation developer, please visit SCE DevNet. Under the Middleware Directory click "Confirm Status" for Amazon Lumberyard.
+- If you're a licensed Playstation/Xbox developer you can get access to Lumberyard PS4/Xbone code (from the [FAQ](https://aws.amazon.com/lumberyard/faq/#Q._How_do_I_get_started_with_Xbox_and_PlayStation_game_development.3F)):
+
+    > If you are a licensed Microsoft Xbox developer, please e-mail your name, studio name, and the licensed e-mail address to lumberyard-consoles@amazon.com. If you are a licensed Sony PlayStation developer, please visit SCE DevNet. Under the Middleware Directory click "Confirm Status" for Amazon Lumberyard.
+
+
+
+[spec format]: https://docs.aws.amazon.com/lumberyard/latest/userguide/waf-files-spec-file.html

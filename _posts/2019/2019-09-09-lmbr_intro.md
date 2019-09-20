@@ -1,10 +1,11 @@
 ---
+layout: post
 title: Amazon Lumberyard Intro
 tags:
 - lumberyard
 - gamedev
 canonical_url: 
-series: lumberyard
+series: Amazon Lumberyard
 ---
 
 Some years ago we worked with [CryEngine](https://www.cryengine.com), and more recently we've started working with its descendant- [Amazon Lumberyard](https://aws.amazon.com/lumberyard/).  Both game engines originated from the same codebase, but since Amazon acquired the source code in 2015 they have diverged significantly.
