@@ -1,56 +1,75 @@
 ---
 layout: post
-title: Lumberyard with Rust Static Library
+title: Rust in Lumberyard
 tags:
 - lumberyard
 - gamedev
 - rust
 - bindgen
+- ffi
 canonical_url: 
-series: Lumberyard Rust
+series: Rust in Lumberyard
 ---
 
-Lumberyard, like CryEngine, is mostly C++.  Some tools are done in Python, and Lua can additionally be used for scripting in game.
+Amazon Lumberyard, like CryEngine, is mostly C++.  Some tools are done in Python, and Lua can additionally be used for scripting in-game.  But, it being primarily C++ opens up the possibility of using languages that support native code bindings- like Rust.
 
-## Adding a library to Waf module
+As an experiment, I wanted to look at how feasible it would be to use Rust, starting with the simplest case- integrating a Rust static library.
 
-https://docs.aws.amazon.com/lumberyard/latest/userguide/waf-using-module.html
+## Bindgen
 
-For example, in `Sandbox/Editor/wscript`:
-```python
-# ...
-hw = dict(
-    # ...
-    # OLD: win_lib = ['version'],
-    win_lib = ['version', 'staticlib', 'Ws2_32', 'userenv'],
-    libpath = ['c:/XXX/lmbr/target/debug/'],
+[bindgen](https://github.com/rust-lang/rust-bindgen) uses clang/LLVM to generate [Rust FFI](https://doc.rust-lang.org/nomicon/ffi.html) bindings from C/C++ header files.  This makes it easy to call functions defined in native libraries and work with native types and data.  The [user guide](https://rust-lang.github.io/rust-bindgen/) provides a good introduction.
+
+In `Cargo.toml`:
+```toml
+[package]
+name = "lmbr_sys"
+version = "0.1.0"
+edition = "2018"
+
+[build-dependencies]
+bindgen = "0.51"
 ```
 
-If you get "undefined symbol" link errors check out [this issue](https://github.com/rust-lang/rust/issues/52892).
+In the [build script](https://doc.rust-lang.org/cargo/reference/build-scripts.html), `build.rs`:
+```rust
+use std::{env, path::PathBuf};
 
-`wrapper.h` must be `wrapper.hpp`
-
-https://forums.developer.apple.com/thread/104296
-https://developer.apple.com/documentation/xcode_release_notes/xcode_10_release_notes
+fn main() {
+    let builder = bindgen::Builder::default()
+        .header("wrapper.hpp")
+        .clang_arg("-I<Lumberyard root>/dev/Code/Framework/AzCore")
+        .enable_cxx_namespaces()
+        .generate_inline_functions(true)
+        .whitelist_type("AZ::Debug::.*")
+        ;
+    let bindings = builder.generate().expect("Unable to generate bindings");
+    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
+    bindings
+        .write_to_file(out_path.join("bindings.rs"))
+        .expect("Couldn't write bindings");
+}
 ```
-open /Library/Developer/CommandLineTools/Packages/macOS_SDK_headers_for_macOS_10.14.pkg
+
+`Builder` provides a [number of methods](https://docs.rs/bindgen/0.51.0/bindgen/struct.Builder.html) to control what and how bindings are generated.  `clang_arg()` can pass options used when building a C++ program.
+
+`OUT_DIR` is an [environment variable set in build scripts](https://doc.rust-lang.org/cargo/reference/environment-variables.html#environment-variables-cargo-sets-for-build-scripts) to the path in the `target/` directory containing intermediate files.
+
+`wrapper.hpp` has declarations we want to generate bindings for.  For starters, it only contains:
+```c
+#include <AzCore/Debug/Trace.h>
 ```
 
-```sh
-grep aux | grep build
-# Get PID
-sudo env "PATH=$PATH" rust-lldb -p <PID>
-```
+`AZ::Debug::Trace` contains static methods used by the [tracing macros](https://docs.aws.amazon.com/lumberyard/latest/userguide/cpp-best-practices-lumberyard-tracing.html) to output text to the Lumberyard console/log.
 
+Unfortunately, `cargo build` resulted in a Segmentation Fault.
 
-## Debugging bindgen
+## Debugging Bindgen
 
-The [end of CONTRIBUTING.md](https://github.com/rust-lang/rust-bindgen/blob/master/CONTRIBUTING.md#debug-logging) has some good information.
+The [end of CONTRIBUTING.md](https://github.com/rust-lang/rust-bindgen/blob/master/CONTRIBUTING.md#debug-logging) has some good information on working with and debugging bindgen.
 
+[creduce](https://github.com/csmith-project/creduce) is used to help produce minimal repro cases.  It's pretty neat, what starts as a 3.4MB pre-processed C++ source file reduces it to 4 lines that fail the same way.
 
-It's pretty neat, it turns my 3.4MB pre-processed C++ and reduces it to a sub-10-line C++ file.
-
-My first `predicate.sh`:
+Key to this is a "predicate script" that determines if the behavior you're trying to isolate has occurred.  My first `predicate.sh`:
 ```sh
 #!/usr/bin/env bash
 
@@ -62,64 +81,76 @@ set -eu
 ~/projects/rust-bindgen/csmith-fuzzing/predicate.py \
     --expect-bindgen-fail \
     --bindgen-args "-- -std=c++14" \
-    ./__bindgen.hpp
+    ./wrapper.hpp
 ```
 
+Running creduce on our header file produces:
 ```sh
-creduce ./predicate.sh ./__bindgen.hpp
-```
-reduces it to:
-```c
+creduce ./predicate.sh ./wrapper.hpp
+# Output
 }
 ```
 
-Indeed, an invalid source file is the shortest possible way to get bindgen to fail.  I need bindgen to kind of work, but no output bindings:
+Indeed, an invalid source file is the shortest possible way to get bindgen to fail.  I need bindgen to partially work, but not output bindings:
 
 ```sh
 ~/projects/rust-bindgen/csmith-fuzzing/predicate.py \
     --expect-bindgen-fail \
     --bindgen-args "-- -std=c++14" \
     --bindgen-grep "Unhandled cursor kind 24" \
-    ./__bindgen.hpp
+    ./wrapper.hpp
 ```
 
-## Building LLVM
+Produces:
+```c++
+template <class d> struct g {
+  d e;
+  static const long f = __alignof__(e);
+};
+```
 
-https://clang.llvm.org/get_started.html
-Linux VM with 8GB and 1.5GB of swap it ran out of memory linking.
+## Using a Custom LLVM
 
-https://llvm.org/docs/CMake.html#llvm-specific-variables
+Turns out this problem was the same as [an already reported issue](https://github.com/rust-lang/rust-bindgen/issues/1590) and requires a fix in llvm.
+
+Follow the ["Getting Started"](https://clang.llvm.org/get_started.html) guide to build llvm trunk.  The [requirements](https://llvm.org/docs/GettingStarted.html#requirements) don't seem to mention this, but make sure you've got plenty of memory.  A Linux VM with 8GB RAM and 1.5GB of swap space runs out of memory linking.
+
+See if there's any [build options](https://llvm.org/docs/CMake.html#llvm-specific-variables) that interest you:
 ```bash
 cmake -DLLVM_TARGETS_TO_BUILD="X86" -DLLVM_ENABLE_PROJECTS=clang -Thost=x64 ../llvm
 ```
 
+Once the build succeeds, using this custom version of llvm/clang is as simple as setting the `LIBCLANG_PATH` environment variable:
 ```bash
 $ LIBCLANG_PATH=<llvm-project>/build/lib cargo build
 ```
-If using Visual Studio and PowerShell:
+Or, if using Visual Studio and PowerShell:
 ```powershell
 PS> $env:LIBCLANG_PATH="<llvm-project>/build/Debug/bin"
 PS> cargo build
 ```
 
-## Next
+This gets us past the seg fault and generates the first version of our Rust FFI bindings.  However, now Rust compilation fails.
 
+## Conflicting Types
+
+The initial generated bindings fail to compile with rustc:
 ```rust
 error[E0391]: cycle detected when processing `root::AZ::u32`
-  --> /Users/j_woltersdorf/projects/lmbr/target/debug/build/lmbr_sys-4d14e371f0340e58/out/bindings.rs:91:24
+  --> /XXX/lmbr/target/debug/build/lmbr_sys-4d14e371f0340e58/out/bindings.rs:91:24
    |
 91 |         pub type u32 = u32;
    |                        ^^^
    |
    = note: ...which again requires processing `root::AZ::u32`, completing the cycle
 note: cycle used when processing `root::AZ::Debug::ProfilerRegister::m_systemId`
-  --> /Users/j_woltersdorf/projects/lmbr/target/debug/build/lmbr_sys-4d14e371f0340e58/out/bindings.rs:547:33
+  --> /XXX/lmbr/target/debug/build/lmbr_sys-4d14e371f0340e58/out/bindings.rs:547:33
    |
 547|                 pub m_systemId: root::AZ::u32,
    |                                 ^^^^^^^^^^^^^
 ```
 
-In `AzCore/base.h`:
+The issue here being Lumberyard defines `u32` and others that conflict with [Rust's built-in types](https://doc.rust-lang.org/book/ch03-02-data-types.html#integer-types).  [In `AzCore/base.h`](https://github.com/aws/lumberyard/blob/master/dev/Code/Framework/AzCore/AzCore/base.h#L258):
 ```c
 namespace AZ
 {
@@ -144,16 +175,16 @@ Causes bindgen to generate:
 pub mod AZ {
         //...
         pub type s8 = i8;
-        pub type u8 = u8;
+        pub type u8 = u8; // error[E0391]: cycle detected
         pub type s16 = i16;
-        pub type u16 = u16;
+        pub type u16 = u16; // error[E0391]: cycle detected
         pub type s32 = i32;
-        pub type u32 = u32;
+        pub type u32 = u32; // error[E0391]: cycle detected
         pub type s64 = i64;
-        pub type u64 = u64;
+        pub type u64 = u64; // error[E0391]: cycle detected
 ```
 
-One possible work-around
+One possible work-around:
 ```rust
 .blacklist_type(r"AZ::u\d{2,3}") // Ban AZ::u32, etc. generated by C typedefs
 .raw_line("type U32 = u32;") // Create top-level type aliases
@@ -162,12 +193,17 @@ One possible work-around
 .module_raw_lines("root::AZ", ["pub type u32 = crate::U32;", "pub type u64 = crate::U64;"].iter().map(|s| *s))
 ```
 
+In short, for `u32` (or another conflicting type):
+1. Blacklist bindgen generated `AZ::u32`
+1. Create `type U32 = u32` alias in crate root
+1. Output `mod AZ { pub type u32 = crate::U32 }` in place of blacklisted `AZ::u32`
 
-In generated `bindings.rs`:
+
+The resulting generated `bindings.rs` becomes:
 ```rust
 /* automatically generated by rust-bindgen */
 
-type U32 = u32; // <<< Our top-level type aliases
+type U32 = u32; // Our top-level type aliases
 type U64 = u64;
 
 #[allow(non_snake_case, non_camel_case_types, non_upper_case_globals)]
@@ -180,7 +216,7 @@ pub mod root {
     pub mod AZ {
         #[allow(unused_imports)]
         use self::super::super::root;
-        pub type u32 = crate::U32; // << C typedefs defined via top-level aliases
+        pub type u32 = crate::U32; // C typedefs defined via top-level aliases
         pub type u64 = crate::U64;
         //...
 ```
@@ -191,3 +227,133 @@ pub mod AZ {
     //...
     pub type u32 = std::primitive::u32;
 ```
+
+If you get "expected syntax" or "unknown type" errors, make sure you pass `-x c++` to clang or name the header file `*.hpp` (instead of `*.h`- see [this issue](https://github.com/rust-lang/rust-bindgen/issues/1155)).
+
+As usual, Macs may require a bit more love.  Depending on the version of macOS and Xcode installed, you may need some more header files (see [this forum post](https://forums.developer.apple.com/thread/104296) and the relevant [release notes](https://developer.apple.com/documentation/xcode_release_notes/xcode_10_release_notes)):
+```sh
+open /Library/Developer/CommandLineTools/Packages/macOS_SDK_headers_for_macOS_10.14.pkg
+```
+
+Likewise, to use [rust-lldb](https://github.com/rust-lang/rust/blob/master/src/etc/rust-lldb):
+```sh
+ps aux | grep build
+# Get PID
+sudo env "PATH=$PATH" rust-lldb -p <PID>
+```
+
+## Static Library
+
+With our bindings generated, we can put them to use and create our static library as a [package example](https://doc.rust-lang.org/cargo/reference/manifest.html#examples) called "staticlib":
+```toml
+[[example]]
+name = "staticlib"
+crate-type = ["staticlib"] # Examples are executables by default
+
+[dev-dependencies]
+log = "0.4"
+```
+
+We'll just create a simple function to call from C/C++:
+```rust
+use log::{info};
+
+#[no_mangle]
+pub extern fn example_static_lib() {
+    lmbr_logger::init().unwrap();
+    info!("RUST!!!!");
+}
+```
+
+`lmbr_logger` is an implementation of the venerable `log` crate for Lumberyard:
+
+```toml
+[package]
+name = "lmbr_logger"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+lmbr_sys = { version = "0.1", path = "../lmbr_sys" }
+log = "0.4"
+```
+
+Following the example from the [`log` docs](https://docs.rs/log/):
+```rust
+use log::{Level, LevelFilter, Metadata, Record, SetLoggerError};
+use std::{ffi::CString, os::raw::c_char};
+
+struct LmbrLogger;
+
+static LOGGER: LmbrLogger = LmbrLogger;
+
+pub fn init() -> Result<(), SetLoggerError> {
+    log::set_logger(&LOGGER)
+        .map(|()| log::set_max_level(LevelFilter::Info))
+}
+
+impl log::Log for LmbrLogger {
+    fn enabled(&self, metadata: &Metadata) -> bool {
+        metadata.level() <= Level::Info
+    }
+
+    fn log(&self, record: &Record) {
+        if self.enabled(record.metadata()) {
+            let message = format!("{}", record.args());
+            log("RUST", &message);
+        }
+    }
+
+    fn flush(&self) {}
+}
+
+pub fn log(window: &str, message: &str) {
+    let window = CString::new(window).unwrap();
+    let window = window.as_bytes_with_nul().as_ptr() as *const c_char;
+    let message = CString::new(message).unwrap();
+    let message = message.as_bytes_with_nul().as_ptr() as *const c_char;
+    unsafe {
+        lmbr_sys::root::AZ::Debug::Trace::Output(window, message);
+    }
+}
+```
+
+Rust strings [aren't null-terminated](https://doc.rust-lang.org/1.7.0/book/strings.html), so we use [`CString`](https://doc.rust-lang.org/std/ffi/struct.CString.html) to convert them as expected by native code.
+
+`cargo build --examples` should produce our library in `target/debug/examples/`.  We can verify our test function will be callable from C/C++:
+```powershell
+dumpbin /symbols C:\XXX\lmbr\target\debug\examples\staticlib.lib | Select-String -Pattern example_static_lib
+# Output
+008 00000000 SECT4  notype ()    External     | example_static_lib
+```
+
+Per [`dumpbin /symbols` docs](https://docs.microsoft.com/en-us/cpp/build/reference/symbols), the third column value `SECTx` shows it is defined in the object file, and the fifth column value `External` shows it is externally visible.
+
+## Adding a library to Waf module
+
+We [previously introduced({% post_url /2019/2019-09-20-lmbr_waf %}) Lumberyard's Waf-based build system.
+
+We might look at integrating this as a [3rd-party library](https://docs.aws.amazon.com/lumberyard/latest/userguide/waf-adding-third-party-libraries.html) when we turn this into a Gem, for now we'll just hard-code the path.  In `Sandbox/Editor/wscript`:
+```python
+# ...
+hw = dict(
+    # ...
+    # OLD: win_lib = ['version'],
+    win_lib = ['version', 'staticlib', 'Ws2_32', 'userenv'],
+    libpath = ['c:/XXX/lmbr/target/debug/examples/'],
+```
+
+If you get "undefined symbol" link errors check out [this issue](https://github.com/rust-lang/rust/issues/52892).
+
+
+
+Our `example_static_lib()` method is then usable from C/C++:
+```c
+extern "C" void example_static_lib();
+
+//...
+example_static_lib();
+```
+
+Launch __Editor__ and the output is visible in the console:  
+![](/assets/lmbr_staticlib_console.png)
