@@ -1,11 +1,12 @@
 ---
 layout: post
-title: PowerShell Crash Course
+title: PowerShell Crash Course (Part 2)
 tags:
 - devops
 - powershell
 - scripting
 - windows
+series: pwsh_crash_course
 ---
 
 
@@ -17,7 +18,7 @@ tags:
 - [Splatting](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_splatting)
 - [Data sections](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_data_sections)
 
-Remoting
+## Remoting
 
 https://docs.microsoft.com/en-us/powershell/scripting/learn/remoting/ssh-remoting-in-powershell-core
 
@@ -31,3 +32,15 @@ https://docs.microsoft.com/en-us/powershell/scripting/learn/remoting/ssh-remotin
 - [Breaking changes in PowerShell Core 6](https://docs.microsoft.com/en-us/powershell/scripting/whats-new/breaking-changes-ps6)
 - ["Tips for writing cross-platform powershell code"](https://powershell.org/2019/02/tips-for-writing-cross-platform-powershell-code/)
 
+
+https://superuser.com/questions/690258/powershell-gci-filter-with-compact-output
+
+[Measure-Command](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/measure-command)
+
+
+https://devblogs.microsoft.com/scripting/maximizing-the-power-of-here-string-in-powershell-for-configuration-data/
+
+
+## &&
+
+https://github.com/PowerShell/PowerShell/pull/9849
