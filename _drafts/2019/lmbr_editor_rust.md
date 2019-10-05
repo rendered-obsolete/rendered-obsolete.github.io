@@ -9,11 +9,14 @@ canonical_url:
 series: Rust in Lumberyard
 ---
 
-With a [Rust static library working in Lumberyard]({% post_url /2019/2019-09-30-lmbr_rust %}), let's try something more interesting.  The main content creation tool, [__Editor__](https://docs.aws.amazon.com/lumberyard/latest/gettingstartedguide/intro.html), has a plugin framework that would be the ideal way to gradually introduce Rust as part of normal development.
+With a [Rust static library working in Lumberyard]({% post_url /2019/2019-09-30-lmbr_rust %}), let's try something more interesting.  The main content creation tool, [__Editor__](https://docs.aws.amazon.com/lumberyard/latest/gettingstartedguide/intro.html), has a plugin framework that would be an ideal way to gradually introduce Rust as part of normal development.
 
 ## Editor Plugins
 
-Haven't yet found documentation in the Lumberyard User Guide on Editor plugins, but it's pretty easy to figure out what's going on.
+We haven't yet found documentation in the Lumberyard User Guide on Editor plugins, but it's pretty easy to figure out what's going on.
+
+__TL;DR__:  
+If we place a shared library in `EditorPlugins/` that exports `IPlugin* CreatePluginInstance(PLUGIN_INIT_PARAM*)`, we can get Editor to load and register our plugin.
 
 Open one of the `wscript` files in `Code/Sandbox/Plugins/` and you'll see they use either the `CryPlugin` or `CryStandAlonePlugin` [Waf module type](https://docs.aws.amazon.com/lumberyard/latest/userguide/waf-using-module.html) (defined in `dev\Tools\build\waf-1.7.13\lmbrwaflib\cryengine_modules.py`).  Plugin binaries are output to `dev/Bin64vc141/EditorPlugins/`, and if we take a look at the exported symbols:
 ```powershell
@@ -26,7 +29,7 @@ dumpbin /exports Bin64vc141/EditorPlugins/MetricsPlugin.dll
     5    4 00002430 ModuleShutdownISystem = DetachEnvironment
 ```
 
-To see what happens at runtime, look at [`Sandbox/Editor/PluginManager.cpp`](https://github.com/aws/lumberyard/blob/e881f3023cc1840650eb7b133e605881d1d4330d/dev/Code/Sandbox/Editor/PluginManager.cpp#L184) (abridged here):
+For what happens at runtime, look at [`Sandbox/Editor/PluginManager.cpp`](https://github.com/aws/lumberyard/blob/e881f3023cc1840650eb7b133e605881d1d4330d/dev/Code/Sandbox/Editor/PluginManager.cpp#L184) (abridged here):
 ```cpp
 // 1. Load the shared library
 QLibrary *hPlugin = new QLibrary(iter->m_path);
@@ -58,11 +61,10 @@ catch (...)
 }
 ```
 
-__TL;DR__
-
-If we place a shared library in `EditorPlugins/` that exports `IPlugin* CreatePluginInstance(PLUGIN_INIT_PARAM*)`, we can get Editor to load and register our plugin.
-
 ## Rust vs Polymorphism
+
+__TL;DR__:  
+There's no built-in support for passing objects much more complex than POD through Rust/C++ FFI.
 
 Let's take a look at `IPlugin` and other defines in `Sandbox/Editor/Include/IPlugin.h`
 ```cpp
@@ -113,13 +115,9 @@ PLUGIN_API void QueryPluginSettings(SPluginSettings& settings);
 - Rust FFI prefers forwarding to C methods (see [FFI Omnibus](http://jakegoulding.com/rust-ffi-omnibus/objects/), [use in Firefox](https://hsivonen.fi/modern-cpp-in-rust/), etc.)
 - There's crates like [vptr](https://docs.rs/vptr/0.2.1/vptr/) with alternative implementations
 
-__TL;DR__
-
-There's no built-in support for passing compatible objects through Rust/C++ FFI.
-
 ## Implementation
 
-I ever-so-briefly contemplated building the vtable in Rust so `IPlugin` instances could be completely constructed.  Instead, we'll do the C++ object creation in C++ via a "EditorRustPlugin" static library:
+We ever-so-briefly contemplated manually building the vtable so `IPlugin` instances could be completely constructed in Rust.  Instead, we'll go the less brittle route and do C++ object creation in C++ via a "EditorRustPlugin" static library:
 
 ```cpp
 #include <platform_impl.h>
@@ -141,7 +139,7 @@ extern "C" PLUGIN_API IPlugin* CreatePluginInstance(PLUGIN_INIT_PARAM* pInitPara
 }
 ```
 
-Where `CEditorRustPlugin` implements `IPlugin`:
+Where `CEditorRustPlugin` implements `IPlugin` and calls C functions exported by our Rust:
 ```cpp
 #include <Include/IPlugin.h>
 
@@ -193,7 +191,7 @@ public:
 };
 ```
 
-First, our `Cargo.toml`:
+Now the Rust side of the plugin.  First, our `Cargo.toml`:
 ```toml
 [package]
 name = "editor_plugin"
@@ -266,7 +264,7 @@ pub extern fn rust_editor_plugin_release() {
 
 Note how we're creating C-compatible null-terminated string literals with `b"XXX\0"`.
 
-`ModuleInitISystem()` needs to be called by each plugin to initialize globals and so on.  In practice, we should call this from `CreatePluginInstance()` in the EditorRustPlugin C library since it's shared by all Rust plugins, but we've got it here just to test calling some other C/C++ methods.
+`ModuleInitISystem()` needs to be called by each plugin to initialize globals and so on.  In practice, we should call this from `CreatePluginInstance()` in the EditorRustPlugin C++ library since it's shared by all Rust plugins, but we've got it here just to test calling some other C/C++ methods.
 
 In `build.rs`:
 ```rust
@@ -274,6 +272,10 @@ use lmbr_build::*;
 use std::{path::PathBuf};
 
 fn main() {
+    // Helpers in lmbr_build to:
+    // - Map Lumberyard build configs to Rust build configs
+    // - Locate Lumberyard install path
+    // - Construct paths to Lumberyard resources
     let config = build_config();
     let config_3rdparty = if config == BuildConfig::Debug { "debug" } else { "release" };
     let ly_root = PathBuf::from(lmbr_root().unwrap());
@@ -335,13 +337,10 @@ Launch Editor and sure enough:
 
 Very cool.  Rust in all the things!
 
-Something I get a kick out of, Rust being "just native code" Visual Studio can step into and through it without plugins/extensions:  
+Something I get a kick out of, with Rust being "just native code" Visual Studio can step into and through it without plugins/extensions:  
 ![](/assets/lmbr_vs_debug_rust.gif)
 
-## Problems
-
-Re-exporting C symbols with cdylib
-https://github.com/rust-lang/rust/issues/36342
+## Common Problems
 
 If you get `error LNK2001: unresolved external symbol` for `CryAssert*()` methods:
 ```
@@ -358,5 +357,10 @@ Make sure at least one of the Lumberyard source files contains:
 #include <platform_impl.h>
 ```
 
+In Editor, if `LoadLibrary()` returns null and `GetLastError()` is `193` (`0xC1`- `ERROR_BAD_EXE_FORMAT`) make sure you're building/running Lumberyard for `x64`, not `x86`.  32-bit applications can't load 64-bit shared libraries (nor vice-versa).
 
-In Editor, if `LoadLibrary()` returns null and `GetLastError()` is `193` (`0xC1`- `ERROR_BAD_EXE_FORMAT`) make sure you're building Lumberyard for `x64`, not `x86`.  32-bit applications can't load 64-bit shared libraries (nor vice-versa).
+## Next Steps
+
+We're a little surprised linking to "EditorRustPlugin" works.  According to [this open issue](https://github.com/rust-lang/rust/issues/36342), re-exporting C symbols in a `cdylib` doesn't work.  This might break unexpectedly and we'd like to better understand what's going on here.
+
+There's yet [another issue](https://github.com/rust-lang/rust-bindgen/issues/1609) with bindgen failing on Lumberyard's more convoluted templates.  Ultimately, bindgen's [short-comings](https://rust-lang.github.io/rust-bindgen/cpp.html#unsupported-features) and pain related to polymorphic types may limit what we can do in Rust without exerting more effort.
