@@ -127,3 +127,13 @@ Yeah, it's not.
 
 
 Lumberyard's shaders are found in `dev\Engine\Shaders\HWScripts\CryFX\`.  The "CryFX" `*.cfx` files are mostly written in [HLSL](https://en.wikipedia.org/wiki/High-Level_Shading_Language) with some additional pre-processing/macros.
+
+If RSC complains:
+```
+Warning: unauthorized IP 10.151.67.44 trying to connect. If this IP is authorized please add it to the whitelist in the config.ini file
+```
+
+Add `dev\Tools\CrySCompileServer\x64\profile`:
+```
+white_list=10.151.0.0/16
+```

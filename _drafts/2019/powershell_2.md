@@ -41,6 +41,15 @@ https://superuser.com/questions/690258/powershell-gci-filter-with-compact-output
 https://devblogs.microsoft.com/scripting/maximizing-the-power-of-here-string-in-powershell-for-configuration-data/
 
 
+Downloading files:
+https://blog.jourdant.me/post/3-ways-to-download-files-with-powershell
+While [BITS](https://docs.microsoft.com/en-us/windows/win32/bits/about-bits) via `Start-BitsTransfer` is a great option for Windows, `Invoke-WebRequest` works best for multi-platform scripts:
+```powershell
+Invoke-WebRequest https://sh.rustup.rs -OutFile rustup-init.sh
+```
+
 ## &&
 
 https://github.com/PowerShell/PowerShell/pull/9849
+
+

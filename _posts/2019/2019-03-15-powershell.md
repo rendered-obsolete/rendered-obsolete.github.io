@@ -193,7 +193,7 @@ md tmp/
 New-Item -ItemType Directory -Name tmp/ -Force | Out-Null
 
 # Add to PATH
-$env:PATH += ";$(env:USERPROFILE)" # `;` for Windows, `:` for *nix
+$env:PATH += ";$env:USERPROFILE" # `;` for Windows, `:` for *nix
 $env:PATH += [IO.Path]::PathSeparator + $(pwd) # Any platform
 
 # Check environment variable `GITHUB_TOKEN` is set
