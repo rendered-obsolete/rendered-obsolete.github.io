@@ -9,6 +9,8 @@ tags:
 series: pwsh_crash_course
 ---
 
+I've remained committed to improving my powershell game.  Reaching for it instead of shoddy `bat` files.
+
 
 ## More
 
@@ -21,7 +23,6 @@ series: pwsh_crash_course
 ## Remoting
 
 https://docs.microsoft.com/en-us/powershell/scripting/learn/remoting/ssh-remoting-in-powershell-core
-
 
 
 - [About Functions Advanced Parameters](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_functions_advanced_parameters)

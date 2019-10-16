@@ -188,9 +188,24 @@ Get-ChildItem -File
 Get-ChildItem -Directory
 Get-ChildItem | ForEach-Object { $_.Name }
 Get-ChildItem | Where-Object {$_.Length -gt 1024}
+# find: `-Force` includes "hidden" folders.  `-Path` and `-Include` also accept comma-separated list.
+Get-Childitem –Path C:\ -Include *HSG* -Exclude *.JPG,*.MP3,*.TMP -File -Recurse -ErrorAction SilentlyContinue -Force
 
+# Create directory
 md tmp/
 New-Item -ItemType Directory -Name tmp/ -Force | Out-Null
+
+# Move files/folders
+mv old new
+Move-Item -Path old -Destination new
+Move-Item old new
+
+# touch
+New-Item -ItemType file filename
+(gci filename).LastWriteTime = Get-Date # Update timestamp
+
+# tail -f
+Get-Content filename -Wait
 
 # Add to PATH
 $env:PATH += ";$env:USERPROFILE" # `;` for Windows, `:` for *nix
@@ -240,6 +255,7 @@ if ($LASTEXITCODE -and ($res -match "0x800700C1")) {
 - [Providers](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_providers) (like `Env:\`)
 - [Redirection](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_redirection)
 - [Call operator `&`](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_operators#call-operator-)
+- [Blog on searching](https://devblogs.microsoft.com/scripting/use-windows-powershell-to-search-for-files/)
 
 ## Error Handling
 
