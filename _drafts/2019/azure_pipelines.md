@@ -23,3 +23,15 @@ Powershell download files
 
 Cross-platform scripts
 https://docs.microsoft.com/en-us/azure/devops/pipelines/scripts/cross-platform-scripting
+
+Trouble shooting
+https://docs.microsoft.com/en-us/azure/devops/pipelines/troubleshooting
+Set variables:
+https://docs.microsoft.com/en-us/azure/devops/pipelines/process/variables
+![](/assets/azure_run_pipeline_variables.png)
+
+
+Pre-installed software
+
+- [VS2017/Windows Server 2016](https://github.com/microsoft/azure-pipelines-image-generation/blob/master/images/win/Vs2017-Server2016-Readme.md)
+- [VS2019/Windows Server 2019](https://github.com/microsoft/azure-pipelines-image-generation/blob/master/images/win/Vs2019-Server2019-Readme.md)
