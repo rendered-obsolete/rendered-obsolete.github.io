@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Migrating from Travis/Appveyor to Azuze Pipelines
+title: Migrating from Appveyor to Azure Pipelines
 tags:
 - azure
 - devops

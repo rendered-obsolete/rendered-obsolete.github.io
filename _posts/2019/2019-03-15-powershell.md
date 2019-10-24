@@ -136,6 +136,7 @@ switch ($collection)
 #3 Greater than 1
 #3 3
 
+# Loops
 foreach ($val in $collection) {
 }
 
