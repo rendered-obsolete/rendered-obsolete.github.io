@@ -205,6 +205,7 @@ Move-Item old new
 New-Item -ItemType file filename
 (gci filename).LastWriteTime = Get-Date # Update timestamp
 
+# cat
 # tail -f
 Get-Content filename -Wait
 

@@ -41,20 +41,21 @@ TickRequestBus::BroadcastResult(frameDeltaTime, &AZ::TickRequestBus::Events::Get
 
 ## Down the Template Rabbit Hole
 
+Let's take a look at what's going on by unraveling the innocuous looking:
 ```cpp
 TickBus::Handler::BusConnect();
 ```
 
-[Code/Framework/AzCore/AzCore/Component/TickBus.h](https://github.com/aws/lumberyard/blob/f3d7d36f55340b60e8e5b2b68a264cec33276c2e/dev/Code/Framework/AzCore/AzCore/Component/TickBus.h#L153):
+`TickBus` is defined in [Code/Framework/AzCore/AzCore/Component/TickBus.h](https://github.com/aws/lumberyard/blob/f3d7d36f55340b60e8e5b2b68a264cec33276c2e/dev/Code/Framework/AzCore/AzCore/Component/TickBus.h#L153):
 ```cpp
 /**
-* The EBus for tick-related requests.
-* The events are defined in the AZ::TickRequests class.
+* The EBus for tick notification events.
+* The events are defined in the AZ::TickEvents class.
 */
-typedef AZ::EBus<TickRequests> TickRequestBus;
+typedef AZ::EBus<TickEvents>    TickBus;
 ```
 
-[Code/Framework/AzCore/AzCore/EBus/EBus.h](https://github.com/aws/lumberyard/blob/f3d7d36f55340b60e8e5b2b68a264cec33276c2e/dev/Code/Framework/AzCore/AzCore/EBus/EBus.h#L345):
+Ok, so we're working with an EBus.  `EBus` is defined in [Code/Framework/AzCore/AzCore/EBus/EBus.h](https://github.com/aws/lumberyard/blob/f3d7d36f55340b60e8e5b2b68a264cec33276c2e/dev/Code/Framework/AzCore/AzCore/EBus/EBus.h#L345):
 ```cpp
 template<class Interface, class BusTraits = Interface>
 class EBus
@@ -63,9 +64,9 @@ class EBus
     //...
 ```
 
-Because only one template parameter is specified, both `Interface` and `BusTraits` are the same type (i.e. `EBus<TickRequests, TickRequests>`).
+Because only one template parameter is specified, both `Interface` and `BusTraits` template parameters are the same type (i.e. `EBus<TickEvents, TickEvents>`).
 
-[Code/Framework/AzCore/AzCore/EBus/BusImpl.h](https://github.com/aws/lumberyard/blob/f3d7d36f55340b60e8e5b2b68a264cec33276c2e/dev/Code/Framework/AzCore/AzCore/EBus/BusImpl.h#L542):
+`EBusImpl` is defined in [Code/Framework/AzCore/AzCore/EBus/BusImpl.h](https://github.com/aws/lumberyard/blob/f3d7d36f55340b60e8e5b2b68a264cec33276c2e/dev/Code/Framework/AzCore/AzCore/EBus/BusImpl.h#L542):
 ```cpp
 template <class Bus, class Traits>
 struct EBusImpl<Bus, Traits, NullBusId>
@@ -88,13 +89,15 @@ struct EBusBroadcaster
 };
 ```
 
-What we have figured out so far:
+It inherits from a few things, but the one we care about is `EBusBroadcaster` which defines `Handler`.
+
+So, to summarize what we have figured out so far:
 ```cpp
 //TickBus::Handler::BusConnect();
-EBusImplTraits<_, TickRequests>::BusesContainer::Handler::BusConnect();
+EBusImplTraits<_, TickEvents>::BusesContainer::Handler::BusConnect();
 ```
 
-[BusImpl.h](https://github.com/aws/lumberyard/blob/f3d7d36f55340b60e8e5b2b68a264cec33276c2e/dev/Code/Framework/AzCore/AzCore/EBus/BusImpl.h#L94)
+`EBusImplTraits` is defined in [BusImpl.h](https://github.com/aws/lumberyard/blob/f3d7d36f55340b60e8e5b2b68a264cec33276c2e/dev/Code/Framework/AzCore/AzCore/EBus/BusImpl.h#L94)
 ```cpp
 template <class Interface, class BusTraits>
 struct EBusImplTraits
@@ -109,8 +112,8 @@ struct EBusImplTraits
 
 ```cpp
 //TickBus::Handler::BusConnect();
-//EBusImplTraits<_, TickRequests>::BusesContainer::Handler::BusConnect();
-AZ::Internal::EBusContainer<_, TickRequests>::Handler::BusConnect();
+//EBusImplTraits<_, TickEvents>::BusesContainer::Handler::BusConnect();
+AZ::Internal::EBusContainer<_, TickEvents>::Handler::BusConnect();
 ```
 
 [Code/Framework/AzCore/AzCore/EBus/Internal/BusContainer.h](https://github.com/aws/lumberyard/blob/f3d7d36f55340b60e8e5b2b68a264cec33276c2e/dev/Code/Framework/AzCore/AzCore/EBus/Internal/BusContainer.h#L93):
@@ -127,7 +130,7 @@ public:
 
 Thing is, `IdHandler` doesn't define `BusConnect()`.  The comment gives you a clue about what's going on- [specialization](https://en.cppreference.com/w/cpp/language/template_specialization)/[partial specialization](https://en.cppreference.com/w/cpp/language/partial_specialization) based on `AddressPolicy` and `HandlerPolicy` from the trait (i.e. `TickRequests`).
 
-`TickRequests` in [TickBus.h](https://github.com/aws/lumberyard/blob/f3d7d36f55340b60e8e5b2b68a264cec33276c2e/dev/Code/Framework/AzCore/AzCore/Component/TickBus.h#L65):
+`TickEvents` in [TickBus.h](https://github.com/aws/lumberyard/blob/f3d7d36f55340b60e8e5b2b68a264cec33276c2e/dev/Code/Framework/AzCore/AzCore/Component/TickBus.h#L65):
 ```cpp
 /**
 * Interface for AZ::TickBus, which is the EBus that dispatches tick events.
@@ -181,9 +184,9 @@ public:
 Now we finally know what `Handler` is:
 ```cpp
 //TickBus::Handler::BusConnect();
-//EBusImplTraits<_, TickRequests>::BusesContainer::Handler::BusConnect();
-AZ::Internal::EBusContainer<_, TickRequests>::Handler::BusConnect();
-NonIdHandler<_, TickRequests>::BusConnect();
+//EBusImplTraits<_, TickEvents>::BusesContainer::Handler::BusConnect();
+//AZ::Internal::EBusContainer<_, TickEvents>::Handler::BusConnect();
+NonIdHandler<_, TickEvents>::BusConnect();
 ```
 
 Look at definition of `NonIdHandler` in [Code/Framework/AzCore/AzCore/EBus/Internal/Handlers.h](https://github.com/aws/lumberyard/blob/f3d7d36f55340b60e8e5b2b68a264cec33276c2e/dev/Code/Framework/AzCore/AzCore/EBus/Internal/Handlers.h#L145):
@@ -202,6 +205,28 @@ public:
     void BusConnect();
     void BusDisconnect();
 ```
+
+Sure enough, there's the declaration for `BusConnect()`.  But, what about the definition?  That's back in [Ebus.h](https://github.com/aws/lumberyard/blob/f3d7d36f55340b60e8e5b2b68a264cec33276c2e/dev/Code/Framework/AzCore/AzCore/EBus/EBus.h#L1223):
+```cpp
+template <typename Interface, typename Traits, typename ContainerType>
+void NonIdHandler<Interface, Traits, ContainerType>::BusConnect()
+{
+    typename BusType::Context& context = BusType::GetOrCreateContext();
+    AZStd::scoped_lock<decltype(context.m_contextMutex)> contextLock(context.m_contextMutex);
+    if (!BusIsConnected())
+    {
+        typename Traits::BusIdType id;
+        m_node = this;
+        BusType::ConnectInternal(context, m_node, id);
+    }
+}
+```
+
+`this` is the `AZ::TickBus::Handler`-derived handler instance from which we called `BusConnect()` (e.g. in `Activate()`).  This looks like the end, let's just pinch this off: it grabs a lock and calls `EBus<>::ConnectInternal()` (also in [Ebus.h](https://github.com/aws/lumberyard/blob/f3d7d36f55340b60e8e5b2b68a264cec33276c2e/dev/Code/Framework/AzCore/AzCore/EBus/EBus.h#L975)), which calls `Connect()` on `EBusContainer` instance member (back in [BusContainer.h](https://github.com/aws/lumberyard/blob/f3d7d36f55340b60e8e5b2b68a264cec33276c2e/dev/Code/Framework/AzCore/AzCore/EBus/Internal/BusContainer.h#L732)), and adds our handler to the list of handlers.
+
+All that template shenanigans to add a pointer to a list.  Who loves C++?
+
+> Bueller... Bueller... Bueller...
 
 
 ## Rustified
