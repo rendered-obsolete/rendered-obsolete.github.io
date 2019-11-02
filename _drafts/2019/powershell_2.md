@@ -41,7 +41,7 @@ https://github.com/PowerShell/PowerShell/pull/9849
 In [7.0.0-preview.5](https://github.com/PowerShell/PowerShell/milestone/71)
 https://github.com/PowerShell/PowerShell/releases/tag/v7.0.0-preview.5
 
-If you're using [Windows Terminal](https://github.com/microsoft/terminal), __V__ > __Settings__ (or `Ctrl+,`) to open `profiles.json`:
+If you're using [Windows Terminal](https://github.com/microsoft/terminal), [preview 1910](https://devblogs.microsoft.com/commandline/windows-terminal-preview-1910-release/) should auto-detect it.  For older releases, __V__ > __Settings__ (or `Ctrl+,`) to open `profiles.json`:
 ```json
 {
     "...": "...",
