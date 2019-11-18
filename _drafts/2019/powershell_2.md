@@ -26,6 +26,54 @@ I've remained committed to improving my powershell game.  Reaching for it instea
 
 https://superuser.com/questions/690258/powershell-gci-filter-with-compact-output
 
+## Existence
+
+https://devblogs.microsoft.com/scripting/use-a-powershell-function-to-see-if-a-command-exists/
+
+
+## Aliases
+
+[`Get-Alias`](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/get-alias):
+```powershell
+# List all aliases
+alias
+Get-Alias
+# Get alias for `Get-Command`
+Get-Alias -Definition Get-Command
+# Get aliases matching `gc*`
+Get-Alias gc*
+Get-Alias -Name gc*
+```
+
+
+## Loops
+
+- [`While`](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_while)
+- [`For`](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_for)
+- [`ForEach-Object`](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/foreach-object)
+- [`ForEach`](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_foreach) statement
+- [`Do`](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_do) while/until
+
+- [`Break`](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_break)
+- [`Continue`](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_continue)
+
+```powershell
+Get-Alias -Definition "*ForEach*"
+
+CommandType     Name                                               Version    Source
+-----------     ----                                               -------    ------
+Alias           % -> ForEach-Object
+Alias           foreach -> ForEach-Object
+```
+
+Repeat something `X` times:
+```powershell
+0..10 | % {
+    # Commands to repeat here
+}
+```
+
+
 ## time/wc
 
 [Measure-Command](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/measure-command)
@@ -33,6 +81,7 @@ https://superuser.com/questions/690258/powershell-gci-filter-with-compact-output
 [Measure-Object](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/measure-object)
 
 https://devblogs.microsoft.com/scripting/maximizing-the-power-of-here-string-in-powershell-for-configuration-data/
+
 
 
 ## &&
@@ -65,41 +114,11 @@ PowerShell 7.0.0-preview.5
 Copyright (c) Microsoft Corporation. All rights reserved.
 ```
 
-## Existence
-
-https://devblogs.microsoft.com/scripting/use-a-powershell-function-to-see-if-a-command-exists/
-
-## Loops
-
-- [`While`](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_while)
-- [`For`](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_for)
-- [`ForEach-Object`](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/foreach-object)
-- [`ForEach`](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_foreach) statement
-- [`Do`](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_do) while/until
-
-- [`Break`](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_break)
-- [`Continue`](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_continue)
-
-```powershell
-Get-Alias -Definition "*ForEach*"
-
-CommandType     Name                                               Version    Source
------------     ----                                               -------    ------
-Alias           % -> ForEach-Object
-Alias           foreach -> ForEach-Object
-```
-
-```powershell
-0..10 | % {
-    # Commands to repeat here
-}
-```
 
 ## More error handling
 
 [`Trap`](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_trap)
 [`$ErrorActionPreference`](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_preference_variables?ranMID=24542&ranEAID=je6NUbpObpQ&ranSiteID=je6NUbpObpQ-e8ALqi5qBUN7mFO9gJmCUg&epi=je6NUbpObpQ-e8ALqi5qBUN7mFO9gJmCUg&irgwc=1&OCID=AID2000142_aff_7593_1243925&tduid=(ir__dwqvlbyvjokfrnl0kk0sohz30f2xgldgb39s6tas00)(7593)(1243925)(je6NUbpObpQ-e8ALqi5qBUN7mFO9gJmCUg)()&irclickid=_dwqvlbyvjokfrnl0kk0sohz30f2xgldgb39s6tas00#erroractionpreference)
-
 
 ## Formatting, awk, substrings
 
@@ -129,19 +148,7 @@ $string.Contains('2019') # True
 [Select-String](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/select-string)
 
 
-## Aliases
 
-[`Get-Alias`](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/get-alias):
-```powershell
-# List all aliases
-alias
-Get-Alias
-# Get alias for `Get-Command`
-Get-Alias -Definition Get-Command
-# Get aliases matching `gc*`
-Get-Alias gc*
-Get-Alias -Name gc*
-```
 
 ## Profiles
 
@@ -152,6 +159,28 @@ https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/abo
 
 `which` and `whereis` [SO](https://stackoverflow.com/questions/63805/equivalent-of-nix-which-command-in-powershell):
 `Get-Command <command>`
+
+
+## Processes
+
+[Get-Process](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.management/get-process)
+[Stop-Process](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.management/stop-process)
+[Wait-Process](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.management/wait-process)
+
+https://docs.microsoft.com/en-us/powershell/scripting/samples/managing-processes-with-process-cmdlets
+
+## Remoting
+
+https://docs.microsoft.com/en-us/powershell/scripting/learn/remoting/ssh-remoting-in-powershell-core
+
+
+
+Downloading files:
+https://blog.jourdant.me/post/3-ways-to-download-files-with-powershell
+While [BITS](https://docs.microsoft.com/en-us/windows/win32/bits/about-bits) via `Start-BitsTransfer` is a great option for Windows, `Invoke-WebRequest` works best for multi-platform scripts:
+```powershell
+Invoke-WebRequest https://sh.rustup.rs -OutFile rustup-init.sh
+```
 
 
 ## Visual Studio
@@ -184,26 +213,6 @@ SYNTAX
 Enter-VsDevShell -VsInstallPath "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\"
 ```
 
-## Processes
-
-[Get-Process](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.management/get-process)
-[Stop-Process](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.management/stop-process)
-[Wait-Process](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.management/wait-process)
-
-https://docs.microsoft.com/en-us/powershell/scripting/samples/managing-processes-with-process-cmdlets
-
-## Remoting
-
-https://docs.microsoft.com/en-us/powershell/scripting/learn/remoting/ssh-remoting-in-powershell-core
-
-
-
-Downloading files:
-https://blog.jourdant.me/post/3-ways-to-download-files-with-powershell
-While [BITS](https://docs.microsoft.com/en-us/windows/win32/bits/about-bits) via `Start-BitsTransfer` is a great option for Windows, `Invoke-WebRequest` works best for multi-platform scripts:
-```powershell
-Invoke-WebRequest https://sh.rustup.rs -OutFile rustup-init.sh
-```
 
 ## Portable Scripts
 
