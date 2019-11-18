@@ -2,34 +2,36 @@
 layout: post
 title: Home Automation with Home Assistant
 tags:
-- hass
+- smarthome
 - iot
-canonical_url:
+- homeautomation
+- hass
+series: Smart Home
 ---
 
+I've been plotting to put a [Raspberry Pi 3 model B](https://www.raspberrypi.org/products/raspberry-pi-3-model-b/) to work as some kind of "smart" home something.
+
+[Install Rasbian]({% post_url /2019/2019-03-21-raspi_3 %})
 
 https://github.com/home-assistant/home-assistant
 
-Hass.io which is solution for a hub.
+[Hass.io](https://www.home-assistant.io/hassio/) which is solution for a hub.
 
 ## Install
 
-Compared to jasper Hass is a breeze.
-https://www.home-assistant.io/docs/installation/
-https://www.home-assistant.io/docs/installation/raspberry-pi/
-
-[Python virtual environment](https://www.home-assistant.io/docs/installation/virtualenv)
-
+Installing Hass is easy.  There's [general instructions](https://www.home-assistant.io/docs/installation/) as well as [instructions specific to the Raspberry Pi](https://www.home-assistant.io/docs/installation/raspberry-pi/).  In either case, they recommend installing into a [Python virtual environment](https://www.home-assistant.io/docs/installation/virtualenv):  
 ```sh
 # Install pre-requisites
 sudo apt-get install -y python3 python3-dev python3-venv python3-pip libffi-dev libssl-dev
 
-# Create `homeassistant` user and python virtual environment
+# Create `homeassistant` user
 sudo useradd -rm homeassistant -G dialout,gpio,i2c,audio
 cd /srv
 sudo mkdir homeassistant
 sudo chown homeassistant:homeassistant homeassistant
 sudo -u homeassistant -H -s
+
+# Create python virtual environment and switch to it
 cd /srv/homeassistant
 python3 -m venv .
 source bin/activate
@@ -44,6 +46,8 @@ Completed once the following text is output:
 ```
 INFO (MainThread) [homeassistant.core] Timer:starting
 ```
+
+If you're unfamiliar with Python or venv, read ["Installing packages using pip and virtual environments"](https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/).
 
 ## Auto Start
 
@@ -89,9 +93,12 @@ sudo journalctl -f -u home-assistant@homeassistant
 ```
 
 ## Dashboard
-https://jonathanmh.com/raspberry-pi-4-kiosk-wall-display-dashboard/
 
-`sudo vim /etc/systemd/system/dashboard.service` and add:
+My Pi is tucked inside the official [7" Touch Display](https://www.raspberrypi.org/products/raspberry-pi-touch-display/), and I'd like to have it auto-start the Hass GUI as a dashboard to serve as a control panel for my entire flat.
+
+### Systemd Service
+
+[This post](https://jonathanmh.com/raspberry-pi-4-kiosk-wall-display-dashboard/) covers one approach to starting a dashboard on Raspberry Pi 4.  `sudo vim /etc/systemd/system/dashboard.service` and add:
 ```ini
 [Unit]
 Description=Chromium Dashboard
@@ -110,12 +117,6 @@ Group=pi
 [Install]
 WantedBy=graphical.target
 ```
-
-```sh
-sudo systemctl enable dashboard.service
-```
-
-`sudo apt-get install unclutter`
 
 `vim ~/dashboard.sh` and add:
 ```sh
@@ -137,15 +138,22 @@ sed -i 's/"exit_type":"Crashed"/"exit_type":"Normal"/' /home/pi/.config/chromium
 /usr/bin/chromium-browser --noerrdialogs --disable-infobars --kiosk http://localhost:8123 &
 ```
 
-`sudo chmod +x ~/dashboard.sh`
-
 ```sh
+# Make the script executable
+chmod +x ~/dashboard.sh
+# Install helper
+sudo apt-get install unclutter
+# Enable the service
+sudo systemctl enable dashboard.service
+# Optionally, view log output
 sudo journalctl -f -u dashboard.service
 ```
 
-https://learn.sparkfun.com/tutorials/how-to-run-a-raspberry-pi-program-on-startup/all
+This didn't work for me, but I didn't spend much time debugging it.
 
-In `~/.config/autostart/dashboard.desktop`:
+### Autostart
+
+A [sparkfun tutorial](https://learn.sparkfun.com/tutorials/how-to-run-a-raspberry-pi-program-on-startup/all) details an easier way to launch a program at startup.  In `~/.config/autostart/dashboard.desktop`:
 ```ini
 [Desktop Entry]
 Type=Application
@@ -153,88 +161,16 @@ Name=Dashboard
 Exec=/home/pi/dashboard.sh
 ```
 
+Here we're using the same `dashboard.sh` from above.
+
 Some more ideas in [this forum thread](https://www.raspberrypi.org/forums/viewtopic.php?t=8298).
 
-## Media Player
+### End Result 
 
-[Kodi](https://www.raspberrypi.org/documentation/usage/kodi/README.md)
-https://kodi.wiki/view/HOW-TO:Install_Kodi_on_Raspberry_Pi
-https://www.home-assistant.io/integrations/kodi
+The default GUI is servicable:  
+![](/assets/raspi3_hass.jpg)
 
-```sh
-sudo apt-get install -y kodi
-# Switch to `homeassistant` user
-sudo -u homeassistant -H -s
-```
-
-Add the following to `/home/homeassistant/.homeassistant/configuration.yaml`:
-```yaml
-media_player:
-  - platform: vlc
-```
-
-```sh
-# Enter venv
-source /srv/homeassistant/bin/activate
-# Validate configuration.yaml
-venv$ hass --script check_config
-# Restart Home Assistant
-sudo systemctl restart home-assistant@homeassistant
-```
-
-## Voice Recognition
-
-https://github.com/snipsco/snips-issues/issues/161
-
-https://www.home-assistant.io/integrations/snips
-https://docs.snips.ai/getting-started/quick-start-jetson-tx2
-https://docs.snips.ai/getting-started
-https://docs.snips.ai/articles/raspberrypi/manual-setup
-https://docs.snips.ai/articles/other-platforms
-
-https://chrisjean.com/fix-apt-get-update-the-following-signatures-couldnt-be-verified-because-the-public-key-is-not-available/
-```sh
-sudo apt-key adv --keyserver pgp.mit.edu --recv-keys D4F50CDCA10A2849
-
-sudo apt-get install -y snips-platform-voice
-```
-
-1. Click __Add an App__
-1. Click `+` of apps of interest
-1. Click __Add Apps__ button
-1. Wait for training to complete
-1. Click __Deploy Assistant__ button
-1. __Download and install manually__
-
-https://docs.snips.ai/articles/console/actions/deploy-your-assistant#deploy-your-assistant-manually-without-sam
-
-https://docs.snips.ai/getting-started/quick-start-raspberry-pi#step-3-install-the-snips-platform
-
-
-
-```sh
-sudo unzip assistant_proj_XYZ.zip -d /usr/share/snips
-sudo systemctl restart 'snips-*'
-
-sudo apt-get install -y mosquitto-clients
-mosquitto_sub -p 1883 -t "#"
-
-tail -f /var/log/syslog
-```
-
-https://stackoverflow.com/questions/20760589/list-all-audio-devices-with-pythons-pyaudio-portaudio-binding
-```py
-import pyaudio
-p = pyaudio.PyAudio()
-for i in range(p.get_device_count()):
-    print p.get_device_info_by_index(i)
-```
-
-https://www.home-assistant.io/docs/mqtt/broker/
-https://www.home-assistant.io/docs/configuration/
-vim ~/.homeassistant/configuration.yaml
-hass --script check_config
-
+You can turn lights on and off, adjust the brightness, etc.  And there's a weather widget.
 
 ## Common Problems
 
@@ -245,13 +181,7 @@ If you don't install ffi `pip install homeassistant` will fail with:
                 ^~~~~~~
 ```
 
-If you `python3 -m pip install` without `sudo` or `--user`:
-```
-ERROR: Could not install packages due to an EnvironmentError: [Errno 13] Permission denied: '/usr/local/lib/python3.6/dist-packages/_cffi_backend.cpython-36m-aarch64-linux-gnu.so'
-Consider using the `--user` option or check the permissions.
-```
-
-https://github.com/home-assistant/home-assistant/issues/15720
+There are [issues](https://github.com/home-assistant/home-assistant/issues/15720) installing hass without venv:
 ```
 2019-10-04 03:16:59 INFO (MainThread) [homeassistant.setup] Setting up recorder
 Exception in thread Recorder:
@@ -266,9 +196,14 @@ ModuleNotFoundError: No module named 'sqlalchemy'
 
 2019-10-04 03:17:09 WARNING (MainThread) [homeassistant.setup] Setup of recorder is taking over 10 seconds.
 ```
-https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/
 
-If you ssh in and `hass --open-ui` gets stuck
+If not using venv and `python3 -m pip install` without `sudo` or `--user`:
+```
+ERROR: Could not install packages due to an EnvironmentError: [Errno 13] Permission denied: '/usr/local/lib/python3.6/dist-packages/_cffi_backend.cpython-36m-aarch64-linux-gnu.so'
+Consider using the `--user` option or check the permissions.
+```
+
+If you ssh in without `-X`, `hass --open-ui` gets stuck:
 ```
 2019-10-04 22:02:40 INFO (MainThread) [homeassistant.core] Timer:starting
 ```
