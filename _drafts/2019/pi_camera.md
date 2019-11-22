@@ -4,14 +4,13 @@ title: Raspberry Pi Zero Camera
 tags:
 - raspi
 - rust
-- showdev
-- conspiracy
+- iot
 ---
 
 I've got a few people on my team that I've long suspected don't make good use of their time.  Many (most?) days they produce nary a single line of code.
 
 - [Basic camera setup](https://www.raspberrypi.org/documentation/configuration/camera.md)
-- [Detailed camera info](https://www.raspberrypi.org/documentation/raspbian/applications/camera.md)
+- [Details on camera utilities](https://www.raspberrypi.org/documentation/raspbian/applications/camera.md)
 
 From looking at the [Pi specifications](https://en.wikipedia.org/wiki/Raspberry_Pi#Specifications)
 The Zero has nearly the same GPU and video hardware capabilities as the larger Pi 3:
@@ -28,11 +27,11 @@ The Zero has nearly the same GPU and video hardware capabilities as the larger P
 1. The narrow end (left) goes in the Zero (gold/metaliic contacts down- towards the PCB), the wide end (right) goes in the camera (again, contacts down):  
 ![](/assets/pi0_camera_ribbon.jpg)
 
-1. At this point you might want to skip ahead to software configuration to make sure things are working correctly before going th
+1. At this point you might want to skip ahead to [software](#software) configuration to make sure things are working correctly before going through the trouble of closing the case.
 
-1. If you have a case, the micro USB connectors align with the corresponding holes of the bin
+1. If you have a case, the micro USB connectors align with the corresponding holes of the bin  
 ![](/assets/pi0_camera_connected.jpg)
-The camera lens fits through the hole in the top
+The camera lens fits through the hole in the top  
 ![](/assets/pi0_camera_lens.jpg)
 
 1. That white plastic "wheel" that comes with the camera is used to adjust the [camera focus](https://www.jeffgeerling.com/blog/2017/fixing-blurry-focus-on-some-raspberry-pi-camera-v2-models).  It has little notches that fit snuggly into the grooves around the lens:
@@ -45,7 +44,7 @@ Turn it a few degrees and take screenshots or use the "preview" window to get it
 ## Software
 
 ```bash
-# Ssh in (replace `raspberrypi.local` with the IP address if necessary)
+# Ssh in (replace `raspberrypi.local` with other name of IP)
 ssh -X pi@raspberrypi.local
 
 pi$ sudo apt-get update
@@ -71,7 +70,8 @@ supported=1 detected=1
 
 # Take a picture
 pi$ raspistill -o test.jpg
-pi$ gpicview test.jpg # If you installed "Raspbian Stretch with desktop"
+# Open the picture (if you installed "Raspbian Stretch with desktop")
+pi$ gpicview test.jpg
 
 # Record 5 second video
 pi$ raspivid -t 5000 -o video.h264
@@ -79,6 +79,7 @@ pi$ raspivid -t 5000 -o video.h264
 
 ## MMAL
 
-https://github.com/raspberrypi/userland 
-- https://github.com/pedrosland/mmal-sys
-- https://github.com/pedrosland/rascam
+
+- [Source for Raspberry Pi GPU libraries](https://github.com/raspberrypi/userland) (including MMAL)
+- [mmal-sys](https://github.com/pedrosland/mmal-sys); bindgen generated Rust wrapper to mmal
+- [rascam](https://github.com/pedrosland/rascam); high-level wrapper over mmal-sys to interact with camera

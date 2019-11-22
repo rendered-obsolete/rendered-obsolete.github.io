@@ -90,7 +90,7 @@ https://github.com/PowerShell/PowerShell/pull/9849
 In [7.0.0-preview.5](https://github.com/PowerShell/PowerShell/milestone/71)
 https://github.com/PowerShell/PowerShell/releases/tag/v7.0.0-preview.5
 
-If you're using [Windows Terminal](https://github.com/microsoft/terminal), [preview 1910](https://devblogs.microsoft.com/commandline/windows-terminal-preview-1910-release/) should auto-detect it.  For older releases, __V__ > __Settings__ (or `Ctrl+,`) to open `profiles.json`:
+If you're using [Windows Terminal](https://github.com/microsoft/terminal), [preview 1910](https://devblogs.microsoft.com/commandline/windows-terminal-preview-1910-release/) (or newer) should auto-detect it.  For older releases, __V__ > __Settings__ (or `Ctrl+,`) to open `profiles.json`:
 ```json
 {
     "...": "...",
@@ -122,8 +122,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
 
 ## Formatting, awk, substrings
 
-`-like` not `-contains` which is for collections
-
+When looking for substrings, make sure you use `-like` not `-contains` (which is for collections).  Contrast:
 ```powershell
 $string = "windows-2019"
 $string -contains '*2019*' # False
@@ -133,10 +132,9 @@ $string.Contains('*2019*') # False
 $string.Contains('2019') # True
 ```
 
+[`-Split` "operator"](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_split)
 
 [Format-*](https://docs.microsoft.com/en-us/powershell/scripting/samples/using-format-commands-to-change-output-view)
-
-[`-Split` "operator"](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_split)
 
 [`-f` "format operator"][operators]
 
@@ -146,8 +144,6 @@ $string.Contains('2019') # True
 ## grep
 
 [Select-String](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/select-string)
-
-
 
 
 ## Profiles
@@ -185,14 +181,16 @@ Invoke-WebRequest https://sh.rustup.rs -OutFile rustup-init.sh
 
 ## Visual Studio
 
-A recent VS 2019 update came "Developer PowerShell for VS 2019":  
+If you use Visual Studio you're familiar with the "developer command prompt"- a cmd shell to use VS executables from the command line.  A recent VS 2019 update came with "Developer PowerShell for VS 2019":  
 ![](/assets/vs2019_dev_pwsh_props.png)
 
+After launching powershell it initializes the environment with:
 ```powershell
 Import-Module "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\Tools\Microsoft.VisualStudio.DevShell.dll"
 Enter-VsDevShell 20a49f0c
 ```
 
+Let's take a look at `Enter-VsDevShell`:
 ```powershell
 PS> Get-Help Enter-VsDevShell
 
@@ -207,10 +205,11 @@ SYNTAX
     Enter-VsDevShell [-Test] [-DevCmdDebugLevel {None | Basic | Detailed | Trace}] [<CommonParameters>]
 ```
 
-
-
+For example, to get a powershell instance for VS 2019 Community edition:
 ```powershell
-Enter-VsDevShell -VsInstallPath "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\"
+$vspath = "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\"
+Import-Module "$vspath\Common7\Tools\Microsoft.VisualStudio.DevShell.dll"
+Enter-VsDevShell -VsInstallPath $vspath
 ```
 
 
