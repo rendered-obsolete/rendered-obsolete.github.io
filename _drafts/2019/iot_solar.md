@@ -8,16 +8,16 @@ tags:
 series: Smart Home
 ---
 
-Some areas of my apartment lack convenient power outlets for smart home devices.  Running cables everywhere will decimate the fengshui of my abode, but living in a sunny climate makes solar power a palatable option.  I ended up trying the "adafruit build" (see projects [1](https://learn.adafruit.com/solar-boost-bag?view=all), [2](http://juliansarokin.com/how-to-build-a-solar-powered-raspberry-pi/), [3](https://www.instructables.com/lesson/Solar-USB-Charger-2/))- aptly named because all components are available from [Adafruit](https://www.adafruit.com):
+Some areas of my apartment lack convenient outlets to power smart home devices.  Running cables everywhere will decimate the [fengshui](https://en.wikipedia.org/wiki/Feng_shui) of my abode, but living in a sunny climate makes solar power a palatable option.  I ended up trying the "adafruit build" (see projects [1](https://learn.adafruit.com/solar-boost-bag?view=all), [2](http://juliansarokin.com/how-to-build-a-solar-powered-raspberry-pi/), [3](https://www.instructables.com/lesson/Solar-USB-Charger-2/))- so named because all components are available from [Adafruit](https://www.adafruit.com):
 
 - [6V 6W solar panel](https://www.adafruit.com/product/1525)
 - [3.7V 6600mAh Li-Ion battery](https://www.adafruit.com/product/353)
 - [USB/DC/Solar Li-Ion/Poly charger](https://www.adafruit.com/product/390): charges battery via solar panel
 - [PowerBoost 500 converter](https://www.adafruit.com/product/1903): converts 3.7V from charger/battery to ~5V for USB-powered devices (like Raspberry Pi 3/4/Zero)
 
-Given that the [PiZero consumes around 0.5W](https://www.jeffgeerling.com/blogs/jeff-geerling/raspberry-pi-zero-power), 6W solar and a 6600mAh battery is overkill for many devices.  Overspeccing now means:  
-1. Don't need to optimize software for power consumption
-1. Can repurpose it with some of my other devices
+Given that the [Raspberry Pi Zero consumes around 0.5W](https://www.jeffgeerling.com/blogs/jeff-geerling/raspberry-pi-zero-power), a 6W solar panel and 6600mAh battery is overkill for many devices.  Over-speccing now means:  
+1. Don't need to optimize software for power consumption during development (e.g. putting CPU or wifi to sleep)
+1. Can repurpose with more demanding devices
 
 ## Some Assembly Required
 
@@ -31,28 +31,34 @@ The small number of components really only fit together one way and some basic s
     - Battery to charger's `BATT` connector
     - PowerBoost converter to charger's `LOAD` connector (via spliced [JST PH 2-pin cables](https://www.adafruit.com/product/261))
 
+And voila:  
 ![](/assets/solar_usb.jpg)
 
-I didn't have any shrink wrap on-hand so I used a bit of electrical tape for exposed wire bits.
+I didn't have any shrink wrap on-hand so I used a snip of electrical tape for exposed wire bits.
 
 Assuming everything is done correctly, expose the solar panel to sunlight and the orange `CHRG` LED on the solar charger flashes and the green `PWR` LED on the converter is lit.  If you're foolish like me and do this at night in a home with "energy efficient" LED lighting, a 1000 lumen torch does the trick.
  
  ## A Long Straw
 
- Should you need to place the solar panel some distance from the rest of the hardware (e.g. outside):
+ Should you need to reach further away to drink up the solar rays:
 
- - Shortest, cheapest 3.2/1.3mm to 5.5/2.1mm adapter
- - Appropriate length of amply available, inexpensive 5.5/2.1mm DC extension cables
+1. Switch the solar panel to 5.5/2.1mm via either:
+    - Shortest, cheapest 3.2/1.3mm to 5.5/2.1mm adapter you can find ([example](https://www.amazon.com/gp/product/B00L365XC0))
+    - Remove the existing jack and replace with another, [e.g. this](https://www.adafruit.com/product/369):  
+![](/assets/dc_power_screw_terminal.jpg)
+1. Use appropriate length of amply available, inexpensive 5.5/2.1mm DC extension cables ([example](https://www.amazon.com/gp/product/B06X99VJ9Y))
+
+In my case, the solar panel's 0.26m of cable was enough to place it outside the bathroom window, and an additional 1m allowed me to place the remaining electronics on the nearest shelf.
 
  ## Winning
 
 This was a fun and incredibly rewarding project.
 
-On occasion I share these side projects with my family, but this was the first that garnered a reaction and aroused interest.  Few people can appreciate the subtle nuances of software development, but in 2019 *everyone* can grok the covetousness of portable USB power!
+On occasion I share these side projects with my family, but this was the first that garnered a reaction and aroused interest.  Few people can appreciate the subtle nuances of software development, but in this foul Year of our Lord, 2019, *everyone* can grok the covetousness of portable USB power!
 
-The modular nature of it also deserves attention.  You can disconnect the JST from the PowerBoost converter and hook the 3.7V from the charger/battery directly up to 3.3V devices.  Plan to use an ultra-low-power Arduino?  Swap out the 6W solar panel and 6600mAh battery for something more modest.
+The modular nature of it also deserves attention.  You should be able to disconnect the JST from the PowerBoost converter and hook the 3.7V from the charger/battery directly up to 3.3V devices.  Plan to use an ultra-low-power Arduino?  Swap out the 6W solar panel and 6600mAh battery for something more modest.  Device needs 1-2A?  Swap the PowerBoost 500 for a [PowerBoost 1000](https://www.adafruit.com/product/2030).
 
-I'm tempted to revisit my [air-quality monitor({% post_url /2019/2019-03-25-pi3_pm25 %}), but no longer living in Shanghai I have little use for it.
+It's tempting to revisit my [air-quality monitor({% post_url /2019/2019-03-25-pi3_pm25 %}), but no longer living in Shanghai I have little use for it.
 
 ## Alternatives
 
