@@ -22,6 +22,8 @@ Installing Hass is easy.  The top-level [install instructions](https://www.home-
 
 Here we'll go through the manual route also referencing [additional instructions for the Raspberry Pi](https://www.home-assistant.io/docs/installation/raspberry-pi/).  If you're unfamiliar with Python/pip/venv, read ["Installing packages using pip and virtual environments"](https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/).
 
+If on Stretch need to manually install python >3.6; apt only gives you 3.5
+
 ```sh
 # Install pre-requisites
 sudo apt-get install -y python3 python3-dev python3-venv python3-pip libffi-dev libssl-dev

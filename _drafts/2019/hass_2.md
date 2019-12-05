@@ -25,53 +25,6 @@ venv$ hass --script check_config
 sudo systemctl restart home-assistant@homeassistant
 ```
 
-## Voice Recognition
-
-https://github.com/snipsco/snips-issues/issues/161
-
-https://www.home-assistant.io/integrations/snips
-https://docs.snips.ai/getting-started/quick-start-jetson-tx2
-https://docs.snips.ai/getting-started
-https://docs.snips.ai/articles/raspberrypi/manual-setup
-https://docs.snips.ai/articles/other-platforms
-
-https://chrisjean.com/fix-apt-get-update-the-following-signatures-couldnt-be-verified-because-the-public-key-is-not-available/
-```sh
-sudo apt-key adv --keyserver pgp.mit.edu --recv-keys D4F50CDCA10A2849
-
-sudo apt-get install -y snips-platform-voice
-```
-
-1. Click __Add an App__
-1. Click `+` of apps of interest
-1. Click __Add Apps__ button
-1. Wait for training to complete
-1. Click __Deploy Assistant__ button
-1. __Download and install manually__
-
-https://docs.snips.ai/articles/console/actions/deploy-your-assistant#deploy-your-assistant-manually-without-sam
-
-https://docs.snips.ai/getting-started/quick-start-raspberry-pi#step-3-install-the-snips-platform
-
-
-
-```sh
-sudo unzip assistant_proj_XYZ.zip -d /usr/share/snips
-sudo systemctl restart 'snips-*'
-
-sudo apt-get install -y mosquitto-clients
-mosquitto_sub -p 1883 -t "#"
-
-tail -f /var/log/syslog
-```
-
-https://stackoverflow.com/questions/20760589/list-all-audio-devices-with-pythons-pyaudio-portaudio-binding
-```py
-import pyaudio
-p = pyaudio.PyAudio()
-for i in range(p.get_device_count()):
-    print p.get_device_info_by_index(i)
-```
 
 https://www.home-assistant.io/docs/mqtt/broker/
 https://www.home-assistant.io/docs/configuration/
