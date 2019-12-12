@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Home Assistant Offline Voice Recognition with Snips
+title: Home Assistant Voice Recognition with Snips
 tags:
 - smarthome
 - iot
@@ -9,7 +9,7 @@ tags:
 series: Smart Home
 ---
 
-After the [intial install of __Home Assistant__]({% post_url /2019/2019-11-22-home_assistant %}), I've beenn eager to get some basic voice recognition working.  One of my early goals was for it to be "offline"; meaning, not use Amazon or Google.
+After the [initial install of __Home Assistant__]({% post_url /2019/2019-11-22-home_assistant %}), I've been eager to get some basic voice recognition working.  One of my early goals was for it to be "offline"; meaning, not use Amazon or Google.
 
 ## Hardware
 
@@ -245,7 +245,7 @@ sudo apt-get install -y snips-watch
 snips-watch -vv
 ```
 
-I installed the [weather app](https://console.snips.ai/store/en/skill_lbVbZQn5Mnk).  So, if I say, "hey snips, what's the weather?" snips-watch should output:
+I added the [weather app](https://console.snips.ai/store/en/skill_lbVbZQn5Mnk) to my Snips assistant.  So, if I say, "hey snips, what's the weather?" snips-watch should output:
 ```
 [15:00:52] [Hotword] detected on site default, for model hey_snips
 [15:00:52] [Asr] was asked to stop listening on site default
@@ -259,7 +259,7 @@ I installed the [weather app](https://console.snips.ai/store/en/skill_lbVbZQn5Mn
 [15:00:55] [Dialogue] New intent detected searchWeatherForecast with confidence 1.000
 ```
 
-Instead of snips-watch, you can probably use any MQTT client:
+Instead of snips-watch, you can use any MQTT client:
 ```sh
 sudo apt-get install -y mosquitto-clients
 # Subscribe to all topics
@@ -268,12 +268,14 @@ mosquitto_sub -p 1883 -t "#"
 
 ## Home Assistant and Snips
 
-Both Home Assistant and Snips are designed to use [MQTT].  You can either:  
+Now that we know Snips is working, we can integrate it with Home Assistant.
+
+Snips uses [MQTT] by default, and Hass has optional MQTT integration.  You can either:  
 - [Have Hass use Snips' broker](https://www.home-assistant.io/integrations/snips#specifying-the-mqtt-broker)
     - The Hass documentation incorrectly says the Snips broker is running on port 9898.  Currently the default is 1883, but consult `/etc/snips.toml`.
 - [Have Snips use Hass' broker](https://docs.snips.ai/articles/platform/platform-configuration#common-parameters-snips-common)
 
-Since we did everything from scratch, [Hass doesn't have a broker](https://www.home-assistant.io/docs/mqtt/broker/).  So, we can just point Hass at the one that got installed with Snips.  In `configuration.yml`:
+Since we did everything from scratch, [Hass doesn't have a broker](https://www.home-assistant.io/docs/mqtt/broker/).  So, we should point Hass at the instance that got installed with Snips.  In `configuration.yaml`:
 ```yml
 # Enable snips (VERY IMPORTANT)
 snips:
@@ -294,7 +296,7 @@ Let's try a basic [intent script](https://www.home-assistant.io/integrations/int
 intent_script:
   searchWeatherForecast:
     speech:
-      text: 'hello intent'
+      text: 'Hello intent'
     action:
       - service: system_log.write
         data_template:
@@ -302,7 +304,7 @@ intent_script:
           level: warning
 ```
 
-Now when hass receives the intent, the TTS engine will say "hello intent" and output something to __Developer > Logs__.
+Again, restart Hass and then saw "hey snips, what's the weather".  Now when Hass receives the intent, the TTS engine will say "hello intent" and output the same to __Developer > Logs__.
 
 ## The End?
 
