@@ -156,6 +156,18 @@ https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/abo
 `which` and `whereis` [SO](https://stackoverflow.com/questions/63805/equivalent-of-nix-which-command-in-powershell):
 `Get-Command <command>`
 
+## Archives
+
+[Expand-Archive](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.archive/expand-archive)
+
+```powershell
+Get-ChildItem 'path to folder' -Filter *.zip | Expand-Archive -DestinationPath 'path to extract' -Force
+```
+
+If you've got something that's not a zip like [7zip](https://stackoverflow.com/questions/42998669/unzip-file-using-7z-in-powershell) a series of `.7z.001`, `.002`, etc.:
+```powershell
+ & $env:ProgramFiles\7-Zip\7z.exe x .\Downloads\*.7z.*  "-o.\Downloads" -y
+```
 
 ## Processes
 

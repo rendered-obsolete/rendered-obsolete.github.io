@@ -119,7 +119,7 @@ The points by themselves are worthwhile since you can redeem them for flights, h
 The perks depend on the airline, route, and your level, but may include:
 - Seat upgrades: usually extra leg-room and on some airlines you even get a _slightly_ wider seat or other perks.
 - Lounge access: when waiting for a connection after a 10+ hour flight sometimes it's nice to be somewhere with quiet, better wifi, more outlets, nicer chairs and bathrooms, and food and drink (including booze).
-- Luggage allowance: depending on the airline and route you get extra checked bags and/or increased weight limits.  This can be especially handy when moving.
+- Luggage allowance: depending on the airline and route you get extra checked bags and/or increased weight limits.  This can be especially handy when [moving]({% post_url /2019/2019-08-15-abroad_moving %}#packing).
 - More points: gain points faster (more per mile flown) at higher levels.
 
 Depending on the route there may be one clear airline to invest in.  If you'll be flying between major hubs and there's a wide choice of airlines it's still worth considering.  If I had to choose between saving $100 on on a $1000 ticket with another airline versus getting the miles to level-up with my usual carrier, I'd pick the latter.
