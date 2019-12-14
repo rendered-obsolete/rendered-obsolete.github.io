@@ -22,7 +22,21 @@ Installing Hass is easy.  The top-level [install instructions](https://www.home-
 
 Here we'll go through the manual route also referencing [additional instructions for the Raspberry Pi](https://www.home-assistant.io/docs/installation/raspberry-pi/).  If you're unfamiliar with Python/pip/venv, read ["Installing packages using pip and virtual environments"](https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/).
 
-If on Stretch need to manually install python >3.6; apt only gives you 3.5
+If on Stretch need to manually install python >=3.7; apt only gives you 3.5:
+```sh
+# Build python 3.7
+# `--enable-optimizations` uses tests that take a long time.  First do a quick install and then do an optimized build later.
+./configure --with-ensurepip=install
+make -j2
+make altinstall
+
+sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.5 50
+sudo update-alternatives --install /usr/bin/python3 python3 /usr/local/bin/python3.7 40
+# Switch to python3.7
+sudo update-alternatives --set python3 /usr/local/bin/python3.7
+# Or, for the TUI to manually select
+#sudo update-alternatives --config python3
+```
 
 ```sh
 # Install pre-requisites
