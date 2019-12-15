@@ -8,87 +8,33 @@ tags:
 series: pwsh_crash_course
 ---
 
-I've remained committed to improving my powershell game.  Reaching for it instead of shoddy `bat` files.
-
-[`$()` "subexpression operator"][operators]
-
-
-## More
-
-- [Enums](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_enum)
-- [Pipeline functions](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_functions#piping-objects-to-functions)
-- [Modules](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_modules)
-- [Splatting](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_splatting)
-- [Data sections](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_data_sections)
-- [Operators][operators]
-- [Advanced Function Parameters](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_functions_advanced_parameters)
-
-
-https://superuser.com/questions/690258/powershell-gci-filter-with-compact-output
-
-## Existence
-
-https://devblogs.microsoft.com/scripting/use-a-powershell-function-to-see-if-a-command-exists/
-
-
-## Aliases
-
-[`Get-Alias`](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/get-alias):
-```powershell
-# List all aliases
-alias
-Get-Alias
-# Get alias for `Get-Command`
-Get-Alias -Definition Get-Command
-# Get aliases matching `gc*`
-Get-Alias gc*
-Get-Alias -Name gc*
-```
-
-
-## Loops
-
-- [`While`](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_while)
-- [`For`](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_for)
-- [`ForEach-Object`](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/foreach-object)
-- [`ForEach`](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_foreach) statement
-- [`Do`](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_do) while/until
-
-- [`Break`](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_break)
-- [`Continue`](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_continue)
-
-```powershell
-Get-Alias -Definition "*ForEach*"
-
-CommandType     Name                                               Version    Source
------------     ----                                               -------    ------
-Alias           % -> ForEach-Object
-Alias           foreach -> ForEach-Object
-```
-
-Repeat something `X` times:
-```powershell
-0..10 | % {
-    # Commands to repeat here
-}
-```
-
+I've remained committed to improving my powershell game.  Reaching for it instead of shoddy `bat` files whenever possible.  There's a bunch of things that didn't make it into the [first post]({% post_url /2019/2019-03-15-powershell %}), including a few things that inadvertantly got left out (e.g. copying files, other loops, etc.).  So, I updated that post so it covers basic syntax and core command-line functionality.  This post covers mostly auxillary features and utility commands.
 
 ## time/wc
 
-[Measure-Command](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/measure-command)
-
-[Measure-Object](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/measure-object)
+```powershell
+# time; measure duration of command
+Measure-Command { make }
+# ls -1; count files in directory
+Get-ChildItem | Measure-Object
+# wc; count number of lines in file
+Get-Content ./Cargo.toml | Measure-Object -Line
+```
+- [Measure-Command](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/measure-command)
+- [Measure-Object](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/measure-object)
 
 https://devblogs.microsoft.com/scripting/maximizing-the-power-of-here-string-in-powershell-for-configuration-data/
 
-
-
 ## &&
 
-https://github.com/PowerShell/PowerShell/pull/9849
-In [7.0.0-preview.5](https://github.com/PowerShell/PowerShell/milestone/71)
-https://github.com/PowerShell/PowerShell/releases/tag/v7.0.0-preview.5
+PowerShell is nice and all, but one of the things I missed most from bash et al. is the ability to chain commands on success/failure like `make clean && make`.
+
+Thanks to [PowerShell Core being open-source](https://github.com/PowerShell/PowerShell/pull/9849), pwsh joins the party as of [7.0.0-preview.5](https://github.com/PowerShell/PowerShell/releases/tag/v7.0.0-preview.5) so you can do things like:
+
+```powershell
+# Create directory and enter it
+New-Item -Type Directory blah && Set-Location blah
+```
 
 If you're using [Windows Terminal](https://github.com/microsoft/terminal), [preview 1910](https://devblogs.microsoft.com/commandline/windows-terminal-preview-1910-release/) (or newer) should auto-detect it.  For older releases, __V__ > __Settings__ (or `Ctrl+,`) to open `profiles.json`:
 ```json
@@ -114,13 +60,7 @@ PowerShell 7.0.0-preview.5
 Copyright (c) Microsoft Corporation. All rights reserved.
 ```
 
-
-## More error handling
-
-[`Trap`](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_trap)
-[`$ErrorActionPreference`](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_preference_variables?ranMID=24542&ranEAID=je6NUbpObpQ&ranSiteID=je6NUbpObpQ-e8ALqi5qBUN7mFO9gJmCUg&epi=je6NUbpObpQ-e8ALqi5qBUN7mFO9gJmCUg&irgwc=1&OCID=AID2000142_aff_7593_1243925&tduid=(ir__dwqvlbyvjokfrnl0kk0sohz30f2xgldgb39s6tas00)(7593)(1243925)(je6NUbpObpQ-e8ALqi5qBUN7mFO9gJmCUg)()&irclickid=_dwqvlbyvjokfrnl0kk0sohz30f2xgldgb39s6tas00#erroractionpreference)
-
-## Formatting, awk, substrings
+## Filtering, substrings, grep, awk
 
 When looking for substrings, make sure you use `-like` not `-contains` (which is for collections).  Contrast:
 ```powershell
@@ -132,63 +72,152 @@ $string.Contains('*2019*') # False
 $string.Contains('2019') # True
 ```
 
-[`-Split` "operator"](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_split)
+```powershell
+# Get first item of output
+Get-ChildItem | select -First 1
+Get-ChildItem | Select-Object -First 1
+# Get certain properties of output
+(Get-ChildItem).FullName
+Get-ChildItem | % { $_.FullName }
+Get-ChildItem | Select-Object -ExpandProperty FullName
 
-[Format-*](https://docs.microsoft.com/en-us/powershell/scripting/samples/using-format-commands-to-change-output-view)
+# grep; find text in files
+Select-String -Path ./src/*.rs -Pattern 'let'
+# Find text in output
+(Get-ChildItem).FullName | Select-String Cargo.*
 
-[`-f` "format operator"][operators]
+# Split a string
+$x = "0 1 2 3"
+-split $x
+# Split using explicit delimiter
+"0,1,2,3" -split ','
+# Split and return specific items
+(-split $x)[0,-1] # 0 3
+(-split $x)[-2..-1] # 2 3
+(-split $x)[0,1+2..3] # all
+(-split $x)[2..3+0] # 2 3 0
+# WARNING: The following DON'T work
+(-split $x)[0+2..3]
+(-split $x)[0,2..3]
+(-split $x)[2..3,0]
+```
 
-[ConvertTo-Json](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/convertto-json)
+- [Filtering Get-ChildItem output](https://superuser.com/questions/690258/powershell-gci-filter-with-compact-output)
+- [Select-Object](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/select-object)
+- [Select-String](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/select-string)
+- [`-Split` operator](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_split)
+- [Arrays](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_arrays)
 
 
-## grep
+## Formatting
 
-[Select-String](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/select-string)
+```powershell
+# Output certain columns
+Get-ChildItem | Format-Table Name, Size
+"{1} {0}" -f "A", "B" # B A
+"{0:X8}" -f 42 # 0000002A
+[String]::Format("{0:x8}", 42) # 0000002a
 
+# Convert to json
+Get-ChildItem | Format-Table Name, Size | ConvertTo-Json
+# Parse json file and get "tasks" field
+(Get-Content ./.vscode/tasks.json | ConvertFrom-Json).tasks
+# Parse key-value pairs as hashtable
+'{ "key":"value1", "Key":"value2" }' | ConvertFrom-Json -AsHashtable
+```
+
+- [Format-*](https://docs.microsoft.com/en-us/powershell/scripting/samples/using-format-commands-to-change-output-view)
+    - [Format-Table](https://docs.microsoft.com/en-us/powershell/module/Microsoft.PowerShell.Utility/Format-Table)
+- [`-f` "format operator"](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_operators#format-operator--f) and [String.Format](https://docs.microsoft.com/en-us/dotnet/api/system.string.format)
+- [ConvertFrom-Json](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/convertfrom-json) and [ConvertTo-Json](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/convertto-json)
+
+## Aliases/which/whereis
+
+[`Get-Alias`](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/get-alias):
+```powershell
+# List all aliases
+alias
+Get-Alias
+# Get alias for `Get-Command`
+Get-Alias -Definition Get-Command
+# Get aliases matching `gc*`
+Get-Alias gc*
+Get-Alias -Name gc*
+```
+
+`which` and `whereis` from this [SO](https://stackoverflow.com/questions/63805/equivalent-of-nix-which-command-in-powershell):
+```powershell
+# All "gcc*" commands
+Get-Command gcc*
+# As a nicer table
+Get-Command gcc* | Format-Table Name, Path
+# Full path to first `cargo`
+Get-Command cargo | Select-Object -First 1 -ExpandProperty Path
+# Execute it
+& $(Get-Command cargo | Select-Object -First 1 -ExpandProperty Path)
+```
+
+- [Call operator `&`](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_operators#call-operator-) and [subexpression operator `$()`](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_operators#subexpression-operator--)
+- [See if a command exists](https://devblogs.microsoft.com/scripting/use-a-powershell-function-to-see-if-a-command-exists/)
 
 ## Profiles
 
-https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_profiles
-`$profile` displays current profile:
-`$home\Documents\PowerShell\Microsoft.PowerShell_profile.ps1`
+[Profiles](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_profiles) are scripts that run when PowerShell starts (like `.bashrc` etc.).  `$profile` is the current profile:
 
+|||
+|-|-|
+| Win10 | `$home\Documents\PowerShell\Microsoft.PowerShell_profile.ps1`
+| Linux/MacOS | `$home/.config/powershell/Microsoft.PowerShell_profile.ps1`
 
-`which` and `whereis` [SO](https://stackoverflow.com/questions/63805/equivalent-of-nix-which-command-in-powershell):
-`Get-Command <command>`
+This is where you can [set `Set-PSReadLineOption`]({% post_url /2019/2019-03-15-powershell %}#shell-keyboard-shortcuts) and other environment/session customizations.
+
+## More Loops
+
+```powershell
+Get-Alias -Definition "*ForEach*"
+
+CommandType     Name                                               Version    Source
+-----------     ----                                               -------    ------
+Alias           % -> ForEach-Object
+Alias           foreach -> ForEach-Object
+```
+
+Repeat something `X` times:
+```powershell
+0..10 | % {
+    # Commands to repeat here
+}
+```
+
 
 ## Archives
 
-[Expand-Archive](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.archive/expand-archive)
+[Expand-Archive](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.archive/expand-archive):  
 
 ```powershell
-Get-ChildItem 'path to folder' -Filter *.zip | Expand-Archive -DestinationPath 'path to extract' -Force
+# Extract to bundle/
+Expand-Archive bundle.zip
+# Extract to path
+Expand-Archive bundle.zip .
+Expand-Archive bundle.zip -DestinationPath .
+# Extract multiple files
+Get-ChildItem $Home/Downloads -Filter *.zip | Expand-Archive -DestinationPath output/ -Force
 ```
 
-If you've got something that's not a zip like [7zip](https://stackoverflow.com/questions/42998669/unzip-file-using-7z-in-powershell) a series of `.7z.001`, `.002`, etc.:
+If you've got something that's not a zip, perhaps a series of [7zip](https://www.7-zip.org/) `.7z.001`, `.002`, etc. (from [this SO](https://stackoverflow.com/questions/42998669/unzip-file-using-7z-in-powershell)):
 ```powershell
  & $env:ProgramFiles\7-Zip\7z.exe x .\Downloads\*.7z.*  "-o.\Downloads" -y
 ```
 
-## Processes
+## curl/wget
 
-[Get-Process](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.management/get-process)
-[Stop-Process](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.management/stop-process)
-[Wait-Process](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.management/wait-process)
-
-https://docs.microsoft.com/en-us/powershell/scripting/samples/managing-processes-with-process-cmdlets
-
-## Remoting
-
-https://docs.microsoft.com/en-us/powershell/scripting/learn/remoting/ssh-remoting-in-powershell-core
-
-
-
-Downloading files:
-https://blog.jourdant.me/post/3-ways-to-download-files-with-powershell
-While [BITS](https://docs.microsoft.com/en-us/windows/win32/bits/about-bits) via `Start-BitsTransfer` is a great option for Windows, `Invoke-WebRequest` works best for multi-platform scripts:
+This [blog](https://blog.jourdant.me/post/3-ways-to-download-files-with-powershell) covers options for downloading files.  While [BITS](https://docs.microsoft.com/en-us/windows/win32/bits/about-bits) via `Start-BitsTransfer` is a great option for Windows, `Invoke-WebRequest` works best for multi-platform scripts:
 ```powershell
+# wget; Http GET
 Invoke-WebRequest https://sh.rustup.rs -OutFile rustup-init.sh
 ```
+- [Invoke-WebRequest](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/invoke-webrequest)
+- [Invoke-RestMethod](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/invoke-restmethod); general REST operations
 
 
 ## Visual Studio
@@ -223,13 +252,6 @@ $vspath = "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\"
 Import-Module "$vspath\Common7\Tools\Microsoft.VisualStudio.DevShell.dll"
 Enter-VsDevShell -VsInstallPath $vspath
 ```
-
-
-## Portable Scripts
-
-- [Breaking changes in PowerShell Core 6](https://docs.microsoft.com/en-us/powershell/scripting/whats-new/breaking-changes-ps6)
-- ["Tips for writing cross-platform powershell code"](https://powershell.org/2019/02/tips-for-writing-cross-platform-powershell-code/)
-
 
 
 [operators]: https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_operators

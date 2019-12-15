@@ -145,6 +145,8 @@ while ($value -gt 0) {
 }
 ```
 
+Cheat sheet:  
+
 - __Assignment__: `+=` `-=` `*=` `/=` `++` `--` (e.g. `++$int` or `$int++` or `$int += 1`)
 - __Equality__: `-eq` `-ne` `-gt` `-ge` `-lt` `-le`
 - __Matching__: `-like` `-notlike` (wildcard), `-match` `-notmatch` (regex; `$matches` contains matching strings)
@@ -156,8 +158,16 @@ while ($value -gt 0) {
 - All are case-insensitive.  For case-sensitive prefix with `c` (e.g. `-clike`)
 - If input is collection, output is a collection of matches
 
+More info:  
 
 - [Comparison operators](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_comparison_operators)
+- [`While`](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_while)
+- [`For`](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_for)
+- [`ForEach-Object`](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/foreach-object)
+- [`ForEach`](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_foreach) statement
+- [`Do`](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_do) while/until
+- [`Break`](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_break)
+- [`Continue`](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_continue)
 
 ## Essentials
 
@@ -171,8 +181,15 @@ Get-Help Get-Command
 # List properties/methods of object
 Get-Command | Get-Member
 
+# Change directory
 cd output/Debug
 Set-Location output/Debug
+# pushd/popd
+pushd tmp/
+popd
+Push-Location tmp/
+Pop-Location
+cd - # Go back to previous directory
 
 # Current file/module's directory
 $PSScriptRoot
@@ -195,20 +212,42 @@ Get-Childitem –Path C:\ -Include *HSG* -Exclude *.JPG,*.MP3,*.TMP -File -Recur
 # Create directory
 md tmp/
 New-Item -ItemType Directory -Name tmp/ -Force | Out-Null
+# touch; create file
+New-Item -ItemType file filename
+(gci filename).LastWriteTime = Get-Date # Update timestamp
+
+# Copy file to existing folder
+Copy-Item filename tmp/
+# Copy folder to new folder (create tmp1/filename)
+Copy-Item tmp/ tmp1/ -Recurse
+# Copy folder to existing folder (creates tmp1/tmp/filename)
+Copy-Item tmp/ tmp1/ -Recurse
 
 # Move files/folders
 mv old new
 Move-Item -Path old -Destination new
 Move-Item old new
 
-# touch
-New-Item -ItemType file filename
-(gci filename).LastWriteTime = Get-Date # Update timestamp
-
 # cat
+Get-Content filename
 # tail -f
 Get-Content filename -Wait
+Get-Content filename -Tail 1 -Wait # Get last line and wait
 
+# Remove directory
+Remove-Item tmp1/ -Recurse
+# Remove files matching pattern
+Remove-Item tmp/* -Include *.txt -Exclude *.keep.txt
+```
+
+- [Get-ChildItem](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.management/get-childitem)
+- [New-Item](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.management/new-item)
+- [Copy-Item](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.management/copy-item)
+- [Move-Item](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.management/move-item)
+- [Get-Content](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.management/get-content)
+- [Remove-Item](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.management/remove-item)
+
+```powershell
 # Add to PATH
 $env:PATH += ";$env:USERPROFILE" # `;` for Windows, `:` for *nix
 $env:PATH += [IO.Path]::PathSeparator + $(pwd) # Any platform
@@ -217,12 +256,6 @@ $env:PATH += [IO.Path]::PathSeparator + $(pwd) # Any platform
 Test-Path Env:\GITHUB_TOKEN
 # Test for file/directory
 Test-Path subdir/child -PathType Leaf # `Container` for directory
-
-pushd tmp/
-popd
-Push-Location tmp/
-Pop-Location
-cd - # Go back to previous directory
 
 # Write to stdout, redirect stderr to stdout, send stdout to /dev/null
 Write-Output "echo" 2>&1 > $null
@@ -246,6 +279,9 @@ Invoke-Expression $ls_l
 $file = "./script.ps1"
 & $file
 
+# Subexpression; string contains result of command
+"Result: $(Test-Path Env:\GITHUB_TOKEN)"
+
 # Execute command looking for failure text
 $res = Invoke-Expression "& $cmd 2>&1"
 if ($LASTEXITCODE -and ($res -match "0x800700C1")) {
@@ -256,7 +292,7 @@ if ($LASTEXITCODE -and ($res -match "0x800700C1")) {
 - [Automatic variables](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_automatic_variables)
 - [Providers](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_providers) (like `Env:\`)
 - [Redirection](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_redirection)
-- [Call operator `&`](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_operators#call-operator-)
+- [Operators](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_operators) (like [call operator `&`](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_operators#call-operator-) and [subexpression operator `$()`](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_operators#subexpression-operator--))
 - [Blog on searching](https://devblogs.microsoft.com/scripting/use-windows-powershell-to-search-for-files/)
 
 ## Error Handling
@@ -299,45 +335,6 @@ if ($?) {
 
 - [Common parameters](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_commonparameters) (like `-ErrorAction`)
 - [Preference variables](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_preference_variables) (like `$ErrorActionPreference`)
-
-## Jobs
-
-```powershell
-# Start job in background (sleeps for 200 seconds)
-$job = Start-Job { param($secs) Start-Sleep $secs } -ArgumentList 200
-# Or
-$job = Start-Sleep 200 &
-# Wait for it with a timeout
-Wait-Job $job -Timeout 4
-
-# Jobs run in their own session, use -ArgumentList
-$value = "hi"
-Start-Job { Write-Output "value=$value" } | Wait-Job | Receive-Job
-# Output: value=
-Start-Job { Write-Output "value=$args" } -ArgumentList $value | Wait-Job | Receive-Job
-# Output: value=hi
-
-
-# Start a bunch of work in parallel
-Get-Job | Remove-Job # Remove existing jobs
-$MaxThreads = 2 # Limit concurrency
-foreach ($_ in 0..10) {
-    # Wait for one of the jobs to finish
-    while ($(Get-Job -State Running).count -ge $MaxThreads) {
-        Start-Sleep 1
-    }
-    Start-Job -ScriptBlock { Start-Sleep 2 } # Random work
-}
-# Wait for them all to finish
-while ($(Get-Job -State Running)){
-    Start-Sleep 1
-}
-```
-
-- [Jobs](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_jobs)
-- Be careful if you use relative paths: jobs start from `$HOME` on macOS/Linux and `Documents/` on Windows
-- Need `Receive-Job` to see stdout/stderr
-- Parallel work snippet from [this SO](https://stackoverflow.com/questions/43685522/running-tasks-parallel-in-powershell)
 
 ## Parameters and Functions
 
