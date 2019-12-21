@@ -66,6 +66,7 @@ When looking for substrings, make sure you use `-like` not `-contains` (which is
 ```powershell
 $string = "windows-2019"
 $string -contains '*2019*' # False
+$string -contains '2019' # False
 $string -like '*2019*' # True
 $string -like '2019' # False
 $string.Contains('*2019*') # False
