@@ -81,7 +81,7 @@ When running things with docker, it takes an extra step to have a shell in the c
     ```
 1. Get a shell to the container:
     ```sh
-    pc> docker exec -it pi_rhasspy_1 /bin/bash
+    docker exec -it pi_rhasspy_1 /bin/bash
     # Now you're in the container
     root@4181a2880c84:/#
     ```
@@ -90,7 +90,7 @@ Replace `pi_rhasspy_1` with the "container id" or "name" of the appropriate cont
 
 ## Configuration
 
-Once docker outputs `rhasspy_1  | Running on https://0.0.0.0:12101 (CTRL + C to quit)` Rhasspy should be up and running.  Ignore what it says and use `http` instead of `https`- point your browser at http://pi3.local:12101.
+Once docker outputs `rhasspy_1  | Running on https://0.0.0.0:12101 (CTRL + C to quit)` Rhasspy should be up and running.  Ignore what it says and use `http` instead of `https`- point your browser at [http://pi3.local:12101].
 
 At this point I was able to configure everything via the __Settings__ tab.  Should that not cooperate, everything can also be done [via json](https://rhasspy.readthedocs.io/en/latest/profiles/#available-settings).
 
@@ -194,11 +194,11 @@ Integrating with Home Assistant is accomplished by leveraging Hass' REST API and
 
 
 1. Hass: Create [long-lived access token](https://developers.home-assistant.io/docs/en/auth_api.html#long-lived-access-token)
-    1. Open Hass: http://pi3.local:8123/profile 
+    1. Open Hass user profile: [http://pi3.local:8123/profile] 
     1. __Long-Lived Access Tokens > Create Token__
     - Also read [Hass authetication docs](https://www.home-assistant.io/docs/authentication/)
 1. Rhasspy: Configure intent handling with Hass
-    1. Open Rhasspy: http://pi3.local:12101/
+    1. Open Rhasspy: [http://pi3.local:12101]
     1. __Settings > Intent Handling__
     1. __Hass URL__ `http://172.17.0.1:8123` (the docker host, `172.17.0.2` is the container itself)
         - If not using docker could instead use `localhost`
@@ -208,7 +208,8 @@ Integrating with Home Assistant is accomplished by leveraging Hass' REST API and
 
 Check [Hass REST API](https://developers.home-assistant.io/docs/en/external_api_rest.html) is working:
 ```sh
-curl -X GET -H "Authorization: Bearer <ACCESS TOKEN>" -H "Content-Type: application/json" http://pi3.local:8123/api/
+# Replace `<TOKEN>` with Hass Long-lived access token
+curl -X GET -H "Authorization: Bearer <TOKEN>" -H "Content-Type: application/json" http://pi3.local:8123/api/
 ```
 Should return:
 ```json
@@ -220,16 +221,17 @@ Note that from _within_ the container you can't connect to services _outside_ th
 # Shell into container
 docker exec -it pi_rhasspy_1 /bin/bash
 # Try Hass REST API to `localhost`
-curl -X GET -H "Authorization: Bearer <ACCESS TOKEN>" -H "Content-Type: application/json" http://localhost:8123/api/
+# Replace `<TOKEN>` with Hass Long-lived access token
+curl -X GET -H "Authorization: Bearer <TOKEN>" -H "Content-Type: application/json" http://localhost:8123/api/
 curl: (7) Failed to connect to localhost port 8123: Connection refused
 ```
 
 Let's test the Rhasspy->Hass connection:  
 
-1. Open Hass: http://pi3.local:8123/profile
+1. Open Hass: [http://pi3.local:8123]
 1. __Developer Tools > Events > Listen to events__
     - `rhasspy_GetTime` and __Start Listening__.
-1. Like when we configured [intent recognition](#intent-recognition), say "what time is it"
+1. Like for [intent recognition](#intent-recognition), say "what time is it"
 1. Hass should output:
 ```json
 {
@@ -247,7 +249,7 @@ Let's test the Rhasspy->Hass connection:
 
 Let's test Hass automation:  
 
-1. Open Hass: http://pi3.local:8123/profile
+1. Open Hass: [http://pi3.local:8123]
 1. __Configuration > Automation > +__
 1. Create an [Event trigger](https://www.home-assistant.io/docs/automation/trigger/#event-trigger):
     - Triggers
@@ -256,7 +258,7 @@ Let's test Hass automation:
         - Action type: __Call service__
         - Service: `system_log.write`
         - Service data: `{message: 'Hello event'}`
-1. Like when we configured [intent recognition](#intent-recognition), say "what time is it"
+1. Like for [intent recognition](#intent-recognition), say "what time is it"
 1. In Hass, __Developer Tools > Logs__ should show the message.
 
 ## Hass TTS
@@ -279,7 +281,7 @@ The `payload` is Jinja2 template that can be set by the caller.
 
 Test the `tts` REST command:
 
-1. Open Hass: http://pi3.local:8123/profile
+1. Open Hass: [http://pi3.local:8123]
 1. __Developer Tools > Services__
 1. Specify `rest_command.tts` service and with data `message: "hello"`
 1. __Call Service__ to trigger Rhasspy TTS
@@ -292,7 +294,7 @@ Let's add it to our Hass automation:
     - Action type: __Call service__
     - Service: `rest_command.tts` (it should auto-complete for you)
     - Service data: `{message: 'hello world'}`
-1. Like when we configured [intent recognition](#intent-recognition), say "what time is it"
+1. Like for [intent recognition](#intent-recognition), say "what time is it"
 
 This should trigger a full loop:
 ```
@@ -336,9 +338,10 @@ WantedBy=multi-user.target
 |Wants/Requires/After| Docker __must__ be running, and ideally Hass is (but we can start Rhasspy without it) | [man](https://www.freedesktop.org/software/systemd/man/systemd.unit.html#%5BUnit%5D%20Section%20Options)
 |Type| Stronger requirement than `simple` ensuring the process starts | [man](https://www.freedesktop.org/software/systemd/man/systemd.service.html#Type=)
 |ExecStart|Start the container
-|ExecStop|Stop the container
+|ExecStop|Stop the container by name
 
-For `ExecStart`, note a few differences from the [original `docker run`](#installation):
+For `ExecStart`, note a few differences from the [original `docker run`](#installation):  
+
 | | | |
 |-|-|-|
 | `--rm` | Remove the container on exit.  Otherwise we get "name taken" errors on restarts.
@@ -367,3 +370,8 @@ Note, if you fail to remove `$HOME` from `docker run` it will fail with:
 ```
 Dec 18 19:00:25 pi3 docker[4764]: /usr/bin/docker: invalid reference format.
 ```
+
+
+[http://pi3.local:12101]: http://pi3.local:12101
+[http://pi3.local:8123]: http://pi3.local:8123
+[http://pi3.local:8123/profile]: http://pi3.local:8123/profile
