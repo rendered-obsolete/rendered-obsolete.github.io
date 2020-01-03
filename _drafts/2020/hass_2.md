@@ -30,3 +30,23 @@ https://www.home-assistant.io/docs/mqtt/broker/
 https://www.home-assistant.io/docs/configuration/
 vim ~/.homeassistant/configuration.yaml
 hass --script check_config
+
+
+https://docs.snips.ai/getting-started/quick-start-jetson-tx2
+https://docs.snips.ai/getting-started
+https://docs.snips.ai/articles/other-platforms
+
+
+
+
+
+https://docs.snips.ai/getting-started/quick-start-raspberry-pi#step-3-install-the-snips-platform
+
+https://docs.snips.ai/guides/advanced-configuration/wakeword/personal-wakeword
+
+
+
+https://chrisjean.com/fix-apt-get-update-the-following-signatures-couldnt-be-verified-because-the-public-key-is-not-available/
+```sh
+sudo apt-key adv --keyserver pgp.mit.edu --recv-keys D4F50CDCA10A2849
+```
