@@ -9,7 +9,7 @@ tags:
 series: Smart Home
 ---
 
-With the [impending demise of Snips]({% post_url /2019/2019-12-10-respeaker %}), I've been looking for a suitable replacement offline speech recognition solution.  After some research, [Rhasspy](https://github.com/synesthesiam/rhasspy) seems like a real winner.  Besides supporting a variety of toolkits, it has [good documentation](https://rhasspy.readthedocs.io/en/latest/), and can be easy to get working.
+With the [impending demise of Snips]({% post_url /2019/2019-12-10-respeaker %}#voice-recognition-with-snips), I've been looking for a suitable replacement offline speech recognition solution.  After some research, [Rhasspy](https://github.com/synesthesiam/rhasspy) seems like a real winner.  Besides supporting a variety of toolkits, it has [good documentation](https://rhasspy.readthedocs.io/en/latest/), and can be easy to get working.
 
 A [Raspberry Pi3B with stock Debian]({% post_url /2019/2019-03-21-raspi_3 %}) really struggled with this at times.  It might be possible to alleviate this by picking different services or adjusting other configuration, but you might be better off just using a more powerful device (like a [Pi4](https://www.raspberrypi.org/products/raspberry-pi-4-model-b/) or [Jetson Nano]({% post_url /2019/2019-04-01-jetson_nano %})) or [running it remotely](https://rhasspy.readthedocs.io/en/latest/speech-to-text/#remote-http-server).
 
