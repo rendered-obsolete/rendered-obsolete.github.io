@@ -35,20 +35,40 @@ When I heard the Nintendo Switch was using a "customized" X1, I assumed the cust
 
 Looks like we have to hold out until the TX2 to get "big boy pants".  It's 1.3 TFLOPS with 58.3 GB/s of bandwidth (almost 2.3x the X1).
 
-## Setup
+## Installation
 
 Follow the [official directions](https://developer.nvidia.com/embedded/learn/get-started-jetson-nano-devkit#write).  On Mac:
 
 ```bash
 # For the SD card in /dev/disk2
 sudo diskutil partitionDisk /dev/disk2 1 GPT "Free Space" "%noformat%" 100%
-unzip -p ~/Downloads/jetson-nano-dev-kit-sd-card-image | sudo dd of=/dev/rdisk2 bs=1m
+unzip -p ~/Downloads/nv-jetson-nano-sd-card-image-r32.3.1.zip | sudo dd of=/dev/rdisk2 bs=1m
 # Wait 10-20 minutes
 ```
 
 The OS install itself is over 9 GB and the Nvidia demos are quite large such that a 16 GB SD card fills up quick.  We recommend at least 32 GB SD card.
 
 Boots into Nvidia customized Ubuntu 18.04.
+
+## Intial Shell Access
+
+Connecting a keyboard/display directly to the Nano is the easiest way to get started.
+
+It is also possible to do a ["headless" install](https://www.jetsonhacks.com/2019/08/21/jetson-nano-headless-setup/):  
+1. Place a jumper on J48
+1. Connect a [5V DC power adapter to the DC barrel jack (5.5mm/2.1mm)](https://devtalk.nvidia.com/default/topic/1048640/jetson-nano/power-supply-considerations-for-jetson-nano-developer-kit/)
+1. Connect a USB cable between host PC and Nano's micro USB (make sure the cable has data wires)
+1. On the host PC, identify the serial device connected to the Nano
+    - Mac: `/dev/tty.usbmodem*`
+    - Linux: `/dev/ttyACM*`
+1. Connect a terminal emulator like `screen` to the serial device baud rate 115200 (see [screen usage]({% post_url /2019/2019-03-21-raspi_3 %}#screen)):
+    ```sh
+    screen /dev/tty.usbmodem0123456789 115200
+    ```
+
+Then, just follow the prompts.
+
+If you're using a Mac running Catalina (10.15) there's [some complications](https://www.reddit.com/r/JetsonNano/comments/dwno63/usb_driver_for_mac_os_catalina/).
 
 Install other software to taste, remember to grab the __arm64__/__aarch64__ version of binaries instead of arm/arm32.
 
