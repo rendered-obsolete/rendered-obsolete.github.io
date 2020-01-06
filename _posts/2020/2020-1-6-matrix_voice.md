@@ -36,7 +36,8 @@ Decided it was interesting enough to warrant a look. The following notes are bas
 ## Pi Setup
 
 1. Turn off the Pi, connect Matrix Voice to Pi's GPIO pins, and turn the Pi back on
-1. Follow the "Raspberry Pi Setup" instructions:
+1. Follow the "Raspberry Pi Setup" instructions:  
+
 ```sh
 # On PC: ssh into the Pi
 ssh pi@raspberrypi.local
