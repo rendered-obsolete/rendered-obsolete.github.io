@@ -25,8 +25,8 @@ Equipment:
 - Micro SD card (at least 8GB)
 - Micro SD card reader, or SD card reader with adapter
 - "Regular" USB-A (male) to micro-B (male) cable
-    - Come with many things (e.g. all but the latest Android devices using USB-C)
-    - From reading forum posts, some charging cables might not have data wires and won't work.  If no device is found, try another cable.
+    - Come with many things (e.g. all but the latest devices using USB-C)
+    - Some charging cables don't have data wires and won't work
 
 Optional, but occasionally useful:
 
@@ -35,78 +35,60 @@ Optional, but occasionally useful:
 - mini HDMI to standard/type-A HDMI adapter or cable (to connect Zero to external display)
 - USB-A (female) to micro-B (male) __OTG__ adapter (to connect/keyboard mouse to Zero)
 
-# Setup
+## Setup
 
 Doing a basic install of Rasbian is similar to with the [Pi 3]({% post_url /2019/2019-03-21-raspi_3 %}):
-
-1. [Download Raspbian](https://www.raspberrypi.org/downloads/)
-1. [Install](https://www.raspberrypi.org/documentation/installation/installing-images/README.md)
 
 Prior to the Zero W/WH with wifi, there was an approach to configure the system completely headless and get it on the network that's still pretty useful:
 - [Raspberry Pi OTG Mode](https://gist.github.com/gbaman/50b6cca61dd1c3f88f41)
 - [Setting Up Pi OTG - The Quick Way](https://gist.github.com/gbaman/975e2db164b3ca2b51ae11e45e8fd40a)
 - [Adafruit guide](https://learn.adafruit.com/turning-your-raspberry-pi-zero-into-a-usb-gadget/overview)
 
-For macOS:
-```bash
-# Write raspbian image to SD in /dev/disk2
-diskutil unmountDisk /dev/disk2
-sudo dd bs=1m if=~/Downloads/2018-11-13-raspbian-stretch.img of=/dev/rdisk2 conv=sync
-cd /Volumes/boot
-# Enable SSH
-touch ssh
-vim config.txt # Add to the bottom: dtoverlay=dwc2
-vim cmdline.txt # After `rootwait` add: modules-load=dwc2,g_ether
-sudo diskutil eject /dev/rdisk2
-```
+1. [Download Raspbian](https://www.raspberrypi.org/downloads/)
+1. [Install](https://www.raspberrypi.org/documentation/installation/installing-images/README.md)- write the image to the SD card:
+    ```bash
+    diskutil list
+    # My sdcard is /dev/disk2
 
-Insert the SD card into the Pi Zero and connect your PC to the micro USB port labeled "USB" (it's the one closest to the middle of the unit) to power it on.
+    # Write raspbian image to SD in /dev/disk2
+    diskutil unmountDisk /dev/disk2
+    # Note: /dev/rdiskX
+    sudo dd bs=1m if=~/Downloads/2019-09-26-raspbian-buster.img of=/dev/rdisk2 conv=sync
 
-After ~30 seconds, in __System Preferences > Network__ you should see:
+    # Enable SSH
+    touch /Volumes/boot/ssh
+    # Configure as USB gadget
+    echo "dtoverlay=dwc2" >> /Volumes/boot/config.txt
+    vim /Volumes/boot/cmdline.txt # After `rootwait` add: modules-load=dwc2,g_ether
+
+    # Note: /dev/rdiskX
+    sudo diskutil eject /dev/rdisk2
+    ```
+1. Insert the SD card into the Pi Zero
+1. Connect your PC to the Zero's micro USB port labeled "USB" (it's the one closest to HDMI) to power it on.
+    - Make sure to use a cable with data wires- some charging cables don't have them.  If a device isn't found, try another cable.
+
+1. Wait ~30 seconds, in __System Preferences > Network__ you should see:  
 ![](/assets/osx_rndis_gadget.png)
 
-Connect with:
-```bash
-# Setup ssh key authentication.  Default password is `raspberry`
-ssh-copy-id pi@raspberrypi.local
-ssh -X pi@raspberrypi.local
-```
+1. Connect to the Zero:
+    ```bash
+    # Setup ssh key authentication.  Default password is `raspberry`
+    ssh-copy-id pi@raspberrypi.local
+    ssh -X pi@raspberrypi.local
+    ```
 
-If you've got multiple devices, or you re-flash at some point you'll see the very scary:
-```
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-@       WARNING: POSSIBLE DNS SPOOFING DETECTED!          @
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-The ECDSA host key for raspberrypi.local has changed,
-and the key for the corresponding IP address 169.254.28.197
-is unknown. This could either mean that
-DNS SPOOFING is happening or the IP address for the host
-and its host key have changed at the same time.
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!
-Someone could be eavesdropping on you right now (man-in-the-middle attack)!
-It is also possible that a host key has just been changed.
-The fingerprint for the ECDSA key sent by the remote host is
-SHA256:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX.
-Please contact your system administrator.
-Add correct host key in /Users/XXX/.ssh/known_hosts to get rid of this message.
-Offending ECDSA key in /Users/XXX/.ssh/known_hosts:37
-ECDSA host key for raspberrypi.local has changed and you have requested strict checking.
-Host key verification failed.
-```
+1. Enable internet sharing to get the Zero online:
 
-Find the line like `Offending ECDSA key in /Users/XXX/.ssh/known_hosts:37`.  It means you should edit `~/.ssh/known_hosts` and remove line `37` to fix the nasty.
+    ![](/assets/osx_rndis_sharing.png)
 
-Next, configure Internet sharing:
+    1. Open __System Preferences > Sharing__
+    1. __Share your connection from__- select your computer's internet connection (probably either LAN or Wifi)
+    1. __To computers using__ select the `RNDIS/Ethernet Gadget`
+    1. Select "Internet Sharing" __On__ checkbox
+    - Note that if the wifi uses 802.1x authentication (like our office) connection sharing won't work.
 
-![](/assets/osx_rndis_sharing.png)
-
-To get it online, open __System Preferences > Sharing__.
-For __Share your connection from__ select your computer's internet connection (probably either LAN or Wifi) and __To computers using__ select the `RNDIS/Ethernet Gadget`.
-
-Note that if the wifi uses 802.1x authentication (like our office) connection sharing won't work.
+1. Continue setting up [networking]({% post_url /2019/2019-03-21-raspi_3 %}#networking) and installing [software]({% post_url /2019/2019-03-21-raspi_3 %}#software).
 
 ## Software
 
