@@ -15,13 +15,13 @@ While looking at microphone arrays like the [ReSpeaker]({% post_url /2019/2019-1
 - RAM: 64 MByte 132MHz SDRAM
 - FLASH: 64 Mbit Flash Memory
 - MCU: [ESP32](https://en.wikipedia.org/wiki/ESP32) (Espressif [ESP32-WROOM-32](https://www.espressif.com/en/products/hardware/esp-wroom-32/overview))
-    - CPU: Tensilica Xtensa dual-core 32-bit LX6
+    - CPU: Tensilica Xtensa dual-core 32-bit LX6 at 240MHz
     - Wifi: 802.11bgn 2.4GHz
     - BT: 4.2
     - RAM: 520 KByte
     - Flash: 4 MByte
 
-Decided it was interesting enough to warrant a look. This is based off the [official Matrix tutorial](https://matrix-io.github.io/matrix-documentation/matrix-voice/esp32/) ([also on Hackster.io](https://www.hackster.io/matrix-labs/program-matrix-voice-esp32-with-vs-code-using-platformio-3dd498
+Decided it was interesting enough to warrant a look. The following notes are based off the [official Matrix tutorial](https://matrix-io.github.io/matrix-documentation/matrix-voice/esp32/) ([also on Hackster.io](https://www.hackster.io/matrix-labs/program-matrix-voice-esp32-with-vs-code-using-platformio-3dd498
 ) with annoying registration pop-up).
 
 
@@ -35,8 +35,8 @@ Decided it was interesting enough to warrant a look. This is based off the [offi
 
 ## Pi Setup
 
-1. Turn off the pi, connect Matrix Voice to it, and turn pi back on
-1. Follow the [setup instructions]():
+1. Turn off the Pi, connect Matrix Voice to Pi's GPIO pins, and turn the Pi back on
+1. Follow the "Raspberry Pi Setup" instructions:
 ```sh
 # On PC: ssh into the Pi
 ssh pi@raspberrypi.local
@@ -46,7 +46,8 @@ curl https://apt.matrix.one/doc/apt-key.gpg | sudo apt-key add -
 echo "deb https://apt.matrix.one/raspbian $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/matrixlabs.list
 # Update repositories and packages
 sudo apt-get update
-sudo apt-get upgrade # This may take a while
+sudo apt-get upgrade -y # This may take a while
+
 # Matrix Voice init and restart
 sudo apt install -y matrixio-creator-init
 sudo reboot
@@ -80,20 +81,19 @@ Hard resetting via RTS pin...
 
 ## PC Setup
 
-
 1. Install [PlatformIO](https://platformio.org/) for your environment/IDE.  E.g. for VSCode:
     1. Open Extension manager
     1. Search for `PlatformIO`
     1. __Install__
 1. Add [pio to PATH](https://docs.platformio.org/en/latest/installation.html#install-shell-commands)
-1. Git PlatformIO project
+1. Git [Matrix PlatformIO project](https://github.com/matrix-io/esp32-platformio)
 1. In `esp32-platformio/platformio.ini` change `SSID_GOES_HERE` and `PASSWORD_GOES_HERE` to the SSID and password of your wifi
 
 For Mac/Linux:
 ```sh
 # Add pio to PATH
 export PATH=$PATH:~/.platformio/penv/bin
-# Git PlatformIO project
+# Git Matrix PlatformIO project
 git clone https://github.com/matrix-io/esp32-platformio
 ```
 
@@ -178,7 +178,7 @@ None of this worked for me, but the next thing did.
 
 ### Serial Output
 
-While Matrix Voice is connected to the pi, you can read serial output from the ESP32.  If you're [already using screen]({% post_url /2019/2019-03-21-raspi_3 %}#screen):
+While Matrix Voice is connected to the Pi, you can read serial output from the ESP32.  If you're [already using screen]({% post_url /2019/2019-03-21-raspi_3 %}#screen):
 ```sh
 # On the pi
 screen /dev/ttyS0 115200
@@ -242,12 +242,12 @@ pio lib update
 
 At this point the LEDs should be running wild.  The Matrix Voice should also be connected to your wifi.  You can either check the connected device list on your AP/router, or you can try pinging `MVESP.local` (the hostname specified in `platformio.ini`).
 
-You should also be able to push an OTA update when the Matrix Voice is not connected to the pi:
+You should also be able to push an [over-the-air (OTA)](https://en.wikipedia.org/wiki/Over-the-air_programming) update to the Matrix Voice even when it is not connected to the Pi:
 
 1. Turn off the pi: `sudo shutdown`
-1. Disconnect Matrix Voice from pi
+1. Disconnect Matrix Voice from Pi
 1. Connect power to Matrix Voice's micro USB
-    - After about 2 seconds the LEDs should restart
+    - After ~2 seconds the LEDs should restart
 1. On PC:
 ```sh
 cd esp32-platformio/
