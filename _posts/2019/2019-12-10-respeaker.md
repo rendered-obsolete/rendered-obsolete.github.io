@@ -128,6 +128,8 @@ You can play the recorded audio with `aplay`.  Looking at the output from `aplay
 aplay -D plughw:SoundLink tmp_file.wav
 ```
 
+If you're not hearing anything also check `alsamixer` to make sure the output is not muted and the volume isn't 0.
+
 There's at least two configuration files that can affect behaviour of `arecord`/`aplay`:
 - `/etc/asound.conf`
 - `~/.asoundrc`

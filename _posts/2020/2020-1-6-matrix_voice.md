@@ -5,6 +5,7 @@ tags:
 - smarthome
 - iot
 - homeautomation
+- embedded
 series: Smart Home
 ---
 
