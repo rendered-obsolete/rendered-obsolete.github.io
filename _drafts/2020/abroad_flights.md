@@ -7,7 +7,7 @@ tags:
 series: living_overseas
 ---
 
-Thinking back, I've flown somewhere between 15,000 and 70,000 miles a year for each of the last 15 years.  What constitutes a "long" flight is relative, but I'd say anything close to 10 hours (or longer) is eligible.  At this point the normal rules of human 
+Thinking back, I've flown somewhere between 15,000 and 70,000 miles a year for each of the last 15 years.  What constitutes a "long" flight is relative, but I'd wager anything close to 10 hours (or longer) is eligible.  At this point the normal rules of human attention span and sitting tolerance break down, and the numbing effects of jet-lag are highly probable.
 
 It goes without saying that a lot of this is subjective, depends on your body size/type, varies by region, etc.  I'd love to hear additional tips/tricks you've discovered.
 
@@ -46,7 +46,7 @@ Two things I'll add:
 
 Most airlines let you pick your seat assignment either at booking, within X hours of departure, or at check-in.  Do it.
 
-Look for upgrades to the "premium" or economy "plus" or whatever the airline calls the better economy seating.
+Look for (potentially free) upgrades to the "premium" or economy "plus" or whatever the airline calls the better economy seating.
 
 __Aisle__
 
@@ -114,11 +114,11 @@ I never fly without a tiny container of aspirin.  If you're prone to headaches a
 
 ### Packing
 
-Long flights are painfully dry.  I always bring chapstick, eye drops, travel skin lotion, and arrange to have a bottle of water on board.
+Long flights are painfully dry.  I always bring chapstick, eye drops, travel skin lotion, and arrange to have a bottle of water on board.  When I can be bothered, a thermal bottle pre-loaded with tea is a wonderous comfort.  Just be mindful of security gates you have to pass through and be sure to de-liquify it.
 
 If you're prone to getting hangry or blood sugar swings like me, bring snacks.  You can always ask the airline staff for something, but I'd rather have a protein bar than whatever they have to offer.
 
-Bring essential toiletries, a change of undergarments, and other _absolute_ necessities in your carry-on.  It doesn't happen often, but if your luggage gets misplaced you won't be miserable.
+Bring essential toiletries, a change of undergarments, and other _absolute_ necessities in your carry-on.  It doesn't happen often- perhaps ~5% of my flights, but if your luggage gets misplaced you won't be miserable.
 
 ### Wardrobe
 
@@ -130,9 +130,11 @@ Flights generally get pretty cool after a few hours.  Unless you tend to run hot
 
 If you fly into the U.S. frequently and are eligible, take a look at [Global Entry](https://www.cbp.gov/travel/trusted-traveler-programs/global-entry).  Besides breezing through U.S. immigration, it automatically enrolls you in [TSA PreCheck](https://www.cbp.gov/travel/trusted-traveler-programs/global-entry/tsa-precheck)- which is handy even for domestic travel.
 
+I used to be a die-hard believer in this, but re-entry has gotten a lot smoother and more automated and PreCheck more crowded over the past few years.
+
 ## Before Take-Off
 
-I like to walk around airports.  I'm not a big duty free shopper or anything.  I just don't understand the appeal of sitting in waiting area right before a 10+ hour flight.  
+I like to walk around airports.  I'm not a big duty free shopper or anything.  I just don't understand the appeal of sitting in the waiting area right before a 10+ hour flight.  
 - Buy gifts for friends/family/co-workers/partners.
 - Pick up snacks and a bottle of water (now that you're through security), or fill your own water bottle.
 - Indulge in over-priced, poorly rendered versions of local cuisine
@@ -152,11 +154,12 @@ I'm not a smoker so there's likely lots more tips/tricks.  Consider taking the o
 
 ## On-Board
 
-## Poor-man's Upgrade
+### Poor-man's Upgrade
 
-While the plane is boarding (and certainly after the "boarding completed" announcement) it should become fairly clear how empty the flight is.
+While the plane is boarding (and certainly after the "boarding completed" announcement) it should become fairly clear how empty the flight is.  Sometimes I check the seating map just prior to departure to claim a different seat in advance.
 
-## Other
+I will mention that staff prefer passengers wait until boarding is completed and only move within the same seating class.  Respect the wishes and requests of the flight crew at all times.
 
-Keep your stuff together.  Resist the urge to place stuff in the seat pocket in front of you.  When the time comes to de-plane if you're been awake for 36 hours or barely slept you'll be pretty insane.
+### Other
 
+Keep your stuff together.  Resist the urge to place stuff in the seat pocket in front of you- lest you forget it.  When the time comes to de-plane if you're been awake for 36 hours or barely slept you'll be pretty insane.
