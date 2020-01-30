@@ -284,3 +284,7 @@ class LuaBuilderWorker
         AZ_TYPE_INFO(LuaBuilderWorker, "{166A7962-A3E4-4451-AC1A-AAD32E29C52C}");
     //...
 ```
+
+## Custom type
+
+https://docs.aws.amazon.com/lumberyard/latest/userguide/asset-pipeline-asset-type-adding.html

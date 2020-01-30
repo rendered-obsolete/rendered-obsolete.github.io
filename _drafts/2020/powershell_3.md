@@ -8,6 +8,9 @@ tags:
 series: pwsh_crash_course
 ---
 
+
+https://devblogs.microsoft.com/scripting/easily-compare-two-folders-by-using-powershell/
+
 ## More
 
 - [Enums](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_enum)
@@ -82,3 +85,9 @@ https://docs.microsoft.com/en-us/powershell/scripting/learn/remoting/ssh-remotin
 
 - [Breaking changes in PowerShell Core 6](https://docs.microsoft.com/en-us/powershell/scripting/whats-new/breaking-changes-ps6)
 - ["Tips for writing cross-platform powershell code"](https://powershell.org/2019/02/tips-for-writing-cross-platform-powershell-code/)
+
+
+https://devblogs.microsoft.com/scripting/powertip-identify-if-you-are-running-on-powershell-core/
+```powershell
+$PSVersionTable.PSEdition
+```

@@ -256,6 +256,8 @@ $env:PATH += [IO.Path]::PathSeparator + $(pwd) # Any platform
 Test-Path Env:\GITHUB_TOKEN
 # Test for file/directory
 Test-Path subdir/child -PathType Leaf # `Container` for directory
+# Get all environment variables
+Get-ChildItem Env:
 
 # Write to stdout, redirect stderr to stdout, send stdout to /dev/null
 Write-Output "echo" 2>&1 > $null
