@@ -100,7 +100,7 @@ If you wear glasses, the case also makes a nice place to stash them while you sl
 
 ### Sleep Aids
 
-Neck cushions, eye masks, auxillary bedding, etc.  I don't like carrying extra, bulky stuff and rarely sleep anyway, so I don't have strong opinions about this stuff.
+Neck cushions, eye masks, auxiliary bedding, etc.  I don't like carrying extra, bulky stuff and rarely sleep anyway, so I don't have strong opinions about this stuff.
 
 ### Meds
 
@@ -114,7 +114,7 @@ I never fly without a tiny container of aspirin.  If you're prone to headaches a
 
 ### Packing
 
-Long flights are painfully dry.  I always bring chapstick, eye drops, travel skin lotion, and arrange to have a bottle of water on board.  When I can be bothered, a thermal bottle pre-loaded with tea is a wonderous comfort.  Just be mindful of security gates you have to pass through and be sure to de-liquify it.
+Long flights are painfully dry.  I always bring chapstick, eye drops, travel skin lotion, and arrange to have a bottle of water on board.  When I can be bothered, a thermal bottle pre-loaded with tea is a wondrous comfort.  Just be mindful of security gates you have to pass through and be sure to de-liquify it.
 
 If you're prone to getting hangry or blood sugar swings like me, bring snacks.  You can always ask the airline staff for something, but I'd rather have a protein bar than whatever they have to offer.
 
@@ -131,6 +131,24 @@ Flights generally get pretty cool after a few hours.  Unless you tend to run hot
 If you fly into the U.S. frequently and are eligible, take a look at [Global Entry](https://www.cbp.gov/travel/trusted-traveler-programs/global-entry).  Besides breezing through U.S. immigration, it automatically enrolls you in [TSA PreCheck](https://www.cbp.gov/travel/trusted-traveler-programs/global-entry/tsa-precheck)- which is handy even for domestic travel.
 
 I used to be a die-hard believer in this, but re-entry has gotten a lot smoother and more automated and PreCheck more crowded over the past few years.
+
+### Itinerary
+
+If you're traveling for work, try to take a few extra days off to actually enjoy where you're going.  Either for opportunistic activities or just sight-seeing.  It puts your mind in the context of "mini-vacation" instead of boring "work trip".
+
+### Device Readiness
+
+Buy a book for your e-reader, grab docs/movies/videos for offline viewing, download the airline app to partake in in-flight entertainment, switch [Steam to offline mode](https://support.steampowered.com/kb_article.php?ref=3160-agcb-2555), and so on to give yourself a few options to kill time.  I find that I can generally program or read the first part of the flight, but for the second part I'm generally too frazzled to do anything but play dumb games or watch movies.
+
+You should also download offline maps and other apps necessary for your destination.
+
+### Anxiety Management
+
+Take care of things well in advance so you're not overwhelmed at the last minute and fretting about what you forgot.  I don't mind chilling in the airport for an hour, I hate _barely_ making flights.
+
+Arrange for someone to check on your pets/children/flat.  Use your phone to make a quick tutorial video showing them where kibble/snacks and sundry accouterments are to be found or how to perform necessary tasks.
+
+Clean your house, or if nothing else, definitely take out the trash before you leave.  Coming back from a long trip to a filthy flat sucks.
 
 ## Before Take-Off
 
@@ -152,13 +170,19 @@ The vapes with juice reservoirs, like fountain pens, may be prone to leak with t
 
 I'm not a smoker so there's likely lots more tips/tricks.  Consider taking the opportunity to quit, or in the weeks leading up to your flight at least taper down.
 
-## On-Board
+## En-Route
 
 ### Poor-man's Upgrade
 
 While the plane is boarding (and certainly after the "boarding completed" announcement) it should become fairly clear how empty the flight is.  Sometimes I check the seating map just prior to departure to claim a different seat in advance.
 
 I will mention that staff prefer passengers wait until boarding is completed and only move within the same seating class.  Respect the wishes and requests of the flight crew at all times.
+
+### Keep Calm
+
+Be pleasant, courteous, and friendly to the crew and your fellow passengers.  You've stuck with each other for the duration and getting agitated or venting frustration really won't help matters at all- and there's nowhere to flee to.  When flight cancellations or other disasters strike, a friendly smile and calm demeanor will get you a lot further than a lot of attitude.
+
+When not in the right mental state, try meditating, stretching and breathing exercises, or listening to music.
 
 ### Other
 
