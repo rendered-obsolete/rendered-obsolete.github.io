@@ -5,16 +5,15 @@ tags:
 - lumberyard
 - gamedev
 - rust
+- bindgen
 series: Rust in Lumberyard
 ---
 
-https://docs.aws.amazon.com/lumberyard/latest/userguide/asset-builder-custom.html
+Lumberyard's Asset Builder SDK can be used to process a custom asset type for use at runtime.  ["Creating a Custom Asset Builder" in the User Guide](https://docs.aws.amazon.com/lumberyard/latest/userguide/asset-builder-custom.html) shows how to do this in C++.  This is another extension point using shared libraries which could potentially be written in Rust.
 
-__MaterialBuilder__ found in `Code\Tools\AssetProcessor\Builders\MaterialBuilder\` because it's one of the simplest.
+For a concrete example, look at __MaterialBuilder__ found in `Code\Tools\AssetProcessor\Builders\MaterialBuilder\` because it's one of the simplest.  [At the bottom of `MaterialBuilder\Source\MaterialBuilderApplication.cpp`](https://github.com/aws/lumberyard/blob/v1.22.0.0/dev/Code/Tools/AssetProcessor/Builders/MaterialBuilder/Source/MaterialBuilderApplication.cpp#L36) you'll find the important sounding `REGISTER_ASSETBUILDER` macro.
 
-At the bottom of `MaterialBuilder\Source\MaterialBuilderApplication.cpp` you'll find the important sounding `REGISTER_ASSETBUILDER` macro.
-
-It's defined in `Code\Tools\AssetProcessor\AssetBuilderSDK\AssetBuilderSDK\AssetBuilderSDK.h`:
+It's defined in [`Code\Tools\AssetProcessor\AssetBuilderSDK\AssetBuilderSDK\AssetBuilderSDK.h`](https://github.com/aws/lumberyard/blob/07228c605ce16cbf5aaa209a94a3cb9d6c1a4115/dev/Code/Tools/AssetProcessor/AssetBuilderSDK/AssetBuilderSDK/AssetBuilderSDK.h):
 ```cpp
 //! This macro should be used by every AssetBuilder to register itself,
 //! AssetProcessor uses these exported function to identify whether a dll is an Asset Builder or not
@@ -56,7 +55,7 @@ It's defined in `Code\Tools\AssetProcessor\AssetBuilderSDK\AssetBuilderSDK\Asset
 // confusion-reducing note: above end-brace is part of the macro, not a namespace
 ```
 
-We saw how to accomplish this when creating an [Editor plugin]({% post_url /2019/2019-10-05-lmbr_editor_rust %}).
+Asset builders need to export particular functions.  We can use the same approach as [Editor plugins]({% post_url /2019/2019-10-05-lmbr_editor_rust %}):
 
 ```rust
 // Ignore warnings like:
@@ -112,7 +111,7 @@ pub mod Environment {
 }
 ```
 
-The extra `bool` is from the default argument in `Code\Framework\AzCore\AzCore\Module\Environment.h`:
+The extra `bool` is from the default argument in [`Code\Framework\AzCore\AzCore\Module\Environment.h`](https://github.com/aws/lumberyard/blob/v1.22.0.0/dev/Code/Framework/AzCore/AzCore/Module/Environment.h#L143):
 ```cpp
 /**
     * Attaches the current module environment from sourceEnvironment.
@@ -124,6 +123,7 @@ The extra `bool` is from the default argument in `Code\Framework\AzCore\AzCore\M
 void Attach(EnvironmentInstance sourceEnvironment, bool useAsGetFallback = false);
 ```
 
+`Cargo.toml`:
 ```toml
 [package]
 name = "asset_builder_plugin"
@@ -131,7 +131,7 @@ version = "0.1.0"
 edition = "2018"
 
 [lib]
-crate-type = ["cdylib"]
+crate-type = ["cdylib"] # Produce shared library (.dll)
 
 [build-dependencies]
 lmbr_build = {version = "0.1", path = "../lmbr_build"}
@@ -142,7 +142,7 @@ lmbr_sys = { version = "0.1", path = "../lmbr_sys" }
 log = "0.4"
 ```
 
-`dumpbin /exports <path>\target\debug\asset_builder_plugin.dll`:
+`cargo build` and check the binary with `dumpbin /exports <path>\target\debug\asset_builder_plugin.dll`:
 ```
 Microsoft (R) COFF/PE Dumper Version 14.23.28106.4
 Copyright (C) Microsoft Corporation.  All rights reserved.
@@ -180,7 +180,7 @@ File Type: DLL
         3000 _RDATA
 ```
 
-Copy `target/debug/asset_builder_plugin.dll` to Lumberyard's `Bin64vc141/Builders/` folder.  Launch __AssetProcessor.exe__, and in __Logs > Messages__:
+Copy `target/debug/asset_builder_plugin.dll` to Lumberyard's `Bin64vc141/Builders/` folder.  Launch __AssetProcessor__ (`Bin64vc141/AssetProcessor.exe`), and in __Logs > Messages__:
 ```
 12/12/2019 4:09 PM - AssetProcessor - Initializing and registering builder D:/projects/lumberyard/dev/Bin64vc141/Builders/asset_builder_plugin.dll
 ```
@@ -222,6 +222,7 @@ unsafe {
 }
 ```
 
+MaterialBuilder calls `CreateComponentIfReady()`, but if we look at the [definition in `Entity.h`](https://github.com/aws/lumberyard/blob/v1.22.0.0/dev/Code/Framework/AzCore/AzCore/Component/Entity.h#L202):
 ```cpp
 /// @cond EXCLUDE_DOCS 
 /**
@@ -236,7 +237,7 @@ ComponentType* CreateComponentIfReady()
 /// @endcond
 ```
 
-It's not immediately clear to me how this logic with `AzToolsFramework::EntityCompositionRequestBus`
+It's not immediately clear to me how to replace it with `AzToolsFramework::EntityCompositionRequestBus`, but it should be ok for our purposes.
 
 ## Debugging
 
@@ -284,6 +285,131 @@ class LuaBuilderWorker
         AZ_TYPE_INFO(LuaBuilderWorker, "{166A7962-A3E4-4451-AC1A-AAD32E29C52C}");
     //...
 ```
+
+## Bad Strings
+
+`AZStd::string` is in [`string.h`](https://github.com/aws/lumberyard/blob/07228c605ce16cbf5aaa209a94a3cb9d6c1a4115/dev/Code/Framework/AzCore/AzCore/std/string/string.h)
+
+```cpp
+typedef basic_string<char >     string;
+
+// In allocator.h
+class allocator
+{
+public:
+
+    AZ_TYPE_INFO(allocator, "{E9F5A3BE-2B3D-4C62-9E6B-4E00A13AB452}");
+
+    typedef void*               pointer_type;
+    typedef AZStd::size_t       size_type;
+    typedef AZStd::ptrdiff_t    difference_type;
+
+    //...
+}
+
+// In string.h
+template<class Element, class Traits = char_traits<Element>, class Allocator = AZStd::allocator >
+class basic_string
+{
+public:
+    typedef Element*                                pointer;
+    typedef const Element*                          const_pointer;
+
+    typedef Element&                                reference;
+    typedef const Element&                          const_reference;
+    typedef typename Allocator::difference_type     difference_type;
+    typedef typename Allocator::size_type           size_type;
+
+    //...
+
+protected:
+    enum
+    {   // length of internal buffer, [1, 16]
+        SSO_BUF_SIZE = 16 / sizeof (Element) < 1 ? 1 : 16 / sizeof(Element)
+    };
+    enum
+    {   // roundup mask for allocated buffers, [0, 15]
+        _ALLOC_MASK = sizeof (Element) <= 1 ? 15 : sizeof (Element) <= 2 ? 7 : sizeof (Element) <= 4 ? 3 : sizeof (Element) <= 8 ? 1 : 0
+    };
+
+    //...
+
+    union //Storage
+    {
+        Element m_buffer[SSO_BUF_SIZE];     //< small buffer used for small string optimization
+        pointer m_data;                     //< dynamically allocated data
+    };
+
+    size_type m_size;           // current length of string
+    size_type m_capacity;       // current storage reserved for string
+    allocator_type m_allocator;
+}
+```
+
+- For `char`, `SSO_BUF_SIZE` is 16 so `m_buffer` provides 16 bytes of inline storage for short strings
+- `size_type` and `difference_type` are `size_t` and `ptrdiff_t`, respectively
+- When targetting 64-bit and ignoring alignment/padding, `sizeof(string) == 40` (bytes)
+
+```rs
+pub struct basic_string<Element, Allocator> {
+    pub __bindgen_anon_1: root::AZStd::basic_string__bindgen_ty_3<Element>,
+    pub m_size: root::AZStd::basic_string_size_type,
+    pub m_capacity: root::AZStd::basic_string_size_type,
+    pub m_allocator: root::AZStd::basic_string_allocator_type<Allocator>,
+    pub _phantom_0: ::std::marker::PhantomData<::std::cell::UnsafeCell<Element>>,
+    pub _phantom_1: ::std::marker::PhantomData<::std::cell::UnsafeCell<Allocator>>,
+}
+//...
+pub type basic_string_difference_type = [u8; 0usize];
+pub type basic_string_size_type = [u8; 0usize];
+//...
+pub const basic_string_SSO_BUF_SIZE: root::AZStd::basic_string__bindgen_ty_1 =
+    basic_string__bindgen_ty_1::SSO_BUF_SIZE;
+#[repr(i32)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub enum basic_string__bindgen_ty_1 {
+    SSO_BUF_SIZE = 0,
+}
+pub const basic_string__ALLOC_MASK: root::AZStd::basic_string__bindgen_ty_2 =
+    basic_string__bindgen_ty_2::_ALLOC_MASK;
+#[repr(i32)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub enum basic_string__bindgen_ty_2 {
+    _ALLOC_MASK = 0,
+}
+#[repr(C)]
+pub union basic_string__bindgen_ty_3<Element> {
+    pub m_buffer: *mut Element,
+    pub m_data: root::AZStd::basic_string_pointer<Element>,
+    _bindgen_union_align: u64,
+    pub _phantom_0: ::std::marker::PhantomData<::std::cell::UnsafeCell<Element>>,
+}
+```
+
+- `SSO_BUF_SIZE` is `0` and `m_buffer` inline storage is just a pointer `*mut Element`
+- `basic_string::size_type` and `basic_string::different_type` are `[u8; 0usize]`- array of __0__ bytes
+- Ignoring alignment/padding, `sizeof(basic_string) == 16` (`std::mem::size_of::<[u8; 0]>() == 0` and `PhantomData` is also [zero-sized](https://doc.rust-lang.org/stable/std/marker/struct.PhantomData.html))
+
+
+```rs
+pub type basic_string_difference_type = u64;
+pub type basic_string_size_type = u64;
+//...
+pub const basic_string_SSO_BUF_SIZE: root::AZStd::basic_string__bindgen_ty_1 =
+    basic_string__bindgen_ty_1::SSO_BUF_SIZE;
+#[repr(i32)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub enum basic_string__bindgen_ty_1 {
+    SSO_BUF_SIZE = 16,
+}
+
+#[repr(C)]
+pub union basic_string__bindgen_ty_3<Element> {
+    pub m_buffer: [u8; basic_string_SSO_BUF_SIZE as usize],
+    //...
+}
+```
+
 
 ## Custom type
 
