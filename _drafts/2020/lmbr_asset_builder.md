@@ -1,15 +1,16 @@
 ---
 layout: post
-title: Lumberyard Asset Builder from Rust
+title: Lumberyard Asset Builder in Rust
 tags:
 - lumberyard
 - gamedev
 - rust
+- ffi
 - bindgen
 series: Rust in Lumberyard
 ---
 
-Lumberyard's Asset Builder SDK can be used to process a custom asset type for use at runtime.  ["Creating a Custom Asset Builder" in the User Guide](https://docs.aws.amazon.com/lumberyard/latest/userguide/asset-builder-custom.html) shows how to do this in C++.  This is another extension point using shared libraries which could potentially be written in Rust.
+Lumberyard's __AssetBuilderSDK__ can be used to process a custom asset type for use at runtime.  ["Creating a Custom Asset Builder" in the User Guide](https://docs.aws.amazon.com/lumberyard/latest/userguide/asset-builder-custom.html) shows how to do this in C++.  This is another extension point using shared libraries which could potentially be written in Rust.
 
 For a concrete example, look at __MaterialBuilder__ found in `Code\Tools\AssetProcessor\Builders\MaterialBuilder\` because it's one of the simplest.  [At the bottom of `MaterialBuilder\Source\MaterialBuilderApplication.cpp`](https://github.com/aws/lumberyard/blob/v1.22.0.0/dev/Code/Tools/AssetProcessor/Builders/MaterialBuilder/Source/MaterialBuilderApplication.cpp#L36) you'll find the important sounding `REGISTER_ASSETBUILDER` macro.
 
@@ -55,7 +56,7 @@ It's defined in [`Code\Tools\AssetProcessor\AssetBuilderSDK\AssetBuilderSDK\Asse
 // confusion-reducing note: above end-brace is part of the macro, not a namespace
 ```
 
-Asset builders need to export particular functions.  We can use the same approach as [Editor plugins]({% post_url /2019/2019-10-05-lmbr_editor_rust %}):
+Asset builders need to export particular functions.  We can use the same approach as with [Editor plugins]({% post_url /2019/2019-10-05-lmbr_editor_rust %}) to register a builder written in Rust:
 
 ```rust
 // Ignore warnings like:
@@ -142,7 +143,7 @@ lmbr_sys = { version = "0.1", path = "../lmbr_sys" }
 log = "0.4"
 ```
 
-`cargo build` and check the binary with `dumpbin /exports <path>\target\debug\asset_builder_plugin.dll`:
+`cargo build` and check the binary with `dumpbin /exports <path>\target\debug\asset_builder_plugin.dll` (in Visual Studio shell):
 ```
 Microsoft (R) COFF/PE Dumper Version 14.23.28106.4
 Copyright (C) Microsoft Corporation.  All rights reserved.
@@ -202,15 +203,16 @@ void BuilderAddComponents(AZ::Entity* entity)
 }
 ```
 
-The first is easy enough [we already investigated using Ebus]({% post_url /2019/2019-12-06-lmbr_ebus %}):
+The first is [working with ebus like we investigated previously]({% post_url /2019/2019-12-06-lmbr_ebus %}) and easy enough to do from Rust.  First, wrap the C++:
 ```cpp
 void AssetBuilderBus_Broadcast_RegisterComponentDescriptor(AZ::ComponentDescriptor* descriptor)
 {
     AssetBuilderSDK::AssetBuilderBus::Broadcast(&AssetBuilderSDK::AssetBuilderBus::Events::RegisterComponentDescriptor, descriptor);
 }
 ```
+Then, call the wrapped method from Rust:
 ```rust
-// lmbr_sys crate
+// In lmbr_sys crate
 extern "C" {
     pub fn AssetBuilderBus_Broadcast_RegisterComponentDescriptor(descriptor: *mut AZ::ComponentDescriptor);
 }
@@ -288,7 +290,7 @@ class LuaBuilderWorker
 
 ## Bad Strings
 
-`AZStd::string` is in [`string.h`](https://github.com/aws/lumberyard/blob/07228c605ce16cbf5aaa209a94a3cb9d6c1a4115/dev/Code/Framework/AzCore/AzCore/std/string/string.h)
+`AZStd::string` is defined in [`string.h`](https://github.com/aws/lumberyard/blob/07228c605ce16cbf5aaa209a94a3cb9d6c1a4115/dev/Code/Framework/AzCore/AzCore/std/string/string.h).  An abridged version:
 
 ```cpp
 typedef basic_string<char >     string;
@@ -346,10 +348,11 @@ protected:
 }
 ```
 
-- For `char`, `SSO_BUF_SIZE` is 16 so `m_buffer` provides 16 bytes of inline storage for short strings
-- `size_type` and `difference_type` are `size_t` and `ptrdiff_t`, respectively
-- When targetting 64-bit and ignoring alignment/padding, `sizeof(string) == 40` (bytes)
+- For `char`, `SSO_BUF_SIZE` is 16 so `m_buffer` provides 16 bytes of inline storage for short strings.  Longer strings use `m_data` and a heap allocation.
+- `size_type` and `difference_type` are `size_t` and `ptrdiff_t`, respectively.
+- When targetting 64-bit and ignoring alignment/padding, `sizeof(string) == 40` (bytes).
 
+Bindgen outputs:
 ```rs
 pub struct basic_string<Element, Allocator> {
     pub __bindgen_anon_1: root::AZStd::basic_string__bindgen_ty_3<Element>,
@@ -390,7 +393,9 @@ pub union basic_string__bindgen_ty_3<Element> {
 - `basic_string::size_type` and `basic_string::different_type` are `[u8; 0usize]`- array of __0__ bytes
 - Ignoring alignment/padding, `sizeof(basic_string) == 16` (`std::mem::size_of::<[u8; 0]>() == 0` and `PhantomData` is also [zero-sized](https://doc.rust-lang.org/stable/std/marker/struct.PhantomData.html))
 
+An `AZStd::string` returned from C++ was ok, but as soon as you did anything with it in Rust you'd get invalid memory access exceptions.  This wasn't Rust's fault, we lied about the size and contents of the type.
 
+We can manually fix it by changing the following lines:
 ```rs
 pub type basic_string_difference_type = u64;
 pub type basic_string_size_type = u64;
@@ -410,7 +415,10 @@ pub union basic_string__bindgen_ty_3<Element> {
 }
 ```
 
+Now `string` is usable from Rust.
 
-## Custom type
+## Closing
 
-https://docs.aws.amazon.com/lumberyard/latest/userguide/asset-pipeline-asset-type-adding.html
+The remainder of fleshing out our asset builder scaffolding involves calling bindgen generated bindings from `lmbr_sys` and creating wrappers for stickier C++ functions.
+
+Wrappers are getting common enough I need to split them out from `lmbr_sys` so it only contains bindings and another crate contains the various "helpers" and utility functions.  Perhaps another day.
