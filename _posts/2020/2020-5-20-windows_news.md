@@ -20,3 +20,7 @@ The holy triumverate of Windows, Mac, and Linux is well established in my indust
 [.NET 5 Preview 4](https://devblogs.microsoft.com/dotnet/announcing-net-5-preview-4-and-our-journey-to-one-net/).  The impending "one .NET to rule them all".
 
 [PowerShell 7.1 Preview 3](https://devblogs.microsoft.com/powershell/powershell-team-may-2020-update/) based on .NET 5.  Also includes [PowerShellGet 3.0 preview 3](https://devblogs.microsoft.com/powershell/powershellget-3-0-preview-3/) which will hopefully get integrated with their new package manager along with nuget.
+
+[WSL2 will include GPU and GUI support](https://ubuntu.com/blog/new-gpu-and-gui-features-announced-for-wsl-at-build), including [DirectX support for Linux](https://devblogs.microsoft.com/directx/directx-heart-linux/).
+
+Finally, [Windows Terminal 1.0](https://devblogs.microsoft.com/commandline/windows-terminal-1-0/).
