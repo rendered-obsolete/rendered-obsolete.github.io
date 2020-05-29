@@ -140,7 +140,9 @@ The API provides a number of options such as what triggers wake-up; here we're u
 
 Using the native `ets_printf` for logging was pretty painful:
 ```rust
-esp_idf_sys::ets_printf(b"value=%d\n\0".as_ptr() as *const _, 1);
+unsafe {
+    esp_idf_sys::ets_printf(b"value=%d\n\0".as_ptr() as *const _, 1);
+}
 ```
 
 We added [esp_idf_logger, an initial ESP-IDF implementation](https://github.com/jeikabu/esp_idf_logger) of the [log facade](https://crates.io/crates/log).

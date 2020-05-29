@@ -23,4 +23,6 @@ The holy triumverate of Windows, Mac, and Linux is well established in my indust
 
 [WSL2 will include GPU and GUI support](https://ubuntu.com/blog/new-gpu-and-gui-features-announced-for-wsl-at-build), including [DirectX support for Linux](https://devblogs.microsoft.com/directx/directx-heart-linux/).
 
+[C# 9](https://devblogs.microsoft.com/dotnet/welcome-to-c-9-0/) is on the horizon.
+
 Finally, [Windows Terminal 1.0](https://devblogs.microsoft.com/commandline/windows-terminal-1-0/).
