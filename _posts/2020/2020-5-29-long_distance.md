@@ -29,9 +29,9 @@ Some ideas based on how we've been passing the time:
     - Take the opportunity to share each other's favorites, classics from childhood, etc.
 - Online video games (or board/card games- where possible), sending each other challenges, etc.
 - Shared music playlist
-    - [YouTube Music](https://support.google.com/youtube/answer/6109639?hl=en), [Spotify](https://support.spotify.com/cy/article/create-playlists-with-your-friends/), and others allow collaborative playlists
+    - [YouTube Music](https://support.google.com/youtube/answer/6109639?hl=en), [Spotify](https://support.spotify.com/cy/article/create-playlists-with-your-friends/), and others allow collaborative playlists.
     - NB- many commercial services have restrictions regarding "family" plans and people in different countries.
-    - There's also several options to broadcast, but this is one-sided sharing.
+    - There's also several options to broadcast the music you're listening to, but this is one-sided sharing.
 
 Hopefully this quarantine will turn out to be a once-in-a-lifetime experience.  But, it's reminded me that many other couples go through a similar situation if work/school takes them elsewhere.
 
