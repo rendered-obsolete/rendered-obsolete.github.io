@@ -222,6 +222,16 @@ That last one is tricky.  `New-PSSession` with a single host returns a `PSSessio
 - [Get-PSSession](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/get-pssession)
 - [Connect-PSSession](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/connect-pssession) ([unavailable on Mac/Linux](https://docs.microsoft.com/en-us/powershell/scripting/whats-new/known-issues-ps6#command-availability))
 
+### Variables
+
+Using [remote vs. local variables](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_remote_variables) is surprisingly painless.  To use a local variable prefix the name with `$using:`, otherwise it's remote:
+```powershell
+Invoke-Command -Session $session -ScriptBlock { $home; $using:home }
+# Output
+C:\Users\win_user
+/Users/mac_user
+```
+
 ## Additional Resources
 
 - [PowerShell Remoting From macOS To Windows Server](https://garrettyamada.com/powershell-remoting/)
