@@ -19,7 +19,7 @@ Motivations:
 
 We want all our packages to be owned by the [Subor organization](https://www.nuget.org/profiles/subor) so everything won't be tied to a single person.
 
-After creating an organization (profile __->Manage Organizations->Add new__), you can click the pencil icon (![]({{ "/assets/nuget_edit_icon.png" | absolute_url }})) to access the organization's settings page and configure various things.
+After creating an organization (profile __> Manage Organizations > Add new__), you can click the pencil icon (![]({{ "/assets/nuget_edit_icon.png" | absolute_url }})) to access the organization's settings page and configure various things.
 
 ## Certificate Creation and Registration
 
@@ -34,11 +34,11 @@ When prompted select __No, do not export the private key__:
 And __DER encoded X.509__:  
 ![]({{ "/assets/certmgr_export_format.png" | absolute_url }})
 
-Then click through to create the .cer.  Now, go to the organization's settings page on nuget.org and pick __Certificates->Register new__.  Select the .cer you just created.
+Then click through to create the .cer.  Now, go to the organization's settings page on nuget.org and pick __Certificates > Register new__.  Select the .cer you just created.
 
 ## Nuget.org API Key
 
-While you're visiting nuget.org it's worth creating an API key __profile->API Keys->+Create__:  
+While you're visiting nuget.org it's worth creating an API key __profile > API Keys > +Create__:  
 ![]({{ "/assets/nuget-org_apikey_create.png" | absolute_url }})
 
 For __Package Owner__ pick the organization.  Uploaded packages will belong to the organization rather than your individual account.
@@ -85,7 +85,7 @@ And there should be a bunch of similar output that ends with `Successfully verif
 
 ## Uploading
 
-The first time I uploaded the package I used nuget.org's web interface: profile __->Manage Packages->+Add new__.
+The first time I uploaded the package I used nuget.org's web interface: profile __> Manage Packages > +Add new__.
 
 Thereafter I can use the "update package versions"-only API key I created to push updates:
 ```
@@ -104,7 +104,7 @@ The package is validated before becoming available via nuget.org.  This seems to
 ## The Circle is Now Complete
 
 Back in Visual Studio, you can now:
-1. Right-click a project __->Manage NuGet Packages...->Browse__.
+1. Right-click a project __> Manage NuGet Packages... > Browse__.
 1. Make sure __Package source__ is `nuget.org` (in case you changed it during package development).  And search for `Subor.NNanomsg.NETStandard`:  
 ![]({{ "/assets/vs_nuget_browse.png" | absolute_url }})
 

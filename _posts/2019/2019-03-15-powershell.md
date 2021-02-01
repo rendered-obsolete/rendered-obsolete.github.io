@@ -85,6 +85,8 @@ $hash += @{4 = "fourth"}
 $hash["fifth"] = 5 # Key has to be quoted here
 $hash[4] = $null # Remove value (but not key) from hash
 
+# List all environment variables
+dir env:
 # String with `PATH` environment variable
 "$env:PATH ${env:PATH}: safer"
 # Multi-line "here string"

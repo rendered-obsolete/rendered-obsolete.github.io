@@ -52,6 +52,25 @@ If you're using [Windows Terminal](https://github.com/microsoft/terminal), [prev
 }
 ```
 
+Setting the default shell:
+Set `defaultProfile` to the `guid` of the desired shell (it was a bit different [before 0.11](https://github.com/microsoft/terminal/issues/5458)):
+```json
+{
+  "...": "...",
+  "defaultProfile": "{574e775e-4f2a-5b96-ac1e-a2962a402336}",
+
+  "profiles": [
+    {
+      "commandline": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+      "guid": "{574e775e-4f2a-5b96-ac1e-a2962a402336}",
+      "name": "PowerShell Core",
+      "startingDirectory": "%USERPROFILE%",
+      "...": "..."
+    },
+  ],
+}
+```
+
 For _Visual Studio Code_, __View__ > __Command Palette__ (`Ctrl+Shift+P`) and type `select default shell`.  It should present a drop-down list of options including the version you just installed.  You may need to restart VS Code to change the current shell.
 
 Opening a new terminal should now display:

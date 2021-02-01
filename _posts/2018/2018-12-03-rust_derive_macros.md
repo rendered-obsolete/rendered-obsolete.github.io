@@ -4,6 +4,8 @@ title: Rust Derive Macros
 tags:
 - rust
 - macros
+- metaprogramming
+series: Rust Macros
 ---
 
 Rust has macros similar in purpose to C++'s macros/templates in that it's code that runs at compile time that itself writes code (meta-programming).  However, the similarities pretty much end there.  There are two types:
@@ -322,8 +324,8 @@ All this is pretty similar to [a common use of discriminated unions in F#](https
 
 For further information on macros, and the reading order I would recommend:  
 
-1. [Rust Programming Language](https://doc.rust-lang.org/book/2018-edition/appendix-04-macros.html)- basic introduction
-1. [The Reference](https://doc.rust-lang.org/reference/procedural-macros.html)- basic introduction
+1. [Rust Programming Language](https://doc.rust-lang.org/book/ch19-06-macros.html)- basic introduction
+1. [The Reference](https://doc.rust-lang.org/reference/macros.html)- basic introduction
 1. ["Creating an enum iterator using Macros 1.1"](https://cbreeden.github.io/Macros11/)- example of `derive` macro
 1. ["Debugging Rust's new Custom Derive System"](https://quodlibetor.github.io/posts/debugging-rusts-new-custom-derive-system/)- overview of development/debugging
 1. [`syn` examples](https://github.com/dtolnay/syn/tree/master/examples)
