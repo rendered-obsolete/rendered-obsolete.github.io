@@ -255,7 +255,7 @@ static extern IntPtr dlerror();
 static extern IntPtr dlsym(IntPtr handle, String symbol);
 ```
 
-The use of [System.Runtime.InteropServices.RuntimeInformation](https://docs.microsoft.com/en-us/dotnet/api/system.runtime.interopservices.runtimeinformation) came from [this blog](https://json-formatter.codepedia.info/dotnet-core-to-detect-operating-system-os-platform/).
+The use of [System.Runtime.InteropServices.RuntimeInformation](https://docs.microsoft.com/en-us/dotnet/api/system.runtime.interopservices.runtimeinformation) came from [this blog](https://codepedia.info/dotnet-core-to-detect-operating-system-os-platform/).
 
 We construct a path based on the host OS (Linux vs OSX, 32 vs 64-bit), and pass it to `dlopen()` to pre-load the shared library.
 
