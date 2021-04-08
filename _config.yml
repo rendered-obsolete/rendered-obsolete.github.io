@@ -30,8 +30,6 @@ plugins:
 
 paginate: 4
 
-disqus:
-  shortname: rendered-obsolete
 repository: rendered-obsolete/rendered-obsolete.github.io
 
 # Exclude from processing.
