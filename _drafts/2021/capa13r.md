@@ -1,30 +1,66 @@
 ---
 layout: post
-title: Ryzen SBC
+title: Building an AMD Ryzen APU (mini) Game Machine
 tags:
-- sbc
+- windows10
+- gamedev
+- showdev
+- watercooler
+- hardware
 - amd
 ---
 
-Between my love of game consoles and working on [Z+ with AMD]({% post_url /2018/2018-10-15-zplus-microservices %}) I perhaps have an unhealthy obsession with AMD APUs.  When AxiomTek announced a SBC with Vega graphics and Zen CPU cores I was... intrigued:
+Between my love of game consoles and working on [Z+ with AMD]({% post_url /2018/2018-10-15-zplus-microservices %}) I perhaps have an unhealthy obsession with AMD APUs.  When AxiomTek announced ([1](https://www.techradar.com/news/raspberry-pi-not-powerful-enough-for-you-this-compact-board-boasts-an-amd-ryzen-apu), [2](https://techbriefly.com/2020/05/20/the-more-powerful-raspberry-pi-alternative-carries-an-amd-ryzen-apu/)) a single-board-computer with Zen CPU cores and Vega graphics I was... intrigued, and thought it might make for a nice [Steam Box](https://en.wikipedia.org/wiki/Steam_Machine_(hardware_platform)).
 
-- [News 1](https://www.techradar.com/news/raspberry-pi-not-powerful-enough-for-you-this-compact-board-boasts-an-amd-ryzen-apu)
-- [News 2](https://techbriefly.com/2020/05/20/the-more-powerful-raspberry-pi-alternative-carries-an-amd-ryzen-apu/)
+## Hardware
 
-I picked up a CAPA13R (V1605B @2.0 GHz) I'm far from an expert in these things, but I had in mind to turn it into a sort of Steam box for my TV and added the following:
+Details on the CAPA13R board are available from the [product page](https://www.axiomtek.com/Default.aspx?MenuId=Products&FunctionId=ProductView&ItemId=25592&C=CAPA13R) and more detailed [spec sheet](https://www.axiomtek.com/Download/Spec/en-US/capa13r.pdf).  Common features:
+
+- AMD Ryzen Embedded V1605B or V1807B APU
+- DDR4 SO-DIMM (up to 16GB of memory)
+- 1 x M.2 Key B (for SSD), 1 x M.2 Key E
+- 2 x 10/100/1000 Mbps Ethernet
+- 2 x USB 3.2 Gen2
+- 2 x HDMI, 1 x [DisplayPort++](https://en.wikipedia.org/wiki/DisplayPort#DisplayPort_dual-mode_(DP++)), 1 x [LVDS](https://en.wikipedia.org/wiki/Low-voltage_differential_signaling)
+
+Notably, it lacks wifi and bluetooth.  The wifi I can do without (the board requires external power so an ethernet cable is fine), but I added a USB bluetooth adapter I had laying around.
+
+| | V1605B | V1807B
+|-|-|-
+| Memory | DDR4-2400 | DDR4-3200
+| Power min. RMS (W) | 12V @ 2.5A | 12V @ 4.2A
+
+Details on the AMD SoC are available from the [Ryzen Embedded V1000 series](https://www.amd.com/en/products/embedded-ryzen-v1000-series) product page and 
+the [product brief](https://www.amd.com/system/files/documents/v1000-family-product-brief.pdf).  All models have 4 cores (8 threads, 4M L2 cache) [Zen micro-architecture](https://en.wikipedia.org/wiki/Zen_(first_generation_microarchitecture)) CPU married with a Radeon Vega 8 GPU ([GCN5](https://en.wikipedia.org/wiki/Graphics_Core_Next#Graphics_Core_Next_5)):
+
+| | V1605B | V1807B
+|-|-|-
+| CPU base/max GHz | 2.0 / 3.6 | 3.35 / 3.8
+| GPU [CU](https://en.wikipedia.org/wiki/Graphics_Core_Next#Compute_units)/GHz/TFLOPS | 8 / 1.1 / 1.1 | 11 / 1.3 / 1.8
+| [TDP](https://en.wikipedia.org/wiki/Thermal_design_power) range/nominal (W) | 12-25 / 15 | 35-54 / 45
+| DDR4 (MT/s / GB/s) | 2400 / 19.2 | 3200 / 25.6
+
+Like [NVidia's Jetson Nano]({% post_url /2019/2019-04-01-jetson_nano %}), the memory bandwidth is rather low.  For comparison, the [original Xbox One/Xbox One S](https://en.wikipedia.org/wiki/Xbox_One#Hardware_comparison) has 8 Jaguar cores (pre-Zen, 8 threads), 12 CUs ([GCN2](https://en.wikipedia.org/wiki/Graphics_Core_Next#Graphics_Core_Next_2), 1.3/1.4 TFLOPS), and DD3 at 68.3 GB/s.  It's difficult to make an "apples to apples" comparison because Zen has 52% improved IPC, GCN 2 and 5 are fairly distant, and the Xbox has an additional 32 MB of ESRAM at 200+ GB/s (generally used for render targets).  But, the V1605V and V1807B are "in the ballpark" of the original Xbox and Xbox S, respectively- memory bandwidth aside.
+
+I picked up a lower-end CAPA13R with the V1605B and added:
 
 - Transcend 240GB SATA III 6Gb / s MTS420S 42mm M.2 SSD
 - HyperX Impact DDR4 16GB, 2666MHz CL15 SODIMM XMP - HX426S15IB2 / 16
-- PicoPSU -90 12V DC-DC ATX Mini-ITX 0-90W power supply power
-- Salcar 60 W Transformer Power Adapter (12 V 6 A)
+- PicoPSU-60 12V DC-DC ATX Mini-ITX 0-60W power supply power
+- Salcar 60 W Transformer Power Adapter (12 V 6 A, 5.5x2.5mm)
 
-Until [ATX12VO](https://en.wikipedia.org/wiki/ATX#ATX12VO) (also see [this guide](https://www.gamersnexus.net/guides/3568-intel-atx-12vo-spec-explained-what-manufacturers-think))ol becomes a thing, I'm using a 90W PicoPSU with pins 4 and 5 shorted to boot the system.  Depending on your power supply of choice, another approach may be necessary- Google is your friend.
+| Top | Bottom
+|-|-
+| ![](/assets/capa13r.jpg) | ![](/assets/capa13r_bottom.jpg)
 
-With a stock install of Windows 10 20H2/19042.631 here's benchmark numbers:
 
-Before you do anything install the [drivers](https://www.axiomtek.com/Default.aspx?MenuId=Products&FunctionId=ProductView&ItemId=25592&C=CAPA13R&upcat=270) to get audio and graphics perfomance working.
+Until [ATX12VO](https://en.wikipedia.org/wiki/ATX#ATX12VO) (also see [this guide](https://www.gamersnexus.net/guides/3568-intel-atx-12vo-spec-explained-what-manufacturers-think)) becomes more of a thing, I'm using a 60W PicoPSU with pins 13 and 14 (OR pin 14- `PS-ON`- to one of the other GNDs) shorted to power the system.  Depending on your power supply of choice, another approach may be necessary.
 
-In general I stuck with the defaults:
+It's worth mentioning __SSW1__, the small switch to the far left of the external ports.  With 1-2 closed (switch _away_ from the external ports) auto power on is disabled and the soft power button is needed to power on the system.  With 2-3 closed (switch _towards_ external ports) power on is enabled and just plugging the system in will auto power on.
+
+## Benchmarks
+
+Installed Windows 10 20H2/19042.631 and the [drivers](https://www.axiomtek.com/Default.aspx?MenuId=Products&FunctionId=ProductView&ItemId=25592&C=CAPA13R&upcat=270) to get audio and graphics working.  Otherwise stuck with the stock install and ran a few benchmarks:
 
 Benchmark | Settings | Score Min/Avg/Max FPS
 -|-|-
@@ -34,11 +70,67 @@ Unigine: Heaven 4.0 | 1080p/OpenGL | 317 5.1 12.6 35.1
 Unigine: Superposition v1.1 | 1080p med/OpenGL | 857 5.72 6.41 7.89
 Unigine: Valley 1.0 | 1920x1200/DX11 | 596 9.7 14.2 24.1
 
-Benhmmfk | Settings | Score Graphics CPU
+Benchmark | Settings | Score Graphics CPU
+-|-|-
 3DMark Demo Time Spy v1.2 | 4K/64-bit | 595 529 2085
 3DMark Demo Time Spy v1.2 | 1920x1200/64-bit | 641 571 2170
 
-So, seemingly not cut out for 4K gaming, however, during none of the benchmarks did the heatsink even become warm.  And even the 1080p performance it's very good.  I suspect either the PicoPSU or power adapter just wasn't delivering enough power.
+So, not cut out for 4K gaming.  However, during none of the benchmarks did the heatsink even become warm, and even the 1080p performance isn't very good.  I wondered if either the PicoPSU or power adapter just wasn't delivering enough power, but the GPU seemed to be fully engaged:
 
-AMD V1605B @2.0 GHz 16GB DDR4, min. RMS. +12V@2.5A
-AMD V1807B @3.35 GHz 16GB DDR4, min. RMS. +12V@4.2A
+![](/assets/capa13r_task_manager_gpu.png)
+
+What stands out is the GPU has only 1 GB of dedicated memory.  This was a limiting factor for us with the [Z+ console](https://github.com/subor/sdk/blob/master/docs/topics/optimization.md) (which had a carve-out of 2GB for dedicated graphics memory leaving 6 GB of system memory).  In our case, we had a BIOS option to specify the amount reserved for VRAM, but the CAPA13R BIOS currently has no such option.
+
+In hind-sight I probably should have gone with the V1807V since the GPU is ~60% more powerful.
+
+## Software
+
+The default boot prompt timeout is 1s, so you'll have to be quick to change BIOS settings.  Press `esc`, set __Advanced > Smart Fan Function__ to __Enabled__.  This allows the fan speed to adjust based on the SoC temperature and makes the system much quieter.
+
+Optionally, set __Boot > Quiet Boot__ to __Enabled__ to suppress the BIOS startup screen.  However this replaces the Windows 10 logo with the American Megatrends logo- which doesn't look great.  Changing the UEFI logo seems to require a tool like "HackBGRT", but I decided to not bother because the boot prompt timeout is short enough that my TV often isn't even on when the BIOS startup is displayed.
+
+Have Steam auto-start in [Big Picture Mode](https://support.steampowered.com/kb_article.php), via __Steam > Settings__:
+
+![](/assets/steam_settings_bpm.png)
+
+Configure [users to auto-login](https://superuser.com/questions/1623508):
+
+1. Change registry:
+    1. Enter `Win+R` and type `regedit` OR hit `Win` key and start typing `registry editor`, then hit `enter`
+    1. Browse to __HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\PasswordLess\Device__ change __DevicePasswordLessBuildVersion__ to `0`
+1. Enter `Win+R` and type `netplwiz`, then hit `enter` OR click __OK__
+1. Uncheck __Users must enter a user name and password to use this computer__ and click __OK__
+
+Now when you restart the system it should login and launch straight into Steam BPM:
+
+![](/assets/steam_bpm.png)
+
+With an added USB bluetooth adapter, pair with a Dualshock 4 controller (or your preferred gamepad):
+
+1. In Windows __Settings > Bluetooth & other devices__
+1. __Add Bluetooth or other device > Bluetooth__
+1. On DS4 press SHARE and PS/home button at the same time and hold until controller LED starts flashing
+1. Should appear as "Wireless Controller", click it to pair
+
+To only see games with _full_ gamepad support:
+
+1. Steam __Library__
+1. Move to the far right to find __Filter Games__ and check __Controller Supported__
+
+Optional but useful, there's a number of wireless keyboards with integrated touchpad on the market:
+
+![](/assets/capa13r_wireless_keyboard.jpg)
+
+To invert the two-finger scroll gesture, try using registry editor to change `ScrollDirection` in `HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\PrecisionTouchPad`.  If that doesn't work, try setting `FlipFlopWheel` as per [this answer](https://superuser.com/questions/948348).
+
+To enable/disable edge gestures, use `EnableEdgy` in `PrecisionTouchPad` registry, or follow [this forum post](https://www.tenforums.com/tutorials/48507-enable-disable-edge-swipe-screen-windows-10-a.html).
+
+## Next Steps
+
+Need to find some kind of case.  Haven't decided if I'll try to buy or 3D print one.
+
+Haven't been able to get it waking from USB.  I've tried disabling "Allow the computer to turn off this device to save power" and enabling "Allow this device to wake the computer" for everything related to USB and HID devices in Device Manager, as well as disabling "USB selective suspend" in advanced Power Settings.  In the BIOS the only options for __Advanced > ACPI Settings > ACPI Sleep State__ are "Suspend Disabled" and ["S3"](https://docs.microsoft.com/en-us/windows/win32/power/system-power-states), but there doesn't seem to be anything related to USB wake.
+
+Maybe I'll look into running some other software like [RetroArch](https://www.retroarch.com/), or [Kodi](https://github.com/xbmc/xbmc) (formerly XBMC) later.
+
+Most importantly, play some games!
