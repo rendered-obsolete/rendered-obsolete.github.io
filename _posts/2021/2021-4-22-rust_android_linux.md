@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Rust in Android and Linux OSes
+title: Rust in Android OS and Linux
 tags:
 - rust
 - news
@@ -17,3 +17,5 @@ The [Linux article](https://security.googleblog.com/2021/04/rust-in-linux-kernel
 Why not bring C++ to Linux?  [Linus Torvalds had this to say](https://itwire.com/open-source/rust-support-in-linux-may-be-possible-by-5-14-release-torvalds.html):
 
 > LOL.  C++ solves _none_ of the C issues, and only makes things worse. It really is a crap language.
+
+To be fair, C++ _can_ solve some of C's issues, but you generally have to go out of your way and use `unsafe` to anything dubious with Rust.
