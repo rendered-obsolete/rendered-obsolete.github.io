@@ -156,6 +156,7 @@ Intel Core i5-8279U CPU 2.40GHz (Coffee Lake), 1 CPU, 8 logical and 4 physical c
 [Host]     : .NET Core 5.0.1 (CoreCLR 5.0.120.57516, CoreFX 5.0.120.57516), X64 RyuJIT
 DefaultJob : .NET Core 5.0.1 (CoreCLR 5.0.120.57516, CoreFX 5.0.120.57516), X64 RyuJIT
 ```
+
 |      Type |                   Method |      Mean |     Error |    StdDev | Ratio | RatioSD |
 |---------- |------------------------- |----------:|----------:|----------:|------:|--------:|
 |  Delegate |             CallDelegate | 16.934 ns | 0.1687 ns | 0.1578 ns | 16.23 |    0.23 |
