@@ -93,6 +93,9 @@ When you ssh into a Windows host the default shell is `cmd.exe` _\*shudder\*_.  
 ```powershell
 # Again, 8.3 path to executable
 New-ItemProperty -Path "HKLM:\SOFTWARE\OpenSSH" -Name DefaultShell -Value "c:/progra~1/powershell/7/pwsh.exe" -PropertyType String -Force
+
+# Have sshd service start automatically
+Set-Service -Name sshd -StartupType Automatic
 ```
 
 To avoid having to specify `WindowsUsername@...` with ssh, you can set a per-host default in `~/.ssh/config` on Linux/Mac:
@@ -120,6 +123,14 @@ ssh HostnameOrIP 'cat >> $HOME/.ssh/authorized_keys' < $HOME/.ssh/id_rsa.pub
 ```
 
 In the above, `$Input` is an [automatic variable](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_automatic_variables#input) containing stdin (from `< $HOME/.ssh/id_rsa.pub`).
+
+Permissions must be set accordingly ([SO](https://stackoverflow.com/questions/16212816/setting-up-openssh-for-windows-using-public-key-authentication/50502015#50502015)):
+
+- References to OpenSSHUtils should be ignored because it's deprecated
+1. Right-click `authorized_keys`, __Properties > Security > Advanced__
+1. Click __Disable Inheritance__, and "Convert inherited permissions into explicit permissions on this object" if prompted
+1. Remove all permissions _EXCEPT_ for `SYSTEM` and yourself, both of which should have __Full control__
+1. In `$env:ProgramData\ssh\sshd_config` remove `Match Group administrators` lines, and `Restart-Service sshd`
 
 Test you can connect from Linux/Mac client to Windows host without inputting password:
 ```powershell
