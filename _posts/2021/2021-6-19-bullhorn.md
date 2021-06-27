@@ -165,7 +165,7 @@ When you get an article, the response body contains:
 <!-- SNIP -->
 ```
 
-You can see the canonical URL with `rel="canonical"`.  In theory we should be able to enable the `"serializer"` feature of quick-xml and follow [the example](https://docs.rs/quick-xml/0.22.0/quick_xml/de/index.html) to decode with:
+You can see the canonical URL with `rel="canonical"`.  In theory we should be able to enable the `"serialize"` feature of quick-xml and follow [the example](https://docs.rs/quick-xml/0.22.0/quick_xml/de/index.html) to decode with:
 
 ```rust
 #[derive(Debug, serde::Deserialize, PartialEq)]
@@ -326,8 +326,7 @@ let categories: Vec<tags::TagsTagCategories> = {
 		// Turn `Option<Vec<Option<_>>>` into `Vec<_>`
 		.unwrap_or_default()
 		.into_iter()
-		// Unwrap Some() and remove None
-		.filter_map(|c| c)
+		.flatten()
 		.collect()
 };
 ```
@@ -539,6 +538,20 @@ fn function() -> anyhow::Result<()> {
 ```
 
 It has several other features, check [the docs](https://docs.rs/thiserror/) for more information.
+
+If you get this error:
+```rust
+error[E0308]: mismatched types
+   --> src/platforms/hashnode.rs:148:13
+    |
+148 |         Err(Error::NotFound)
+    |             ^^^^^^^^^^^^^^^^ expected struct `anyhow::Error`, found enum `Error`
+```
+
+Use `impl From`:
+```rust
+Err(Error::NotFound.into())
+```
 
 ### Logging
 
