@@ -32,7 +32,7 @@ I settled on the following requirements:
 
 	Articles are written in markdown and may contain [Jekyll front-matter](https://jekyllrb.com/docs/front-matter/) as used by Github Pages.
 
-To avoid confusion with the original (or [some Ruby feature flag thingie](https://github.com/fetlife/rollout)), I dub thee... __BULLHORN__ (stylized in all-caps, for obvious reasons).
+To avoid confusion with the original (or [some Ruby feature flag thingie](https://github.com/fetlife/rollout)), I dub thee... __BULLHORN__ (stylized in all-caps, for obvious reasons).  Rough code is [on Github](https://github.com/jeikabu/cargo_bullhorn/)
 
 ## Devto and REST
 

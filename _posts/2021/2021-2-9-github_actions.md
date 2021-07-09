@@ -9,10 +9,11 @@ tags:
 - ci
 - actions
 - powershell
+description: Using Github Actions to perform a variety of tasks related to a C# project.  Building native libraries for multiple platforms, automated tests and code coverage, and final packaging and publishing to nuget.
 ---
 
 Over the years I've used a few different CI solutions for my humble public projects: 
-[Travis]({% post_url /2019/2019-02-06-docker-qemu %}#Travis), [Appveyor]({% post_url /2018/2018-09-21-dotnet %}#Appveyor), and eventually Azure Pipelines.
+[Travis](https://rendered-obsolete.github.io/2019/02/06/docker-qemu.html#Travis), [Appveyor](https://rendered-obsolete.github.io/2018/09/21/dotnet.html#Appveyor), and eventually Azure Pipelines.
 
 I initially liked the idea of separating the CI/CD to avoid the dreaded vendor lock-in and freeing me to change SCC provider at will, but I've never really liked the UX of always having to visit an external site.  Github Actions is interesting for projects hosted on Github as it's an integrated solution similar to that offered by competitors like Gitlab.
 
@@ -104,7 +105,7 @@ jobs:
 
 ## Code Coverage
 
-[I'd previously used]({% post_url /2018/2018-09-21-dotnet %}#code-coverage) [OpenCover](https://github.com/OpenCover/opencover) to instrument .NET projects.  [Microsoft has a nice article](https://docs.microsoft.com/en-us/dotnet/core/testing/unit-testing-code-coverage) detailing code coverage for .NET unit tests.  They use [Coverlet](https://dotnetfoundation.org/projects/coverlet) which seems to now be the de-facto .NET solution given that Xunit test projects created with `dotnet new xunit` automatically add a reference to [coverlet.collector](https://www.nuget.org/packages/coverlet.collector).
+[I'd previously used](https://rendered-obsolete.github.io/2018/09/21/dotnet.html#code-coverage) [OpenCover](https://github.com/OpenCover/opencover) to instrument .NET projects.  [Microsoft has a nice article](https://docs.microsoft.com/en-us/dotnet/core/testing/unit-testing-code-coverage) detailing code coverage for .NET unit tests.  They use [Coverlet](https://dotnetfoundation.org/projects/coverlet) which seems to now be the de-facto .NET solution given that Xunit test projects created with `dotnet new xunit` automatically add a reference to [coverlet.collector](https://www.nuget.org/packages/coverlet.collector).
 
 Coverlet has 3 different ways to profile projects.  The first approach integrates nicely by leveraging MSBuild ([docs](https://github.com/coverlet-coverage/coverlet/blob/master/Documentation/MSBuildIntegration.md)):
 ```sh
@@ -145,7 +146,7 @@ Codecov provides [codecov-action](https://github.com/codecov/codecov-action) for
 
 If Codecov reports "an error processing coverage reports" you'll be left staring at the unhelpful:
 
-![](../../assets/codecov_error_processing_report.png)
+![](https://rendered-obsolete.github.io/assets/codecov_error_processing_report.png)
 
 In my case, despite [seemingly supporting json](https://docs.codecov.io/docs/supported-report-formats) (the default produced by Coverlet) Codecov was unable to process it.  Adding `/p:CoverletOutputFormat=lcov` to the test run fixed it.
 
@@ -173,7 +174,7 @@ For Codecov, open the repository then __Settings > Badge__.  Alternatively, you 
 
 I also want Actions to produce some platform-specific native binaries.  Even if you have no native code, this same approach can be used for multi-platform testing or to produce intermediary outputs/artifacts.
 
-[As before]({% post_url /2019/2019-02-06-docker-qemu %}), we can use docker and QEmu on Linux to easily build platform-specific binaries without cross-compiling.
+[As before](https://rendered-obsolete.github.io/2019/02/06/docker-qemu.html), we can use docker and QEmu on Linux to easily build platform-specific binaries without cross-compiling.
   The gist is create a Dockerfile like:
 ```dockerfile
 # Start with Debian for arm32
@@ -243,7 +244,7 @@ jobs:
 
 This workflow is triggered by the `workflow_dispatch` event with `inputs:` parameters that can be [manually run](https://docs.github.com/en/actions/managing-workflow-runs/manually-running-a-workflow) via Github UI:
 
-![](../../assets/github_actions_manual_run.png)
+![](https://rendered-obsolete.github.io/assets/github_actions_manual_run.png)
 
 `github.event` is part of the [context about the workflow run](https://docs.github.com/en/actions/reference/context-and-expression-syntax-for-github-actions#github-context).  Amongst other values it contains `nng_tag:` from triggering event.
 

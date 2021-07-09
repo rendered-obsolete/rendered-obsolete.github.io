@@ -1,7 +1,8 @@
 ---
 layout: post
-title: Cross-posting to Tumblr
+title: Cross-posting to Tumblr with AWS Lambda
 tags:
+- rust
 - serverless
 - productivity
 - cli
@@ -9,15 +10,16 @@ tags:
 - tumblr
 - lambda
 - rest
+description: Extending my Rust CLI tool, BULLHORN, to cross-post to Tumblr.  OAuth authentication via AWS Lambda.
 ---
 
-I really enjoyed [making a CLI tool to automate cross-posting blog posts to different places](https://rendered-obsolete.github.io/2021/06/19/bullhorn.html).  So, I started looking for another platform to add and Tumblr seemed like a good candidate.  Rough code is [on Github](https://github.com/jeikabu/cargo_bullhorn/).
+I really enjoyed [making a CLI tool to automate cross-posting blog posts to different places](https://rendered-obsolete.github.io/2021/06/19/bullhorn.html).  So, I started looking for another platform to add and Tumblr seemed like a good candidate.  Again, rough code is [on Github](https://github.com/jeikabu/cargo_bullhorn/).
 
 ## Tumblr API
 
-The Tumbler API is [well documented](https://www.tumblr.com/docs/en/api/v2).  But before you get started you need to [register an "application"](https://www.tumblr.com/oauth/apps).  For "Default callback URL" put a valid URL, you can always edit this later (via __Account > Settings > Apps > ✎__).  This will get you an OAuth "consumer" key and secret (sometimes referred to as "client" credentials).
+The Tumblr API is [well documented](https://www.tumblr.com/docs/en/api/v2).  But before you get started you need to [register an "application"](https://www.tumblr.com/oauth/apps).  For "Default callback URL" put a valid URL, you can always edit this later (via __Account > Settings > Apps > ✎__).  This will get you an OAuth "consumer" key and secret (sometimes referred to as "client" credentials).
 
-Some parts of the Tumbler API can be called with just the consumer key.  For example, to [retrieve published posts](https://www.tumblr.com/docs/en/api/v2#posts--retrieve-published-posts):
+Some parts of the Tumblr API can be called with just the consumer key.  For example, to [retrieve published posts](https://www.tumblr.com/docs/en/api/v2#posts--retrieve-published-posts):
 
 ```powershell
 curl -G https://api.tumblr.com/v2/blog/{blog-identifier}/posts?api_key={oauth_consumer_key}
@@ -29,7 +31,7 @@ But most of the interesting ones, like [creating a new post](https://www.tumblr.
 
 ## OAuth
 
-Tumblr's [docs](https://www.tumblr.com/docs/en/api/v2#authentication) are a bit light on OAuth 1.0a details, but their implementation closely resembles [Twitter's](https://developer.twitter.com/en/docs/authentication/oauth-1-0a/obtaining-user-access-tokens) and there's also an [RFC](https://datatracker.ietf.org/doc/html/rfc5849).  Twitter calls it 3-legged OAuth authentication, the RFC calls it redirection-based authentication.  Whatever you call it, the gist is:
+Tumblr's [docs](https://www.tumblr.com/docs/en/api/v2#authentication) are a bit light on OAuth 1.0a details, but their implementation closely resembles [Twitter's](https://developer.twitter.com/en/docs/authentication/oauth-1-0a/obtaining-user-access-tokens) and there's also an [RFC](https://datatracker.ietf.org/doc/html/rfc5849).  Twitter calls it "3-legged" OAuth authentication, the RFC calls it "redirection-based" authentication.  Whatever you call it, the gist is:
 
 1. `POST https://www.tumblr.com/oauth/request_token` with client credentials (i.e. consumer key/secret) -> receive "temporary credentials"
 1. Direct user to https://www.tumblr.com/oauth/authorize website for "resource owner" approval
@@ -50,7 +52,7 @@ let client_credentials =
 // Sign request using only client/consumer credentials
 let auth_header =
 	oauth1_request::Builder::<_, _>::new(client_credentials, oauth1_request::HmacSha1)
-		// Can optionally specify callback URL here, otherwise Tumbler will use the application default
+		// Can optionally specify callback URL here, otherwise Tumblr will use the application default
 		//.callback("https://callback_url")
 		.post(uri.clone(), &());
 let resp = self
@@ -70,9 +72,9 @@ let temp_token = get_value(&mut resp_body_pairs, "oauth_token")?.to_owned();
 let temp_token_secret = get_value(&mut resp_body_pairs, "oauth_token_secret")?.to_owned();
 ```
 
-Now we have the "temporary credentials".  We still need the `oauth_verifier` that will be sent to our callback URL.  To receive this from our callback we'll use AWS Simple Queue Service (SQS).
+Now we have the "temporary credentials".  We still need the `oauth_verifier` that will be sent to our callback URL.  To receive this from our callback we'll use [AWS Simple Queue Service (SQS)](https://aws.amazon.com/sqs/).
 
-To interact with AWS in Rust there's the [recently announced](https://aws.amazon.com/blogs/developer/a-new-aws-sdk-for-rust-alpha-launch/) official [AWS SDK for Rust](https://github.com/awslabs/aws-sdk-rust) which requires AWS access credentials.  To obtain AWS access credentials, in the AWS console __$YOUR_NAME (upper-right) > My Security Credentials > Access keys > Create New Access Key__ (keep these safe).  And then set the following [environment variables](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-envvars.html):
+To interact with AWS in Rust there's the [recently announced](https://aws.amazon.com/blogs/developer/a-new-aws-sdk-for-rust-alpha-launch/) official [AWS SDK for Rust](https://github.com/awslabs/aws-sdk-rust) which requires AWS access credentials.  To obtain AWS access credentials, in the AWS console click __$YOUR_NAME (upper-right) > My Security Credentials > Access keys > Create New Access Key__ (keep these safe).  And then set the following [environment variables](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-envvars.html):
 ```powershell
 $Env:AWS_ACCESS_KEY_ID="xxx"
 $Env:AWS_SECRET_ACCESS_KEY="yyy"
@@ -92,7 +94,7 @@ let query = format!("{}/oauth/authorize?oauth_token={}", WWW, temp_token);
 let exit_status = open::that(query)?;
 ```
 
-The ["open" crate](https://crates.io/crates/open) makes it easy to show the Tumblr resource owner approval page in a browser.  While the user is approving our Tumbler application, we wait for our callback to send the oauth verifier via SQS:
+The ["open" crate](https://crates.io/crates/open) makes it easy to show the Tumblr resource owner approval page in a browser.  While the user is approving our Tumblr application, we wait for our callback to send the oauth verifier via SQS:
 
 ```rust
 // Receive oauth_verifier from lambda via SQS
@@ -129,11 +131,11 @@ let resp = self.client
 	.await?;
 ```
 
-The user token and secret we receive is valid until revoked, so we can store them somewhere safe to avoid having to do this again.  We can now use Tumblr on the user's behalf.
+The user token and secret we receive is valid until revoked (via user's __Settings > Apps__), so we can store them somewhere safe to avoid having to do this again.  We can now use Tumblr on the user's behalf.
 
 ## Callback
 
-Above covered the important parts of the client.  The part of OAuth authentication remaining is our callback that Tumblr's resource owner approval page redirects to.  We could leave an HTTP server running all the time, but that's a bit silly for something we only need occasionally.  This looks like a job for "serverless" and AWS Lambda.
+Above covered the important parts of the client.  The part of OAuth authentication remaining is our callback that Tumblr's resource owner approval webpage redirects to.  We could leave an HTTP server running all the time, but that's a bit silly for something we only need occasionally.  This looks like a job for "serverless" and AWS Lambda.
 
 ### Basic Lambda
 
@@ -271,13 +273,13 @@ aws lambda update-function-code \
 
 ### API Gateway
 
-To get Tumblr to call our lambda via the callback URL we use AWS API Gateway to trigger our lambda via an HTTP endpoint.
+To get Tumblr to call our lambda via the callback URL we use [AWS API Gateway](https://aws.amazon.com/api-gateway/) to trigger our lambda via an HTTP endpoint.
 
 Open the lambda in AWS console then __+ Add trigger > API Gateway > Create an API__, for "API type" __REST API__ ("HTTP" likely also works) and for "Security" __Open__.
 
 From the list of triggers expand __Details__ and note "API endpoint".  This can be set as "Default callback URL" of the Tumblr application as well as the `oauth_callback` parameter in the client.
 
-When `http://tumbler/authorize` redirects to the callback you get `https://your_callback_url?oauth_token=xxx&oauth_verifier=yyy`.  Apparently lambdas don't accept query strings (the `?xxx=yyy` bits), so we need to [move the query into the body](https://aws.amazon.com/premiumsupport/knowledge-center/pass-api-gateway-rest-api-parameters/).
+When `http://tumblr/authorize` redirects to the callback you get `https://your_callback_url?oauth_token=xxx&oauth_verifier=yyy`.  Apparently lambdas don't accept query strings (the `?xxx=yyy` bits), so we need to [move the query into the body](https://aws.amazon.com/premiumsupport/knowledge-center/pass-api-gateway-rest-api-parameters/).
 
 In AWS console open API Gateway and __/bullhorn ANY > Integration Request__, deselect __Use Lambda Proxy integration__ and expand __Mapping Templates__.  Select __When there are no templates defined__, __Add mapping template__ enter `application/json` and click ☑.  Now there's two options:
 
@@ -313,7 +315,7 @@ The latter is easier.  See the [docs for template syntax](https://docs.aws.amazo
 
 Don't forget to __Save__!
 
-In API Gateway you can test everything, for "Method" __GET__ and "Query Strings" `oauth_token=xxx&oauth_verifier=yyy` then __Test__.  In the log output you'll see: the original query, the mapped endpoint request body, and the output from the lambda.
+In API Gateway you can verify everything works, for "Method" __GET__ and "Query Strings" `oauth_token=xxx&oauth_verifier=yyy` then __Test__.  In the log output you'll see: the original query, the mapped endpoint request body, and the output from the lambda.
 
 Once this is working you must select __Actions > Deploy API__, set "Deployment stage" to __default__ and then __Deploy__.  Failure to do this will result in your lambda receiving the query string from the initial API Gateway configuration.
 
@@ -361,11 +363,11 @@ Our [client](#client) will receive the verifier and complete OAuth authenticatio
 
 Since managed services like SQS generally exhibit [eventual consistency](https://en.wikipedia.org/wiki/Eventual_consistency), I wonder if `get_queue_url()` can temporarily fail and needs to be retried.  It's worked fine the way it is (so far), so maybe that's accounted for when the client creates the queue?
 
-## Posting to Tumbler
+## Posting to Tumblr
 
-Thus far everything was related to OAuth and obtaining user credentials.  Once we have them we can interact with Tumbler.
+Thus far everything was related to OAuth and obtaining user credentials.  Once we have them we can interact with Tumblr.
 
-The Tumblr API has both a "legacy" and "neue" forms.  Legacy supports markdown, but not canonical URLs.  Neue has canonical URLs but not markdown; posts must be composed from [Neue Post Format (NPF) blocks](https://www.tumblr.com/docs/npf).  It might work to build the markdown as HTML and embed in a block, but I don't feel like trying that just yet.  Until there's a better solution, we'll create a "link" post that's just a hyper-link to the original article.
+The Tumblr API has both a "legacy" and "neue" forms.  Legacy supports markdown, but not canonical URLs.  Neue has canonical URLs but not markdown; posts must be composed from [Neue Post Format (NPF) blocks](https://www.tumblr.com/docs/npf).  It might work to build the markdown as HTML and embed in a block, but I'll look into that later.  Until there's a better solution, we'll create a "link" post that's just a hyper-link to the original article.
 
 ```rust
 // Check if the article already exists
@@ -483,4 +485,4 @@ impl std::fmt::Display for RequestTags {
 
 The resulting post looks like this:
 
-![](/assets/tumblr_link_post.png)
+![](https://rendered-obsolete.github.io/assets/tumblr_link_post.png)

@@ -5,13 +5,15 @@ tags:
 - dotnet
 - csharp
 - performance
+description: Exploring calling native code with function pointers introduced in C# 9.0.
+slug: native-code-in-net-5-0-and-c-9-0-1
 ---
 
 A while back [we covered working with native assemblies](https://rendered-obsolete.github.io/2018/09/09/native-assembly.html).  It's worth re-reading to familiarize yourself with the problem and prior solutions.  There's been a few new options introduced in .NET Core and .NET 5.0.
 
 ## NativeLibrary
 
-The [NativeLibary](https://docs.microsoft.com/en-us/dotnet/api/system.runtime.interopservices.nativelibrary) static class was introduced in .NET Core 3.0 and makes it easy to use `DllImport` in a portable way.  To call a function `nng_alloc()` in a native shared library:
+The [NativeLibrary](https://docs.microsoft.com/en-us/dotnet/api/system.runtime.interopservices.nativelibrary) static class was introduced in .NET Core 3.0 and makes it easy to use `DllImport` in a portable way.  To call a function `nng_alloc()` in a native shared library:
 ```csharp
 // In `nng.NETCore` managed assembly
 namespace nng.Native.Basic
@@ -136,7 +138,7 @@ public unsafe void CallFunctionPointer()
 }
 ```
 
-So, for whatever reason it turns our function pointer into an `IntPtr` and then casts it to `cdecl` (which must be an internal symbol because we can't use it).  But the key thing is the use of `calli`.  Compare that with __benchmarks > DllImport > CallDllImport__:
+So, for whatever reason it turns our function pointer into an `IntPtr` and then casts it to `cdecl` (which must be an internal symbol because we can't use it directly).  But the key thing is the use of `calli`.  Compare that with __benchmarks > DllImport > CallDllImport__:
 ```
 	IL_0000: ldsfld valuetype [nng.NET.Shared]nng.Native.nng_aio [nng.NET.Shared]nng.Native.nng_aio::Null /* 0A000014 */
 	IL_0005: ldc.i4.s 9
