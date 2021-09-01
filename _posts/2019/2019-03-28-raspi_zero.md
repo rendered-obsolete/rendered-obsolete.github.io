@@ -102,7 +102,7 @@ Thankfully, Rust also works!  All we really need is Rust anyway.
 
 It's easy to install Rust on the Zero via rustup:
 ```bash
-curl https://sh.rustup.rs -sSf | sh
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
 Let's build [runng](https://github.com/jeikabu/runng).

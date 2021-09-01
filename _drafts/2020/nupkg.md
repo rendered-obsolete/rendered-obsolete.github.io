@@ -41,41 +41,10 @@ https://docs.microsoft.com/en-us/nuget/reference/errors-and-warnings/nu5128#scen
 
 But then lose dependency on `nng.Shared` package.
 
-```xml
-  <PropertyGroup Condition="'$(TargetFramework)'=='netstandard2.0' or '$(TargetFramework)'=='netstandard2.1'">
-    <DefineConstants>FEATURE_NETSTANDARD2_0_AND_UP</DefineConstants>
-  </PropertyGroup>
-```
-
-https://docs.microsoft.com/en-us/nuget/quickstart/create-and-publish-a-package-using-the-dotnet-cli
-
-To sign a package you [still need](https://github.com/NuGet/Home/issues/7939) nuget:
-
-subor
-oy2eqtpuqj6yez2sqwia377k27ifbjuupjmt63xdevjj4i
-jeikabu
-oy2cl32afob6kyvehi2qkgfu3pzok53eflucgzxwdwrc7i
 
 Signing and uploading is largely unchanged [from before]({% post_url /2018/2018-08-18-nuget-sign-upload %}).
 
-```powershell
-# Create release nupkg
-# -c : --configuration
-dotnet pack -c Release
-
-# Sign nupkg
-nuget.exe sign .\bin\Release\Subor.nng.NETCore.1.1.1.1.nupkg -Timestamper http://sha256timestamp.ws.symantec.com/sha256/timestamp -CertificatePath path_to_cert.pfx
-
-# Publish to nuget.org
-dotnet nuget push .\bin\Release\Subor.nng.NETCore.1.1.1.1.nupkg -k <NugetApiKey> -s https://api.nuget.org/v3/index.json
-```
-
-`<NugetApiKey>` is nuget.org API key.
 
 
 
-
-
-
-https://github.com/aspnet/Tooling/blob/master/missing-template.md
-https://github.com/dotnet/templating/wiki/Available-templates-for-dotnet-new
+RUYI@20!8

@@ -12,8 +12,7 @@ tags:
 description: Using Github Actions to perform a variety of tasks related to a C# project.  Building native libraries for multiple platforms, automated tests and code coverage, and final packaging and publishing to nuget.
 ---
 
-Over the years I've used a few different CI solutions for my humble public projects: 
-[Travis](https://rendered-obsolete.github.io/2019/02/06/docker-qemu.html#Travis), [Appveyor](https://rendered-obsolete.github.io/2018/09/21/dotnet.html#Appveyor), and eventually Azure Pipelines.
+Over the years I've used a few different CI solutions for my humble public projects: [Travis](https://rendered-obsolete.github.io/2019/02/06/docker-qemu.html#Travis), [Appveyor](https://rendered-obsolete.github.io/2018/09/21/dotnet.html#Appveyor), and eventually Azure Pipelines.
 
 I initially liked the idea of separating the CI/CD to avoid the dreaded vendor lock-in and freeing me to change SCC provider at will, but I've never really liked the UX of always having to visit an external site.  Github Actions is interesting for projects hosted on Github as it's an integrated solution similar to that offered by competitors like Gitlab.
 

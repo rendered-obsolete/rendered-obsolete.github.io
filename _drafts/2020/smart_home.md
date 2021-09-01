@@ -13,6 +13,11 @@ https://www.home-assistant.io/integrations/mqtt_room
 https://www.home-assistant.io/getting-started/presence-detection/
 https://www.home-assistant.io/integrations/person/
 
+Change password in docker container:
+```
+hass --script auth --config /config change_password <username> <password>
+```
+
 ## VS Code
 
 1. Install `Remote - SSH` extension ([`ms-vscode-remote.remote-ssh`](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-ssh))

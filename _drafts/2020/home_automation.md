@@ -5,6 +5,7 @@ tags:
 - smarthome
 - iot
 - homeautomation
+- home assistant
 series: Smart Home
 ---
 

@@ -1,3 +1,23 @@
+---
+layout: post
+title: 
+tags:
+- smarthome
+- iot
+- homeautomation
+- hass
+series: Smart Home
+---
+
+##
+
+
+Update containers ([SO](https://stackoverflow.com/questions/49316462)):
+```sh
+docker-compose up --force-recreate --build -d
+docker image prune -f
+```
+
 ## Media Player
 
 [Kodi](https://www.raspberrypi.org/documentation/usage/kodi/README.md)
