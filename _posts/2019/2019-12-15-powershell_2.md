@@ -36,6 +36,8 @@ Thanks to [PowerShell Core being open-source](https://github.com/PowerShell/Powe
 New-Item -Type Directory blah && Set-Location blah
 ```
 
+https://github.com/microsoft/terminal/issues/7482
+
 If you're using [Windows Terminal](https://github.com/microsoft/terminal), [preview 1910](https://devblogs.microsoft.com/commandline/windows-terminal-preview-1910-release/) (or newer) should auto-detect it.  For older releases, __V__ > __Settings__ (or `Ctrl+,`) to open `profiles.json`:
 ```json
 {
@@ -189,7 +191,7 @@ Get-Command cargo | Select-Object -First 1 -ExpandProperty Path
 | Win10 | `$home\Documents\PowerShell\Microsoft.PowerShell_profile.ps1`
 | Linux/MacOS | `$home/.config/powershell/Microsoft.PowerShell_profile.ps1`
 
-This is where you can [set `Set-PSReadLineOption`]({% post_url /2019/2019-03-15-powershell %}#shell-keyboard-shortcuts) and other environment/session customizations.
+This is where you can [set `Set-PSReadLineOption`]({% post_url /2019/2019-03-15-powershell %}#shell-keyboard-shortcuts) and other environment/session customizations like customizing the [prompt](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_prompt).
 
 ## More Loops
 

@@ -8,6 +8,8 @@ canonical_url:
 series: Amazon Lumberyard
 ---
 
+https://docs.aws.amazon.com/lumberyard/latest/userguide/debugging-intro.html
+
 ![](/assets/lmbr_savelevelstats.png)
 
 Here's __Static Geometry__:  

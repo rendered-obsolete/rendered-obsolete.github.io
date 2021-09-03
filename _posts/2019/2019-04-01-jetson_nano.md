@@ -46,9 +46,21 @@ unzip -p ~/Downloads/nv-jetson-nano-sd-card-image-r32.3.1.zip | sudo dd of=/dev/
 # Wait 10-20 minutes
 ```
 
+https://prod.liveshare.vsengsaas.visualstudio.com/join?AE48BAFEACC1E0FA84B373A573ED1EB697C9
+
+
+Windows:
+1. Download and install [SD Memory Card Formatter](https://www.sdcard.org/downloads/formatter_4/eula_windows/)
+1. Select: card drive, __Quick format__.  Leave __Volume label__ blank.
+1. __Format__
+1. Download and install [Etcher](https://www.balena.io/etcher/)
+1. 
+
 The OS install itself is over 9 GB and the Nvidia demos are quite large such that a 16 GB SD card fills up quick.  We recommend at least 32 GB SD card.
 
 Boots into Nvidia customized Ubuntu 18.04.
+
+If you have access to a 3D printer, check out [this case](https://www.thingiverse.com/thing:3518410).
 
 ## Intial Shell Access
 

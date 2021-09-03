@@ -41,10 +41,52 @@ https://docs.microsoft.com/en-us/nuget/reference/errors-and-warnings/nu5128#scen
 
 But then lose dependency on `nng.Shared` package.
 
+```xml
+  <PropertyGroup Condition="'$(TargetFramework)'=='netstandard2.0' or '$(TargetFramework)'=='netstandard2.1'">
+    <DefineConstants>FEATURE_NETSTANDARD2_0_AND_UP</DefineConstants>
+  </PropertyGroup>
+```
+
+https://docs.microsoft.com/en-us/nuget/quickstart/create-and-publish-a-package-using-the-dotnet-cli
+
+To sign a package you [still need](https://github.com/NuGet/Home/issues/7939) nuget:
+
+
 
 Signing and uploading is largely unchanged [from before]({% post_url /2018/2018-08-18-nuget-sign-upload %}).
 
+```powershell
+# Create release nupkg
+# -c : --configuration
+dotnet pack -c Release
+
+# Sign nupkg
+nuget.exe sign .\bin\Release\Subor.nng.NETCore.1.1.1.1.nupkg -Timestamper http://sha256timestamp.ws.symantec.com/sha256/timestamp -CertificatePath path_to_cert.pfx
+
+# Publish to nuget.org
+dotnet nuget push .\bin\Release\Subor.nng.NETCore.1.1.1.1.nupkg -k <NugetApiKey> -s https://api.nuget.org/v3/index.json
+```
+
+`<NugetApiKey>` is nuget.org API key.
+
+https://github.com/aspnet/Tooling/blob/master/missing-template.md
+https://github.com/dotnet/templating/wiki/Available-templates-for-dotnet-new
 
 
+## Docker Multi-Stage Builds
 
-RUYI@20!8
+https://docs.docker.com/develop/develop-images/multistage-build/
+https://github.com/moby/moby/issues/37345
+
+
+Azure pipelines missing dotnet core SDK:
+https://docs.microsoft.com/en-us/azure/devops/pipelines/ecosystems/dotnet-core?view=azure-devops#build-environment
+
+If you forgot to run `docker run --rm --privileged multiarch/qemu-user-static:register` you'll get:
+```
+standard_init_linux.go:211: exec user process caused "exec format error"
+```
+
+Installing powershell on Travis:
+https://troylindsayblog.wordpress.com/2017/11/25/powershell-core-on-travis-ci/
+https://troylindsayblog.wordpress.com/2017/11/25/powershell-core-on-travis-ci/
